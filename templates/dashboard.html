@@ -351,8 +351,14 @@
 
 <script>
 (function() {
-    var trigger = document.getElementById('dsTrigger');
     var changeBtn = document.getElementById('sdChangeBtn');
+    if (changeBtn) {
+        changeBtn.addEventListener('click', function() {
+            window.location.href = '{{ url_for("dashboard.index") }}';
+        });
+    }
+
+    var trigger = document.getElementById('dsTrigger');
     if (!trigger) return;
     var panel = document.getElementById('dsPanel');
     var searchInput = document.getElementById('dsSearchInput');
@@ -360,13 +366,7 @@
     var clearBtn = document.getElementById('dsClear');
     var dropdown = document.getElementById('dsDropdown');
 
-    if (!trigger || !panel) return;
-
-    if (changeBtn) {
-        changeBtn.addEventListener('click', function() {
-            window.location.href = '{{ url_for("dashboard.index") }}';
-        });
-    }
+    if (!panel) return;
 
     trigger.addEventListener('click', function(e) {
         e.stopPropagation();
