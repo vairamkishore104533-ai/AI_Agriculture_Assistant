@@ -111,20 +111,17 @@ def index():
     username = session.get("username", "Farmer")
 
     selected_district = request.args.get("district", "").strip()
-    if selected_district and selected_district not in ALL_DISTRICTS:
-        selected_district = ""
+    if not selected_district or selected_district not in ALL_DISTRICTS:
+        selected_district = ALL_DISTRICTS[0]
 
-    zone = None
-    zone_info = None
-    if selected_district:
-        zone = get_zone_for_district(selected_district)
-        zone_info = ZONE_INFO.get(zone)
+    zone = get_zone_for_district(selected_district)
+    zone_info = ZONE_INFO.get(zone)
 
     season_key = get_current_season()
     season = get_season_name(season_key, lang)
 
     weather_service = WeatherService()
-    weather_data = weather_service.get_current_weather(district=selected_district) if selected_district else {}
+    weather_data = weather_service.get_current_weather(district=selected_district)
     ai_advice = weather_service.get_ai_farming_advice(weather_data, lang) if weather_data else ""
 
     crop_count = Crop.count_by_user(user_id)
@@ -148,7 +145,7 @@ def index():
         ],
     }
 
-    if selected_district and zone_info:
+    if zone_info:
         zone_tips_en = [
             f"Your region ({zone}) is ideal for {zone_info.get('major_crops', 'diverse crops')}.",
             f"Predominant soil type: {zone_info.get('soil', 'varied soils')}.",
