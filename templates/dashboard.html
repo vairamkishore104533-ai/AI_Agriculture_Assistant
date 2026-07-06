@@ -106,44 +106,53 @@
             </div>
         </div>
 
-        <!-- District Selector -->
-        <div class="ds-wrapper">
-            <div class="ds-label">
-                <span class="lang-en">{{ t('select_district_title') }}</span>
-                <span class="lang-ta">உங்கள் மாவட்டத்தைத் தேர்ந்தெடுக்கவும்</span>
-            </div>
-            <div class="ds-dropdown" id="dsDropdown">
-                <button class="ds-trigger" id="dsTrigger" type="button">
-                    <span class="ds-trigger-icon">📍</span>
-                    {% if selected_district %}
-                    <span class="ds-trigger-text">
-                        <span class="lang-en">{{ selected_district }}</span>
-                        <span class="lang-ta">{{ district_ta.get(selected_district, selected_district) }}</span>
-                    </span>
-                    {% else %}
-                    <span class="ds-trigger-text ds-placeholder">
-                        <span class="lang-en">Choose your district</span>
-                        <span class="lang-ta">உங்கள் மாவட்டத்தை தேர்வு செய்யவும்</span>
-                    </span>
-                    {% endif %}
-                    <svg class="ds-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="ds-panel" id="dsPanel">
-                    <div class="ds-search">
-                        <svg class="ds-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                        <input type="text" id="dsSearchInput" placeholder="{{ t('search_district') }}" autocomplete="off">
-                        <button class="ds-clear" id="dsClear">✕</button>
-                    </div>
-                    <div class="ds-options" id="dsOptions">
-                        {% for d in all_districts %}
-                        <a href="{{ url_for('dashboard.index', district=d) }}" class="ds-option" data-name="{{ d }}">
-                            <span class="ds-option-icon">🌾</span>
-                            <span class="ds-option-name">
-                                <span class="lang-en">{{ d }}</span>
-                                <span class="lang-ta">{{ district_ta.get(d, d) }}</span>
-                            </span>
-                        </a>
-                        {% endfor %}
+        <!-- District Selector - Full Page -->
+        <div class="ds-page">
+            <div class="ds-container">
+                <div class="ds-header">
+                    <div class="ds-header-icon">🌾</div>
+                    <h2 class="ds-title">
+                        <span class="lang-en">{{ t('select_district_title') }}</span>
+                        <span class="lang-ta">உங்கள் மாவட்டத்தைத் தேர்ந்தெடுக்கவும்</span>
+                    </h2>
+                    <p class="ds-subtitle">
+                        <span class="lang-en">{{ t('select_district_desc') }}</span>
+                        <span class="lang-ta">உங்கள் பகுதிக்கு ஏற்ற தனிப்பயனாக்கப்பட்ட விவசாய நுண்ணறிவுகள், வானிலை தரவு மற்றும் பயிர் பரிந்துரைகளைப் பெற உங்கள் மாவட்டத்தைத் தேர்வு செய்யவும்.</span>
+                    </p>
+                </div>
+                <div class="ds-dropdown" id="dsDropdown">
+                    <button class="ds-trigger" id="dsTrigger" type="button">
+                        <span class="ds-trigger-icon">📍</span>
+                        {% if selected_district %}
+                        <span class="ds-trigger-text">
+                            <span class="lang-en">{{ selected_district }}</span>
+                            <span class="lang-ta">{{ district_ta.get(selected_district, selected_district) }}</span>
+                        </span>
+                        {% else %}
+                        <span class="ds-trigger-text ds-placeholder">
+                            <span class="lang-en">Choose your district</span>
+                            <span class="lang-ta">உங்கள் மாவட்டத்தை தேர்வு செய்யவும்</span>
+                        </span>
+                        {% endif %}
+                        <svg class="ds-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="ds-panel" id="dsPanel">
+                        <div class="ds-search">
+                            <svg class="ds-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <input type="text" id="dsSearchInput" placeholder="{{ t('search_district') }}" autocomplete="off">
+                            <button class="ds-clear" id="dsClear">✕</button>
+                        </div>
+                        <div class="ds-options" id="dsOptions">
+                            {% for d in all_districts %}
+                            <a href="{{ url_for('dashboard.index', district=d) }}" class="ds-option" data-name="{{ d }}">
+                                <span class="ds-option-icon">🌾</span>
+                                <span class="ds-option-name">
+                                    <span class="lang-en">{{ d }}</span>
+                                    <span class="lang-ta">{{ district_ta.get(d, d) }}</span>
+                                </span>
+                            </a>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
