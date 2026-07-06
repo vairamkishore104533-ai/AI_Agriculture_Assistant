@@ -990,6 +990,115 @@
     }
 }
 
+/* ========== SELECTED DISTRICT HEADER ========== */
+.sd-header {
+    margin-bottom: 28px;
+    animation: dsFadeIn 0.4s ease;
+}
+
+.sd-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 18px 24px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.sd-header-inner:hover {
+    border-color: rgba(16,185,129,0.2);
+    box-shadow: var(--shadow-md);
+}
+
+.sd-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.sd-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sd-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.sd-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.sd-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    background: var(--green-50);
+    border: 1px solid rgba(16,185,129,0.15);
+    color: var(--emerald-dark);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sd-change:hover {
+    background: var(--green-100);
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+}
+
+.sd-change svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .sd-change {
+    background: rgba(16,185,129,0.08);
+    color: #4ade80;
+    border-color: rgba(74,222,128,0.15);
+}
+
+[data-theme="dark"] .sd-change:hover {
+    background: rgba(16,185,129,0.15);
+    border-color: rgba(74,222,128,0.3);
+}
+
+@media (max-width: 768px) {
+    .sd-header-inner {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+    .sd-icon {
+        font-size: 1.2rem;
+    }
+    .sd-name {
+        font-size: 1.1rem;
+    }
+    .sd-change {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+}
+
 /* Selected District Bar */
 .selected-district-bar {
     display: flex;
