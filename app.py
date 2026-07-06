@@ -187,14 +187,12 @@ def set_language():
         session["lang"] = lang
     return jsonify({"success": True})
 
-@app.route("/ai-chat")
 @app.route("/crops")
 @app.route("/crop-diagnosis")
 @app.route("/fertilizer")
 @app.route("/irrigation")
 def feature_pages():
     route_map = {
-        "/ai-chat": "ai_chat.html",
         "/crops": "crops.html",
         "/crop-diagnosis": "crop_diagnosis.html",
         "/fertilizer": "fertilizer.html",

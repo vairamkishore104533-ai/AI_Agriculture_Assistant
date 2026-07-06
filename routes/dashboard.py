@@ -144,6 +144,8 @@ def index():
     selected_district = request.args.get("district", "").strip()
     if selected_district and selected_district not in ALL_DISTRICTS:
         selected_district = ""
+    if selected_district:
+        session["district"] = selected_district
 
     zone = None
     zone_info = None
