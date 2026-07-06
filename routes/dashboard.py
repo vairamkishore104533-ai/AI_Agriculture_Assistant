@@ -10,94 +10,125 @@ dashboard_bp = Blueprint("dashboard", __name__)
 
 DISTRICT_ZONES = {
     "Cauvery Delta Zone": [
-        "Ariyalur", "Cuddalore", "Karur", "Mayiladuthurai",
-        "Nagapattinam", "Perambalur", "Pudukkottai",
-        "Thanjavur", "Tiruchirappalli", "Tiruvarur",
+        "Thanjavur", "Tiruvarur", "Nagapattinam", "Mayiladuthurai",
     ],
     "North Eastern Zone": [
-        "Chengalpattu", "Chennai", "Kanchipuram", "Kallakurichi",
-        "Ranipet", "Tirupathur", "Tiruvallur",
-        "Tiruvannamalai", "Vellore", "Viluppuram",
+        "Chennai", "Chengalpattu", "Kancheepuram", "Tiruvallur",
+        "Cuddalore", "Villupuram", "Kallakurichi", "Vellore",
+        "Ranipet", "Tirupattur", "Tiruvannamalai",
     ],
     "Western Zone": [
-        "Coimbatore", "Dharmapuri", "Dindigul", "Erode",
-        "Krishnagiri", "Namakkal", "Nilgiris", "Salem", "Tiruppur",
+        "Coimbatore", "Tiruppur", "Erode", "Karur",
+        "Namakkal", "Dindigul", "Theni",
     ],
     "Southern Zone": [
-        "Madurai", "Ramanathapuram", "Sivaganga", "Tenkasi",
-        "Theni", "Thoothukudi", "Tirunelveli", "Virudhunagar",
+        "Madurai", "Virudhunagar", "Thoothukudi", "Tirunelveli",
+        "Tenkasi", "Sivaganga", "Ramanathapuram", "Pudukkottai",
     ],
-    "High Rainfall Zone": ["Kanyakumari"],
+    "Hilly Zone": ["Nilgiris"],
+    "High Rainfall Zone": ["Kanniyakumari"],
 }
 
 ZONE_INFO = {
     "Cauvery Delta Zone": {
-        "description": "The Cauvery Delta region is the traditional rice bowl of Tamil Nadu, characterized by fertile alluvial soil and an extensive network of irrigation canals fed by the Cauvery River.",
-        "ta_description": "காவிரி டெல்டா பகுதி தமிழ்நாட்டின் பாரம்பரிய நெற்களஞ்சியமாகும். வளமான வண்டல் மண் மற்றும் காவிரி ஆற்றின் நீர்ப்பாசன வசதி இங்கு சாகுபடியை வளப்படுத்துகிறது.",
-        "soil": "Alluvial soil (clay loam, silty clay loam) — Rich in potash and lime",
-        "ta_soil": "வண்டல் மண் (களிமண், மணற்களி) — பொட்டாஷ் மற்றும் சுண்ணாம்பு நிறைந்தது",
-        "major_crops": "Paddy (3 seasons), Sugarcane, Banana, Pulses, Groundnut, Cotton",
-        "ta_major_crops": "நெல் (3 பருவங்கள்), கரும்பு, வாழை, பயறு வகைகள், நிலக்கடலை, பருத்தி",
-        "climate": "Tropical — Hot and humid. Temperature: 25–37°C. Rainfall: 900–1100 mm annually.",
+        "description": "The Cauvery Delta region is the traditional rice bowl of Tamil Nadu. Fertile alluvial and clay soils, fed by the Cauvery River network, make this zone ideal for intensive paddy cultivation.",
+        "ta_description": "காவிரி டெல்டா பகுதி தமிழ்நாட்டின் பாரம்பரிய நெற்களஞ்சியமாகும். வளமான வண்டல் மற்றும் களிமண் மண் காவிரி ஆற்றின் நீர்ப்பாசன வசதியுடன் தீவிர நெல் சாகுபடிக்கு ஏற்றது.",
+        "soil": "Alluvial, Clay, Saline",
+        "ta_soil": "வண்டல் மண், களிமண், உவர் மண்",
+        "major_crops": "Paddy, Sugarcane, Banana, Pulses, Groundnut",
+        "ta_major_crops": "நெல், கரும்பு, வாழை, பயறு வகைகள், நிலக்கடலை",
+        "climate": "Tropical — Hot and humid. Temperature: 25–37°C. Rainfall: 900–1100 mm.",
         "ta_climate": "வெப்பமண்டலம் — வெப்பம் மற்றும் ஈரப்பதம். வெப்பநிலை: 25–37°C. மழைப்பொழிவு: 900–1100 மிமீ.",
         "icon": "fas fa-water",
         "color": "#0d9488",
     },
     "North Eastern Zone": {
-        "description": "This zone encompasses the northern coastal plains and interior districts, featuring a mix of sandy coastal soils and red loams with diverse agricultural production.",
-        "ta_description": "இந்த மண்டலம் வடக்கு கடலோர சமவெளிகள் மற்றும் உள்நாட்டு மாவட்டங்களை உள்ளடக்கியது. மணல் கடலோர மண் மற்றும் சிவப்பு மண் கலந்த வேறுபட்ட விவசாய உற்பத்தியை கொண்டுள்ளது.",
-        "soil": "Red sandy loam, Coastal alluvium, Lateritic soils",
-        "ta_soil": "சிவப்பு மணற்களி, கடலோர வண்டல் மண், சிகப்பு மண்",
-        "major_crops": "Paddy, Sugarcane, Groundnut, Vegetables, Mango, Cashew, Coconut",
-        "ta_major_crops": "நெல், கரும்பு, நிலக்கடலை, காய்கறிகள், மாம்பழம், முந்திரி, தேங்காய்",
-        "climate": "Sub-tropical — Moderate. Temperature: 22–35°C. Rainfall: 900–1200 mm (NE monsoon).",
-        "ta_climate": "துணை வெப்பமண்டலம் — மிதமான. வெப்பநிலை: 22–35°C. மழைப்பொழிவு: 900–1200 மிமீ (வடகிழக்கு பருவமழை).",
+        "description": "This zone covers the northern coastal plains and interior districts, featuring red sandy loams, clay loams, and coastal alluvium with diverse agricultural production.",
+        "ta_description": "இந்த மண்டலம் வடக்கு கடலோர சமவெளிகள் மற்றும் உள்நாட்டு மாவட்டங்களை உள்ளடக்கியது. சிவப்பு மணற்களி, களிமண் மற்றும் கடலோர வண்டல் மண் ஆகியவற்றைக் கொண்டுள்ளது.",
+        "soil": "Red Sandy Loam, Clay Loam, Coastal Alluvium, Laterite",
+        "ta_soil": "சிவப்பு மணற்களி, களிமண், கடலோர வண்டல் மண், சிகப்பு மண்",
+        "major_crops": "Paddy, Sugarcane, Groundnut, Vegetables, Mango, Cashew",
+        "ta_major_crops": "நெல், கரும்பு, நிலக்கடலை, காய்கறிகள், மாம்பழம், முந்திரி",
+        "climate": "Sub-tropical — Moderate. Temperature: 22–35°C. Rainfall: 900–1200 mm.",
+        "ta_climate": "துணை வெப்பமண்டலம் — மிதமான. வெப்பநிலை: 22–35°C. மழைப்பொழிவு: 900–1200 மிமீ.",
         "icon": "fas fa-cloud-sun",
         "color": "#2563eb",
     },
     "Western Zone": {
-        "description": "The Western zone covers the rain-shadow region of the Western Ghats with dry conditions, black cotton soils, and a strong focus on cotton, millets, and oilseeds.",
-        "ta_description": "மேற்கு மண்டலம் மேற்குத் தொடர்ச்சி மலையின் மழைநிழல் பகுதியை உள்ளடக்கியது. உலர்ந்த நிலைமைகள், கருப்பு பருத்தி மண் மற்றும் பருத்தி, சிறுதானியங்கள், எண்ணெய் வித்துக்கள் மீது கவனம் செலுத்துகிறது.",
-        "soil": "Black cotton soil, Red loam, Mixed red and black soil",
-        "ta_soil": "கருப்பு பருத்தி மண், சிவப்பு மண், கலந்த சிவப்பு மற்றும் கருப்பு மண்",
-        "major_crops": "Cotton, Maize, Sorghum, Turmeric, Coconut, Millets, Tobacco",
-        "ta_major_crops": "பருத்தி, மக்காச்சோளம், சோளம், மஞ்சள், தேங்காய், சிறுதானியங்கள், புகையிலை",
-        "climate": "Semi-arid tropical — Hot and dry. Temperature: 24–39°C. Rainfall: 600–900 mm annually.",
+        "description": "The Western zone covers the rain-shadow region of the Western Ghats with red loam, black soils, and mixed soils, supporting cotton, oilseeds, and horticulture.",
+        "ta_description": "மேற்கு மண்டலம் மேற்குத் தொடர்ச்சி மலையின் மழைநிழல் பகுதியை உள்ளடக்கியது. சிவப்பு மண், கருப்பு மண் மற்றும் கலப்பு மண் பருத்தி, எண்ணெய் வித்துக்கள் மற்றும் தோட்டக்கலைக்கு துணைபுரிகிறது.",
+        "soil": "Red Loam, Black Soil, Mixed Soil, Laterite",
+        "ta_soil": "சிவப்பு மண், கருப்பு மண், கலப்பு மண், சிகப்பு மண்",
+        "major_crops": "Cotton, Maize, Sorghum, Turmeric, Coconut, Millets",
+        "ta_major_crops": "பருத்தி, மக்காச்சோளம், சோளம், மஞ்சள், தேங்காய், சிறுதானியங்கள்",
+        "climate": "Semi-arid tropical — Hot and dry. Temperature: 24–39°C. Rainfall: 600–900 mm.",
         "ta_climate": "அரை வறண்ட வெப்பமண்டலம் — வெப்பம் மற்றும் உலர்ந்த. வெப்பநிலை: 24–39°C. மழைப்பொழிவு: 600–900 மிமீ.",
         "icon": "fas fa-sun",
         "color": "#d97706",
     },
     "Southern Zone": {
-        "description": "The Southern zone covers the southern plains with red lateritic soils, supporting a mix of rainfed and irrigated crops including cotton, chillies, and paddy.",
-        "ta_description": "தெற்கு மண்டலம் சிவப்பு மண் பகுதிகளை உள்ளடக்கியது. மழையைச் சார்ந்த மற்றும் பாசன வசதியுள்ள பயிர்களான பருத்தி, மிளகாய், நெல் ஆகியவை பயிரிடப்படுகின்றன.",
-        "soil": "Red lateritic soil, Red sandy loam, Coastal alluvium",
-        "ta_soil": "சிவப்பு மண், சிவப்பு மணற்களி, கடலோர வண்டல் மண்",
-        "major_crops": "Cotton, Chillies, Paddy, Groundnut, Sugarcane, Mango, Coconut",
-        "ta_major_crops": "பருத்தி, மிளகாய், நெல், நிலக்கடலை, கரும்பு, மாம்பழம், தேங்காய்",
+        "description": "The Southern zone covers the southern plains with red sandy soils, deep red soils, and black cotton soils, supporting cotton, chillies, and paddy cultivation.",
+        "ta_description": "தெற்கு மண்டலம் சிவப்பு மண், ஆழமான சிவப்பு மண் மற்றும் கருப்பு பருத்தி மண் பகுதிகளை உள்ளடக்கியது. பருத்தி, மிளகாய் மற்றும் நெல் சாகுபடிக்கு துணைபுரிகிறது.",
+        "soil": "Red Sandy Soil, Deep Red Soil, Black Cotton Soil, Coastal Alluvium",
+        "ta_soil": "சிவப்பு மணல் மண், ஆழமான சிவப்பு மண், கருப்பு பருத்தி மண், கடலோர வண்டல் மண்",
+        "major_crops": "Cotton, Chillies, Paddy, Groundnut, Sugarcane, Mango",
+        "ta_major_crops": "பருத்தி, மிளகாய், நெல், நிலக்கடலை, கரும்பு, மாம்பழம்",
         "climate": "Tropical — Hot and moderately humid. Temperature: 25–36°C. Rainfall: 700–1100 mm.",
         "ta_climate": "வெப்பமண்டலம் — வெப்பம் மற்றும் மிதமான ஈரப்பதம். வெப்பநிலை: 25–36°C. மழைப்பொழிவு: 700–1100 மிமீ.",
         "icon": "fas fa-leaf",
         "color": "#059669",
     },
+    "Hilly Zone": {
+        "description": "The Nilgiris district features a unique hilly terrain with red loamy, laterite, and peaty forest soils, ideal for plantation crops like tea, coffee, and spices.",
+        "ta_description": "நீலகிரி மாவட்டம் சிவப்பு மண், சிகப்பு மண் மற்றும் கரி காட்டு மண் ஆகியவற்றுடன் தனித்துவமான மலைப்பகுதியாகும். தேயிலை, காபி மற்றும் மசாலா பயிர்களுக்கு ஏற்றது.",
+        "soil": "Red Loamy Soil, Laterite, Peaty Forest Soil",
+        "ta_soil": "சிவப்பு மண், சிகப்பு மண், கரி காட்டு மண்",
+        "major_crops": "Tea, Coffee, Spices, Vegetables, Fruits",
+        "ta_major_crops": "தேயிலை, காபி, மசாலா பொருட்கள், காய்கறிகள், பழங்கள்",
+        "climate": "Montane — Cool and humid. Temperature: 10–25°C. Rainfall: 1200–2000 mm.",
+        "ta_climate": "மலைகாலநிலை — குளிர் மற்றும் ஈரப்பதம். வெப்பநிலை: 10–25°C. மழைப்பொழிவு: 1200–2000 மிமீ.",
+        "icon": "fas fa-mountain",
+        "color": "#7c3aed",
+    },
     "High Rainfall Zone": {
-        "description": "Kanyakumari district receives the highest rainfall in Tamil Nadu from both Southwest and Northeast monsoons, with lush green vegetation and plantation crops.",
-        "ta_description": "கன்னியாகுமரி மாவட்டம் தென்மேற்கு மற்றும் வடகிழக்கு பருவமழை இரண்டிலிருந்தும் அதிக மழைப்பொழிவைப் பெறுகிறது. பசுமையான தாவரங்கள் மற்றும் தோட்டப் பயிர்கள் உள்ளன.",
-        "soil": "Lateritic soil, Red loam, Forest soil",
-        "ta_soil": "சிகப்பு மண், சிவப்பு மண், காட்டு மண்",
-        "major_crops": "Rubber, Coconut, Tapioca, Pepper, Banana, Cloves, Paddy",
-        "ta_major_crops": "ரப்பர், தேங்காய், மரவள்ளி, மிளகு, வாழை, கிராம்பு, நெல்",
-        "climate": "Tropical — High rainfall. Temperature: 22–33°C. Rainfall: 1500–2500 mm annually.",
+        "description": "Kanniyakumari district receives the highest rainfall in Tamil Nadu from both monsoons, with deep red loam and coastal alluvium supporting lush vegetation.",
+        "ta_description": "கன்னியாகுமரி மாவட்டம் இரு பருவமழைகளிலிருந்தும் அதிக மழைப்பொழிவைப் பெறுகிறது. ஆழமான சிவப்பு மண் மற்றும் கடலோர வண்டல் மண் பசுமையான தாவரங்களை வளர்க்கிறது.",
+        "soil": "Deep Red Loam, Saline Coastal Alluvium, Clay Loam",
+        "ta_soil": "ஆழமான சிவப்பு மண், உவர் கடலோர வண்டல் மண், களிமண்",
+        "major_crops": "Rubber, Coconut, Tapioca, Pepper, Banana, Cloves",
+        "ta_major_crops": "ரப்பர், தேங்காய், மரவள்ளி, மிளகு, வாழை, கிராம்பு",
+        "climate": "Tropical — High rainfall. Temperature: 22–33°C. Rainfall: 1500–2500 mm.",
         "ta_climate": "வெப்பமண்டலம் — அதிக மழைப்பொழிவு. வெப்பநிலை: 22–33°C. மழைப்பொழிவு: 1500–2500 மிமீ.",
         "icon": "fas fa-umbrella",
         "color": "#0891b2",
     },
 }
 
-ALL_DISTRICTS = sorted(d for districts in DISTRICT_ZONES.values() for d in districts)
+ALL_DISTRICTS = [
+    "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore",
+    "Cuddalore", "Dharmapuri", "Dindigul", "Erode",
+    "Kallakurichi", "Kancheepuram", "Kanniyakumari", "Karur",
+    "Krishnagiri", "Madurai", "Mayiladuthurai", "Nagapattinam",
+    "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai",
+    "Ramanathapuram", "Ranipet", "Salem", "Sivaganga",
+    "Tenkasi", "Thanjavur", "Theni", "Thoothukudi",
+    "Tiruchirappalli", "Tirunelveli", "Tirupattur", "Tiruppur",
+    "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore",
+    "Villupuram", "Virudhunagar",
+]
+
+# Extend zone mapping for districts listed but not in user's zone definitions
+_EXTRA_DISTRICT_ZONES = {
+    "Cauvery Delta Zone": ["Ariyalur", "Perambalur", "Tiruchirappalli"],
+    "Western Zone": ["Dharmapuri", "Krishnagiri", "Salem"],
+}
 
 
 def get_zone_for_district(district_name):
     for zone, districts in DISTRICT_ZONES.items():
+        if district_name in districts:
+            return zone
+    for zone, districts in _EXTRA_DISTRICT_ZONES.items():
         if district_name in districts:
             return zone
     return None
@@ -111,18 +142,24 @@ def index():
     username = session.get("username", "Farmer")
 
     selected_district = request.args.get("district", "").strip()
-    if not selected_district or selected_district not in ALL_DISTRICTS:
-        selected_district = ALL_DISTRICTS[0]
+    if selected_district and selected_district not in ALL_DISTRICTS:
+        selected_district = ""
 
-    zone = get_zone_for_district(selected_district)
-    zone_info = ZONE_INFO.get(zone)
+    zone = None
+    zone_info = None
+    if selected_district:
+        zone = get_zone_for_district(selected_district)
+        zone_info = ZONE_INFO.get(zone)
 
     season_key = get_current_season()
     season = get_season_name(season_key, lang)
 
-    weather_service = WeatherService()
-    weather_data = weather_service.get_current_weather(district=selected_district)
-    ai_advice = weather_service.get_ai_farming_advice(weather_data, lang) if weather_data else ""
+    weather_data = {}
+    ai_advice = ""
+    if selected_district:
+        weather_service = WeatherService()
+        weather_data = weather_service.get_current_weather(district=selected_district)
+        ai_advice = weather_service.get_ai_farming_advice(weather_data, lang) if weather_data else ""
 
     crop_count = Crop.count_by_user(user_id)
     expense_summary = Expense.get_summary(user_id)
@@ -148,12 +185,12 @@ def index():
     if zone_info:
         zone_tips_en = [
             f"Your region ({zone}) is ideal for {zone_info.get('major_crops', 'diverse crops')}.",
-            f"Predominant soil type: {zone_info.get('soil', 'varied soils')}.",
+            f"Predominant soil types: {zone_info.get('soil', 'varied soils')}.",
             "Follow local agricultural extension office recommendations for best results.",
         ]
         zone_tips_ta = [
             f"உங்கள் பகுதி ({zone}) {zone_info.get('ta_major_crops', 'பல்வேறு பயிர்கள்')} சாகுபடிக்கு ஏற்றது.",
-            f"முக்கிய மண் வகை: {zone_info.get('ta_soil', 'பல்வேறு மண்')}.",
+            f"முக்கிய மண் வகைகள்: {zone_info.get('ta_soil', 'பல்வேறு மண்')}.",
             "சிறந்த முடிவுகளுக்கு உள்ளூர் வேளாண் விரிவாக்க மைய பரிந்துரைகளை பின்பற்றவும்.",
         ]
         tips["en"] = zone_tips_en + tips["en"]

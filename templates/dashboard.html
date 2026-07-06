@@ -4,22 +4,23 @@
     'Ariyalur': 'அரியலூர்', 'Chengalpattu': 'செங்கல்பட்டு', 'Chennai': 'சென்னை',
     'Coimbatore': 'கோயம்புத்தூர்', 'Cuddalore': 'கடலூர்', 'Dharmapuri': 'தர்மபுரி',
     'Dindigul': 'திண்டுக்கல்', 'Erode': 'ஈரோடு', 'Kallakurichi': 'கள்ளக்குறிச்சி',
-    'Kanchipuram': 'காஞ்சிபுரம்', 'Kanyakumari': 'கன்னியாகுமரி', 'Karur': 'கரூர்',
+    'Kancheepuram': 'காஞ்சிபுரம்', 'Kanniyakumari': 'கன்னியாகுமரி', 'Karur': 'கரூர்',
     'Krishnagiri': 'கிருஷ்ணகிரி', 'Madurai': 'மதுரை', 'Mayiladuthurai': 'மயிலாடுதுறை',
     'Nagapattinam': 'நாகப்பட்டினம்', 'Namakkal': 'நாமக்கல்', 'Nilgiris': 'நீலகிரி',
     'Perambalur': 'பெரம்பலூர்', 'Pudukkottai': 'புதுக்கோட்டை', 'Ramanathapuram': 'ராமநாதபுரம்',
     'Ranipet': 'ராணிப்பேட்டை', 'Salem': 'சேலம்', 'Sivaganga': 'சிவகங்கை',
     'Tenkasi': 'தென்காசி', 'Thanjavur': 'தஞ்சாவூர்', 'Theni': 'தேனி',
     'Thoothukudi': 'தூத்துக்குடி', 'Tiruchirappalli': 'திருச்சிராப்பள்ளி', 'Tirunelveli': 'திருநெல்வேலி',
-    'Tirupathur': 'திருப்பத்தூர்', 'Tiruppur': 'திருப்பூர்', 'Tiruvallur': 'திருவள்ளூர்',
+    'Tirupattur': 'திருப்பத்தூர்', 'Tiruppur': 'திருப்பூர்', 'Tiruvallur': 'திருவள்ளூர்',
     'Tiruvannamalai': 'திருவண்ணாமலை', 'Tiruvarur': 'திருவாரூர்', 'Vellore': 'வேலூர்',
-    'Viluppuram': 'விழுப்புரம்', 'Virudhunagar': 'விருதுநகர்'
+    'Villupuram': 'விழுப்புரம்', 'Virudhunagar': 'விருதுநகர்'
 } %}
 {% set zone_ta = {
     'Cauvery Delta Zone': 'காவிரி டெல்டா மண்டலம்',
     'North Eastern Zone': 'வடகிழக்கு மண்டலம்',
     'Western Zone': 'மேற்கு மண்டலம்',
     'Southern Zone': 'தெற்கு மண்டலம்',
+    'Hilly Zone': 'மலை மண்டலம்',
     'High Rainfall Zone': 'அதிக மழைப்பொழிவு மண்டலம்'
 } %}
 <div class="dashboard-wrapper">
@@ -105,22 +106,50 @@
             </div>
         </div>
 
-        <!-- Selected District Bar -->
-        <div class="selected-district-bar">
-            <div class="district-badge">
-                <span class="district-icon">📍</span>
-                <span class="district-name">
-                    <span class="lang-en">{{ selected_district }}</span>
-                    <span class="lang-ta">{{ district_ta.get(selected_district, selected_district) }}</span>
-                </span>
-                <span class="zone-tag">
-                    <span class="lang-en">{{ zone }}</span>
-                    <span class="lang-ta">{{ zone_ta.get(zone, zone) }}</span>
-                </span>
+        <!-- District Selector -->
+        <div class="ds-wrapper">
+            <div class="ds-label">
+                <span class="lang-en">{{ t('select_district_title') }}</span>
+                <span class="lang-ta">உங்கள் மாவட்டத்தைத் தேர்ந்தெடுக்கவும்</span>
             </div>
-
+            <div class="ds-dropdown" id="dsDropdown">
+                <button class="ds-trigger" id="dsTrigger" type="button">
+                    <span class="ds-trigger-icon">📍</span>
+                    {% if selected_district %}
+                    <span class="ds-trigger-text">
+                        <span class="lang-en">{{ selected_district }}</span>
+                        <span class="lang-ta">{{ district_ta.get(selected_district, selected_district) }}</span>
+                    </span>
+                    {% else %}
+                    <span class="ds-trigger-text ds-placeholder">
+                        <span class="lang-en">Choose your district</span>
+                        <span class="lang-ta">உங்கள் மாவட்டத்தை தேர்வு செய்யவும்</span>
+                    </span>
+                    {% endif %}
+                    <svg class="ds-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="ds-panel" id="dsPanel">
+                    <div class="ds-search">
+                        <svg class="ds-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        <input type="text" id="dsSearchInput" placeholder="{{ t('search_district') }}" autocomplete="off">
+                        <button class="ds-clear" id="dsClear">✕</button>
+                    </div>
+                    <div class="ds-options" id="dsOptions">
+                        {% for d in all_districts %}
+                        <a href="{{ url_for('dashboard.index', district=d) }}" class="ds-option" data-name="{{ d }}">
+                            <span class="ds-option-icon">🌾</span>
+                            <span class="ds-option-name">
+                                <span class="lang-en">{{ d }}</span>
+                                <span class="lang-ta">{{ district_ta.get(d, d) }}</span>
+                            </span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
 
+        {% if selected_district and zone and zone_info %}
         <!-- Zone Info Card -->
         <div class="zone-card" style="--zone-color: {{ zone_info.get('color', '#059669') }}">
             <div class="zone-card-bg"></div>
@@ -291,7 +320,60 @@
                 </a>
             </div>
         </div>
+        {% endif %}
     </main>
 </div>
+
+<script>
+(function() {
+    var trigger = document.getElementById('dsTrigger');
+    var panel = document.getElementById('dsPanel');
+    var searchInput = document.getElementById('dsSearchInput');
+    var options = document.querySelectorAll('#dsOptions .ds-option');
+    var clearBtn = document.getElementById('dsClear');
+    var dropdown = document.getElementById('dsDropdown');
+
+    if (!trigger || !panel) return;
+
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open');
+        trigger.classList.toggle('open');
+        if (!isOpen) {
+            setTimeout(function() { if (searchInput) searchInput.focus(); }, 100);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (dropdown && !dropdown.contains(e.target)) {
+            panel.classList.remove('open');
+            trigger.classList.remove('open');
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            options.forEach(function(opt) {
+                var name = opt.getAttribute('data-name') || '';
+                opt.style.display = name.toLowerCase().includes(q) ? '' : 'none';
+            });
+            if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            }
+        });
+    }
+})();
+</script>
 
 {% endblock %}
