@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
+            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
+            <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
+            <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
+            <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
+            <a href="/irrigation" class="sidebar-nav-item"><span class="nav-icon">💧</span> {{ t('sidebar_irrigation') }}</a>
+            <a href="{{ url_for('weather.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌤️</span> {{ t('sidebar_weather') }}</a>
+            <a href="{{ url_for('market.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_market') }}</a>
+            <a href="{{ url_for('schemes.index') }}" class="sidebar-nav-item"><span class="nav-icon">🏛️</span> {{ t('sidebar_schemes') }}</a>
+            <a href="{{ url_for('expenses.index') }}" class="sidebar-nav-item active"><span class="nav-icon">💰</span> {{ t('sidebar_expenses') }}</a>
+            <a href="{{ url_for('analytics.index') }}" class="sidebar-nav-item"><span class="nav-icon">📈</span> {{ t('sidebar_analytics') }}</a>
+            <a href="{{ url_for('notifications.index') }}" class="sidebar-nav-item"><span class="nav-icon">🔔</span> {{ t('sidebar_notifications') }}</a>
+            <a href="{{ url_for('profile.index') }}" class="sidebar-nav-item"><span class="nav-icon">👤</span> {{ t('sidebar_profile') }}</a>
+            {% if is_admin %}<a href="{{ url_for('admin.index') }}" class="sidebar-nav-item"><span class="nav-icon">⚙️</span> {{ t('admin_title') }}</a>{% endif %}
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-nav-item logout-item"><span class="nav-icon">🚪</span> {{ t('sidebar_logout') }}</a>
+        </nav>
+    </aside>
+    <main class="main-content">
+        <div class="page-header">
+            <div><button class="mobile-toggle" onclick="toggleSidebar()">☰</button><h1>{{ t('expenses_title') }}</h1></div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" onclick="openModal('add-expense-modal')">+ {{ t('expenses_add_expense') }}</button>
+                <button class="btn" style="background:var(--green-50);color:var(--emerald-dark)" onclick="document.getElementById('expense-type').value='income';openModal('add-expense-modal')">+ {{ t('expenses_add_income') }}</button>
+                <button class="lang-toggle" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
+                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid" id="expense-summary"></div>
+
+        <div class="dashboard-grid" style="margin-bottom:24px">
+            <div class="stat-card"><h3 style="margin-bottom:16px">{{ t('expenses_category_chart') }}</h3><div data-chart="expense-pie"></div></div>
+            <div class="stat-card"><h3 style="margin-bottom:16px">{{ t('expenses_income_chart') }}</h3><div data-chart="income-bar"></div></div>
+        </div>
+
+        <div class="stat-card">
+            <table class="data-table">
+                <thead><tr><th>{{ t('expenses_date') }}</th><th>{{ t('expenses_category') }}</th><th>{{ t('expenses_description') }}</th><th>{{ t('expenses_amount') }}</th><th>{{ t('delete') }}</th></tr></thead>
+                <tbody id="expense-table-body"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal-overlay" id="add-expense-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="expense-modal-title">{{ t('expenses_add_expense') }}</h2>
+            <button class="modal-close" onclick="closeModal('add-expense-modal')">&times;</button>
+        </div>
+        <form id="add-expense-form" style="display:flex;flex-direction:column;gap:16px">
+            <input type="hidden" name="type" id="expense-type" value="expense">
+            <div class="form-group">
+                <label>{{ t('expenses_category') }}</label>
+                <select name="category" required>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}">{{ t('expenses_' + cat) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>{{ t('expenses_amount') }} (₹)</label>
+                <input type="number" name="amount" step="0.01" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>{{ t('expenses_description') }}</label>
+                <input type="text" name="description">
+            </div>
+            <div class="form-group">
+                <label>{{ t('expenses_date') }}</label>
+                <input type="date" name="date">
+            </div>
+            <button type="submit" class="btn btn-primary">{{ t('expenses_save') }}</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function loadExpenses() {
+    fetch("/api/expenses").then(r=>r.json()).then(res=>{
+        if(!res.success) return;
+        document.getElementById("expense-summary").innerHTML = `
+            <div class="stat-card"><div class="stat-card-value" style="color:var(--emerald)">₹${res.summary.income||0}</div><div class="stat-card-label">{{ t('expenses_income') }}</div></div>
+            <div class="stat-card"><div class="stat-card-value" style="color:#ef4444">₹${res.summary.expense||0}</div><div class="stat-card-label">{{ t('expenses_expense') }}</div></div>
+            <div class="stat-card"><div class="stat-card-value">₹${(res.summary.income||0)-(res.summary.expense||0)}</div><div class="stat-card-label">{{ t('expenses_profit') }}</div></div>
+        `;
+        const tbody = document.getElementById("expense-table-body");
+        if(res.expenses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>{{ t('expenses_no_data') }}</p></td></tr>';
+        } else {
+            tbody.innerHTML = res.expenses.map(e => `
+                <tr>
+                    <td>${e.date}</td>
+                    <td><span class="badge ${e.type === 'income' ? 'badge-harvested' : 'badge-damaged'}">${e.type === 'income' ? '📈' : '💸'} ${e.category}</span></td>
+                    <td>${e.description||'-'}</td>
+                    <td><strong>₹${e.amount}</strong></td>
+                    <td><button class="btn" style="padding:4px 10px;font-size:0.8rem;background:#fef2f2;color:#ef4444" onclick="deleteExpense('${e.id}')">✕</button></td>
+                </tr>
+            `).join("");
+        }
+        if(typeof initCharts === 'function') setTimeout(initCharts, 200);
+    });
+}
+
+function deleteExpense(id) {
+    if(!confirm("{{ t('confirm_delete') }}")) return;
+    fetch("/api/expenses/"+id, {method:"DELETE"}).then(r=>r.json()).then(res=>{
+        if(res.success) { showToast(res.message,"success"); loadExpenses(); }
+    });
+}
+
+document.getElementById("add-expense-form")?.addEventListener("submit", function(e){
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    fetch("/api/expenses", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})
+    .then(r=>r.json()).then(res=>{
+        if(res.success) { showToast(res.message,"success"); closeModal('add-expense-modal'); this.reset(); loadExpenses(); }
+        else showToast(res.message,"error");
+    });
+});
+
+document.addEventListener("DOMContentLoaded", loadExpenses);
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
+            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
+            <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item active"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
+            <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
+            <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
+            <a href="/irrigation" class="sidebar-nav-item"><span class="nav-icon">💧</span> {{ t('sidebar_irrigation') }}</a>
+            <a href="{{ url_for('weather.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌤️</span> {{ t('sidebar_weather') }}</a>
+            <a href="{{ url_for('market.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_market') }}</a>
+            <a href="{{ url_for('schemes.index') }}" class="sidebar-nav-item"><span class="nav-icon">🏛️</span> {{ t('sidebar_schemes') }}</a>
+            <a href="{{ url_for('expenses.index') }}" class="sidebar-nav-item"><span class="nav-icon">💰</span> {{ t('sidebar_expenses') }}</a>
+            <a href="{{ url_for('analytics.index') }}" class="sidebar-nav-item"><span class="nav-icon">📈</span> {{ t('sidebar_analytics') }}</a>
+            <a href="{{ url_for('notifications.index') }}" class="sidebar-nav-item"><span class="nav-icon">🔔</span> {{ t('sidebar_notifications') }}</a>
+            <a href="{{ url_for('profile.index') }}" class="sidebar-nav-item"><span class="nav-icon">👤</span> {{ t('sidebar_profile') }}</a>
+            {% if is_admin %}<a href="{{ url_for('admin.index') }}" class="sidebar-nav-item"><span class="nav-icon">⚙️</span> {{ t('admin_title') }}</a>{% endif %}
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-nav-item logout-item"><span class="nav-icon">🚪</span> {{ t('sidebar_logout') }}</a>
+        </nav>
+    </aside>
+    <main class="main-content">
+        <div class="page-header">
+            <div><button class="mobile-toggle" onclick="toggleSidebar()">☰</button><h1>{{ t('crops_title') }}</h1></div>
+            <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" onclick="openModal('add-crop-modal')">+ {{ t('crops_add') }}</button>
+                <button class="lang-toggle" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
+                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            {% if crops %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>{{ t('crop_name') }}</th>
+                        <th>{{ t('crop_district') }}</th>
+                        <th>{{ t('crop_village') }}</th>
+                        <th>{{ t('crop_soil') }}</th>
+                        <th>{{ t('crop_land_size') }}</th>
+                        <th>{{ t('crop_planting') }}</th>
+                        <th>{{ t('crop_harvest') }}</th>
+                        <th>{{ t('crop_status') }}</th>
+                        <th>{{ t('edit') }}</th>
+                        <th>{{ t('delete') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in crops %}
+                    <tr>
+                        <td>{{ crop.crop_name }}</td>
+                        <td>{{ crop.district }}</td>
+                        <td>{{ crop.village }}</td>
+                        <td>{{ crop.soil_type }}</td>
+                        <td>{{ crop.land_size }}</td>
+                        <td>{{ crop.planting_date }}</td>
+                        <td>{{ crop.harvest_date }}</td>
+                        <td><span class="badge badge-{{ crop.status }}">{{ t('crop_' + crop.status) }}</span></td>
+                        <td><button class="btn" style="padding:6px 12px;font-size:0.8rem;background:var(--green-50);color:var(--emerald-dark)" onclick="editCrop('{{ crop.id }}')">{{ t('edit') }}</button></td>
+                        <td><button class="btn" style="padding:6px 12px;font-size:0.8rem;background:#fef2f2;color:#ef4444" onclick="deleteCrop('{{ crop.id }}')">{{ t('delete') }}</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🌾</div>
+                <h3>{{ t('crops_no_crops') }}</h3>
+                <button class="btn btn-primary" onclick="openModal('add-crop-modal')" style="margin-top:16px">+ {{ t('crops_add') }}</button>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
+<!-- Add Crop Modal -->
+<div class="modal-overlay" id="add-crop-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>{{ t('crops_add') }}</h2>
+            <button class="modal-close" onclick="closeModal('add-crop-modal')">&times;</button>
+        </div>
+        <form id="add-crop-form" style="display:flex;flex-direction:column;gap:16px">
+            <div class="form-group">
+                <label>{{ t('crop_name') }}</label>
+                <select name="crop_name" required>
+                    {% for c in crop_list %}
+                    <option value="{{ c }}">{{ t('crop_' + c) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_district') }}</label>
+                <select name="district" required>
+                    {% for d in districts %}
+                    <option value="{{ d }}">{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_village') }}</label>
+                <input type="text" name="village">
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_soil') }}</label>
+                <select name="soil_type" required>
+                    {% for s in soil_types %}
+                    <option value="{{ s }}">{{ t('soil_' + s) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_land_size') }}</label>
+                <input type="number" name="land_size" step="0.01" min="0.01" required>
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_planting') }}</label>
+                <input type="date" name="planting_date">
+            </div>
+            <div class="form-group">
+                <label>{{ t('crop_harvest') }}</label>
+                <input type="date" name="harvest_date">
+            </div>
+            <button type="submit" class="btn btn-primary">{{ t('crop_save') }}</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function deleteCrop(id) {
+    const msg = "{{ t('confirm_delete') }}";
+    if (!confirm(msg)) return;
+    fetch("/api/crops/" + id, {method:"DELETE"})
+    .then(r=>r.json()).then(res=>{
+        if(res.success){showToast(res.message,"success");location.reload()}
+        else showToast(res.message,"error");
+    });
+}
+
+document.getElementById("add-crop-form")?.addEventListener("submit", function(e){
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    fetch("/api/crops", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})
+    .then(r=>r.json()).then(res=>{
+        if(res.success){showToast(res.message,"success");location.reload()}
+        else showToast(res.message,"error");
+    });
+});
+</script>
+{% endblock %}
