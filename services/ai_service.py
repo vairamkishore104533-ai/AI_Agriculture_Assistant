@@ -1,151 +1,92 @@
 import os
-import json
-import requests
+from google import genai
+from google.genai import types
+from google.genai.errors import APIError, ClientError, ServerError
 
 class AIService:
     def __init__(self):
         self.gemini_key = os.getenv("GEMINI_API_KEY", "")
         self.openai_key = os.getenv("OPENAI_API_KEY", "")
         self.provider = os.getenv("AI_PROVIDER", "gemini")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            key = self.gemini_key
+            if not key:
+                key = self.openai_key
+            self._client = genai.Client(api_key=key)
+        return self._client
 
     def get_response(self, message, language="en", district="", history=None):
+        if not self.gemini_key:
+            return "AI service is not configured. Please set GEMINI_API_KEY in .env file."
+
         system_prompt = self._build_system_prompt(language, district)
-        messages = self._build_messages(history)
-        messages.append({"role": "user", "content": message})
 
-        if self.provider == "openai" and self.openai_key:
-            return self._call_openai(system_prompt, messages, language)
-        elif self.provider == "gemini" and self.gemini_key:
-            return self._call_gemini(system_prompt, messages, language)
-        elif self.gemini_key:
-            return self._call_gemini(system_prompt, messages, language)
-        elif self.openai_key:
-            return self._call_openai(system_prompt, messages, language)
-        else:
-            return "Unable to contact the AI service at the moment. Please set the GEMINI_API_KEY or OPENAI_API_KEY environment variable and try again."
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.7,
+            max_output_tokens=2048,
+            top_p=0.95,
+            top_k=40,
+        )
 
-    def _call_gemini(self, system_prompt, messages, language):
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent?key={self.gemini_key}"
+            client = self._get_client()
 
-            contents = []
-            for msg in messages:
-                role = "model" if msg["role"] == "assistant" else "user"
-                contents.append({
-                    "role": role,
-                    "parts": [{"text": msg["content"]}]
-                })
+            if history and len(history) > 0:
+                chat_history = []
+                for msg in history[-20:]:
+                    role = "model" if msg["role"] == "assistant" else "user"
+                    chat_history.append(
+                        types.Content(
+                            role=role,
+                            parts=[types.Part(text=msg["content"])]
+                        )
+                    )
 
-            payload = {
-                "system_instruction": {
-                    "parts": [{"text": system_prompt}]
-                },
-                "contents": contents,
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 2048,
-                    "topK": 40,
-                    "topP": 0.95,
-                },
-                "safetySettings": [
-                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-                ]
-            }
+                chat = client.chats.create(
+                    model=self.gemini_model,
+                    history=chat_history,
+                    config=config,
+                )
+                response = chat.send_message(message)
+                result = response.text
+            else:
+                response = client.models.generate_content(
+                    model=self.gemini_model,
+                    contents=message,
+                    config=config,
+                )
+                result = response.text
 
-            resp = requests.post(url, json=payload, timeout=60)
-            resp.raise_for_status()
-            result = resp.json()
-
-            candidates = result.get("candidates", [])
-            if not candidates:
-                print(f"[Gemini] No candidates in response: {json.dumps(result)[:200]}")
-                return "I received an empty response from the AI service. Please try rephrasing your question."
-
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if not parts:
-                finish_reason = candidates[0].get("finishReason", "UNKNOWN")
-                if finish_reason == "SAFETY":
-                    return "Your question was blocked by safety filters. Please ask an agriculture-related question."
-                print(f"[Gemini] No parts, finishReason={finish_reason}")
-                return "The AI service could not generate a response. Please try a different question."
-
-            text = parts[0].get("text", "")
-            if not text.strip():
+            if not result or not result.strip():
                 return "The AI service returned an empty response. Please try again."
 
-            return text.strip()
+            return result.strip()
 
-        except requests.exceptions.Timeout:
-            print("[Gemini] Request timed out after 60s")
-            return "The AI service is taking too long to respond. Please try again later."
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if hasattr(e, 'response') else 0
-            print(f"[Gemini] HTTP {status}: {str(e)[:200]}")
-            if status == 400:
-                return "The AI service received an invalid request. You may have exceeded the message length limit."
+        except ServerError as e:
+            status = e.code if hasattr(e, 'code') else 0
+            print(f"[Gemini] Server error {status}: {str(e)[:200]}")
             if status == 429:
                 return "The AI service is currently overloaded. Please wait a moment and try again."
-            if status == 403 or status == 401:
+            if status in (403, 401):
                 return "The AI service is not properly configured. Please check your API key."
             return "Unable to contact the AI service at the moment. Please try again later."
-        except requests.exceptions.ConnectionError:
-            print("[Gemini] Connection error")
-            return "Unable to reach the AI service. Please check your internet connection."
+        except ClientError as e:
+            err_str = str(e)
+            print(f"[Gemini] Client error: {err_str[:200]}")
+            if "UNAUTHENTICATED" in err_str or "API_KEY" in err_str:
+                return "The AI service is not properly configured. Please check your Gemini API key."
+            return "The AI service received an invalid request. Please try rephrasing your question."
+        except APIError as e:
+            print(f"[Gemini] API error: {str(e)[:200]}")
+            return "Unable to contact the AI service at the moment. Please try again later."
         except Exception as e:
             print(f"[Gemini] Unexpected error: {type(e).__name__}: {str(e)[:200]}")
-            return "Unable to contact the AI service at the moment. Please try again later."
-
-    def _call_openai(self, system_prompt, messages, language):
-        try:
-            url = "https://api.openai.com/v1/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {self.openai_key}",
-                "Content-Type": "application/json",
-            }
-
-            openai_messages = [{"role": "system", "content": system_prompt}]
-            for msg in messages:
-                role = "assistant" if msg["role"] == "assistant" else "user"
-                openai_messages.append({"role": role, "content": msg["content"]})
-
-            payload = {
-                "model": self.openai_model,
-                "messages": openai_messages,
-                "temperature": 0.7,
-                "max_tokens": 2048,
-            }
-
-            resp = requests.post(url, headers=headers, json=payload, timeout=60)
-            resp.raise_for_status()
-            result = resp.json()
-
-            choice = result.get("choices", [{}])[0]
-            text = choice.get("message", {}).get("content", "")
-            if not text.strip():
-                finish = choice.get("finish_reason", "UNKNOWN")
-                print(f"[OpenAI] Empty response, finish_reason={finish}")
-                return "The AI service returned an empty response. Please try again."
-
-            return text.strip()
-
-        except requests.exceptions.Timeout:
-            print("[OpenAI] Request timed out")
-            return "The AI service is taking too long. Please try again later."
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if hasattr(e, 'response') else 0
-            print(f"[OpenAI] HTTP {status}: {str(e)[:200]}")
-            if status == 429:
-                return "The AI service is currently overloaded. Please wait and try again."
-            if status in (401, 403):
-                return "The AI service is not properly configured. Please check your API key."
-            return "Unable to contact the AI service. Please try again later."
-        except Exception as e:
-            print(f"[OpenAI] Error: {type(e).__name__}: {str(e)[:200]}")
             return "Unable to contact the AI service at the moment. Please try again later."
 
     def _build_system_prompt(self, language, district=""):
