@@ -55,8 +55,14 @@ class MockCollection:
         with self._lock:
             for doc in self._docs.values():
                 if self._matches(doc, query):
-                    if "$set" in update:
-                        doc.update(update["$set"])
+                    for op, val in update.items():
+                        if op == "$set":
+                            doc.update(val)
+                        elif op == "$push":
+                            for key, value in val.items():
+                                if key not in doc:
+                                    doc[key] = []
+                                doc[key].append(value)
                     modified = 1
                     break
         return type("UpdateResult", (), {"modified_count": modified})()

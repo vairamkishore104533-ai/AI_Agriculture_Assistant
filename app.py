@@ -99,8 +99,12 @@ except Exception as e:
             def update_one(self, query, update):
                 for d in self._docs.values():
                     if self._matches(d, query):
-                        for op in update:
-                            if op == "$set": d.update(update[op])
+                        for op, val in update.items():
+                            if op == "$set": d.update(val)
+                            elif op == "$push":
+                                for k, v in val.items():
+                                    if k not in d: d[k] = []
+                                    d[k].append(v)
                         return
             def delete_one(self, query):
                 for key in list(self._docs.keys()):

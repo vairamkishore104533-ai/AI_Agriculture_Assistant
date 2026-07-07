@@ -1,12 +1,12 @@
-from flask import Blueprint, render_template, request, jsonify, session, Response, stream_with_context
+from flask import Blueprint, render_template, request, jsonify, session
 from utils.auth import login_required
 from services.ai_service import AIService
 from models.chat import ChatConversation
 from datetime import datetime
-import json
+import traceback
+import sys
 
 chatbot_bp = Blueprint("chatbot", __name__)
-ai_service = AIService()
 
 @chatbot_bp.route("/ai-chat")
 @login_required
@@ -41,192 +41,165 @@ def index():
         selected_district=session.get("district", ""),
     )
 
-@chatbot_bp.route("/api/chat", methods=["POST"])
+@chatbot_bp.route("/api/chat/send", methods=["POST"])
 @login_required
-def chat():
-    data = request.get_json()
-    prompt = data.get("prompt", "").strip()
-    lang = session.get("lang", "en")
-    district = session.get("district", "")
-    conv_id = data.get("conv_id", "")
-    user_id = session["user_id"]
+def chat_send():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Invalid request payload"}), 400
 
-    if not prompt:
-        msg = "Please enter a question." if lang == "en" else "தயவுசெய்து ஒரு கேள்வியை உள்ளிடவும்."
-        return jsonify({"success": False, "message": msg})
+        message = data.get("message", "").strip()
+        conv_id = data.get("conversation_id", "")
+        language = data.get("language", session.get("lang", "en"))
+        district = data.get("district", session.get("district", ""))
+        user_id = session["user_id"]
 
-    if len(prompt) < 3:
-        msg = "Question too short. Please be more specific." if lang == "en" else "கேள்வி மிகவும் குறுகியது. மேலும் விவரமாக கேளுங்கள்."
-        return jsonify({"success": False, "message": msg})
+        if not message:
+            msg = "Please enter a question." if language == "en" else "தயவுசெய்து ஒரு கேள்வியை உள்ளிடவும்."
+            return jsonify({"success": False, "message": msg})
 
-    conv = None
-    history = []
-    if conv_id:
-        conv = ChatConversation.find_by_id(conv_id)
-        if conv and conv.user_id == user_id:
-            history = [{"role": m["role"], "content": m["content"]} for m in conv.messages]
+        if len(message) < 2:
+            msg = "Question too short. Please be more specific." if language == "en" else "கேள்வி மிகவும் குறுகியது. மேலும் விவரமாக கேளுங்கள்."
+            return jsonify({"success": False, "message": msg})
 
-    response = ai_service.get_response(prompt, lang, district, history)
+        ai_service = AIService()
 
-    if not conv:
-        conv = ChatConversation({
-            "user_id": user_id,
-            "title": prompt[:60] + ("..." if len(prompt) > 60 else ""),
-            "district": district,
-            "messages": [],
-        })
-        conv.save()
-        conv.add_message("user", prompt)
-        conv.add_message("assistant", response)
-        title = prompt[:60] + ("..." if len(prompt) > 60 else "")
-        conv.update({"title": title})
-    else:
-        conv.add_message("user", prompt)
-        conv.add_message("assistant", response)
+        conv = None
+        history = []
+        if conv_id:
+            conv = ChatConversation.find_by_id(conv_id)
+            if conv and conv.user_id == user_id:
+                history = [{"role": m["role"], "content": m["content"]} for m in conv.messages]
 
-    return jsonify({
-        "success": True,
-        "response": response,
-        "conv_id": conv.id,
-        "title": conv.title,
-    })
-
-@chatbot_bp.route("/api/chat/stream", methods=["POST"])
-@login_required
-def chat_stream():
-    data = request.get_json()
-    prompt = data.get("prompt", "").strip()
-    lang = session.get("lang", "en")
-    district = session.get("district", "")
-    conv_id = data.get("conv_id", "")
-    user_id = session["user_id"]
-
-    if not prompt:
-        msg = "Please enter a question." if lang == "en" else "தயவுசெய்து ஒரு கேள்வியை உள்ளிடவும்."
-        return jsonify({"success": False, "message": msg})
-
-    conv = None
-    history = []
-    if conv_id:
-        conv = ChatConversation.find_by_id(conv_id)
-        if conv and conv.user_id == user_id:
-            history = [{"role": m["role"], "content": m["content"]} for m in conv.messages]
-
-    def generate():
-        full_response = ""
-        for chunk in ai_service.stream_response(prompt, lang, district, history):
-            full_response += chunk
-            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+        response = ai_service.get_response(
+            message=message,
+            language=language,
+            district=district,
+            history=history,
+        )
 
         if not conv:
             conv = ChatConversation({
                 "user_id": user_id,
-                "title": prompt[:60] + ("..." if len(prompt) > 60 else ""),
+                "title": message[:60] + ("..." if len(message) > 60 else ""),
                 "district": district,
                 "messages": [],
             })
             conv.save()
-            conv.add_message("user", prompt)
-            conv.add_message("assistant", full_response)
-            title = prompt[:60] + ("..." if len(prompt) > 60 else "")
-            conv.update({"title": title})
-        else:
-            conv.add_message("user", prompt)
-            conv.add_message("assistant", full_response)
 
-        yield f"data: {json.dumps({'done': True, 'conv_id': conv.id, 'title': conv.title})}\n\n"
+        conv.add_message("user", message)
+        conv.add_message("assistant", response)
 
-    return Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
-    )
+        return jsonify({
+            "success": True,
+            "reply": response,
+            "conversation_id": conv.id,
+            "title": conv.title,
+        })
+
+    except Exception as e:
+        import sys
+        print(f"[Chat Error] {traceback.format_exc()}", file=sys.stderr)
+        lang = session.get("lang", "en")
+        msg = "Unable to contact the AI service at the moment. Please try again later."
+        return jsonify({"success": False, "message": msg}), 500
 
 @chatbot_bp.route("/api/chat/conversations", methods=["GET"])
 @login_required
 def list_conversations():
-    user_id = session["user_id"]
-    conversations = ChatConversation.find_by_user(user_id)
-    return jsonify({"success": True, "conversations": [c.to_dict() for c in conversations]})
+    try:
+        user_id = session["user_id"]
+        conversations = ChatConversation.find_by_user(user_id)
+        return jsonify({"success": True, "conversations": [c.to_dict() for c in conversations]})
+    except Exception as e:
+        print(f"[Chat Error] list_conversations: {traceback.format_exc()}")
+        return jsonify({"success": False, "message": "Failed to load conversations"}), 500
 
 @chatbot_bp.route("/api/chat/conversation/<conv_id>", methods=["GET"])
 @login_required
 def get_conversation(conv_id):
-    user_id = session["user_id"]
-    conv = ChatConversation.find_by_id(conv_id)
-    if not conv or conv.user_id != user_id:
-        lang = session.get("lang", "en")
-        msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
-        return jsonify({"success": False, "message": msg})
-    return jsonify({"success": True, "conversation": conv.to_dict()})
+    try:
+        user_id = session["user_id"]
+        conv = ChatConversation.find_by_id(conv_id)
+        if not conv or conv.user_id != user_id:
+            lang = session.get("lang", "en")
+            msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
+            return jsonify({"success": False, "message": msg}), 404
+        return jsonify({"success": True, "conversation": conv.to_dict()})
+    except Exception as e:
+        print(f"[Chat Error] get_conversation: {traceback.format_exc()}")
+        return jsonify({"success": False, "message": "Failed to load conversation"}), 500
 
 @chatbot_bp.route("/api/chat/conversation/<conv_id>", methods=["DELETE"])
 @login_required
 def delete_conversation(conv_id):
-    user_id = session["user_id"]
-    conv = ChatConversation.find_by_id(conv_id)
-    if not conv or conv.user_id != user_id:
-        lang = session.get("lang", "en")
-        msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
-        return jsonify({"success": False, "message": msg})
-    ChatConversation.delete_by_id(conv_id)
-    return jsonify({"success": True})
+    try:
+        user_id = session["user_id"]
+        conv = ChatConversation.find_by_id(conv_id)
+        if not conv or conv.user_id != user_id:
+            lang = session.get("lang", "en")
+            msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
+            return jsonify({"success": False, "message": msg}), 404
+        ChatConversation.delete_by_id(conv_id)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"[Chat Error] delete_conversation: {traceback.format_exc()}")
+        return jsonify({"success": False, "message": "Failed to delete conversation"}), 500
 
 @chatbot_bp.route("/api/chat/new", methods=["POST"])
 @login_required
 def new_conversation():
-    user_id = session["user_id"]
-    district = session.get("district", "")
-    conv = ChatConversation({
-        "user_id": user_id,
-        "title": "New Chat",
-        "district": district,
-        "messages": [],
-    })
-    conv.save()
-    return jsonify({"success": True, "conversation": conv.to_dict()})
+    try:
+        user_id = session["user_id"]
+        district = session.get("district", "")
+        conv = ChatConversation({
+            "user_id": user_id,
+            "title": "New Chat",
+            "district": district,
+            "messages": [],
+        })
+        conv.save()
+        return jsonify({"success": True, "conversation": conv.to_dict()})
+    except Exception as e:
+        print(f"[Chat Error] new_conversation: {traceback.format_exc()}")
+        return jsonify({"success": False, "message": "Failed to create conversation"}), 500
 
 @chatbot_bp.route("/api/chat/export", methods=["POST"])
 @login_required
 def export_chat():
-    data = request.get_json()
-    conv_id = data.get("conv_id", "")
-    export_format = data.get("format", "txt")
-    user_id = session["user_id"]
-    lang = session.get("lang", "en")
+    try:
+        data = request.get_json()
+        conv_id = data.get("conv_id", "")
+        lang = session.get("lang", "en")
+        user_id = session["user_id"]
 
-    conv = ChatConversation.find_by_id(conv_id)
-    if not conv or conv.user_id != user_id:
-        msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
-        return jsonify({"success": False, "message": msg})
+        conv = ChatConversation.find_by_id(conv_id)
+        if not conv or conv.user_id != user_id:
+            msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
+            return jsonify({"success": False, "message": msg}), 404
 
-    lines = []
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-    header = f"AI Agriculture Assistant - Chat Export\nDate: {now}\nDistrict: {conv.district or 'Not set'}\nLanguage: {'Tamil' if lang == 'ta' else 'English'}\n"
-    header += "=" * 50 + "\n\n"
-    lines.append(header)
+        lines = []
+        now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+        header = (
+            f"AI Agriculture Assistant - Chat Export\n"
+            f"Date: {now}\n"
+            f"District: {conv.district or 'Not set'}\n"
+            f"Language: {'Tamil' if lang == 'ta' else 'English'}\n"
+            f"{'=' * 50}\n\n"
+        )
+        lines.append(header)
 
-    for msg in conv.messages:
-        role = "You" if msg["role"] == "user" else "AI Assistant"
-        content = msg["content"]
-        lines.append(f"[{role}]\n{content}\n\n")
+        for msg in conv.messages:
+            role = "You" if msg["role"] == "user" else "AI Assistant"
+            lines.append(f"[{role}]\n{msg['content']}\n\n")
 
-    text_content = "".join(lines)
-
-    if export_format == "txt":
         return jsonify({
             "success": True,
-            "export": text_content,
-            "filename": f"chat_{conv_id}.txt",
+            "export": "".join(lines),
+            "filename": f"chat_{conv_id[:8]}.txt",
             "mime": "text/plain",
         })
-    else:
-        return jsonify({
-            "success": True,
-            "export": text_content,
-            "filename": f"chat_{conv_id}.txt",
-            "mime": "text/plain",
-        })
+    except Exception as e:
+        print(f"[Chat Error] export: {traceback.format_exc()}")
+        return jsonify({"success": False, "message": "Failed to export chat"}), 500

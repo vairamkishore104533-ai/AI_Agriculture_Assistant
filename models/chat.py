@@ -17,8 +17,15 @@ class ChatConversation:
 
     @staticmethod
     def find_by_id(conv_id):
-        from bson.objectid import ObjectId
-        data = ChatConversation.get_collection().find_one({"_id": ObjectId(conv_id)})
+        data = ChatConversation.get_collection().find_one({"_id": conv_id})
+        if not data:
+            from bson.objectid import ObjectId
+            data = ChatConversation.get_collection().find_one({"_id": ObjectId(conv_id)})
+        if not data:
+            try:
+                data = ChatConversation.get_collection().find_one({"_id": str(conv_id)})
+            except Exception:
+                pass
         return ChatConversation(data) if data else None
 
     @staticmethod
@@ -41,13 +48,13 @@ class ChatConversation:
             "updated_at": self.updated_at,
         }
         result = ChatConversation.get_collection().insert_one(data)
-        self.id = str(result.inserted_id)
+        rid = result.inserted_id
+        self.id = str(rid) if not isinstance(rid, str) else rid
         return self.id
 
     def update(self, data):
-        from bson.objectid import ObjectId
         ChatConversation.get_collection().update_one(
-            {"_id": ObjectId(self.id)},
+            {"_id": self.id},
             {"$set": data}
         )
 
@@ -55,28 +62,19 @@ class ChatConversation:
         msg = {"role": role, "content": content, "timestamp": datetime.utcnow().isoformat()}
         self.messages.append(msg)
         self.updated_at = datetime.utcnow()
-        from bson.objectid import ObjectId
         ChatConversation.get_collection().update_one(
-            {"_id": ObjectId(self.id)},
-            {"$push": {"messages": msg}, "$set": {"updated_at": self.updated_at}}
-        )
-
-    def generate_title(self):
-        if self.messages:
-            first_user_msg = next((m["content"] for m in self.messages if m["role"] == "user"), None)
-            if first_user_msg:
-                self.title = first_user_msg[:60] + ("..." if len(first_user_msg) > 60 else "")
-        self.title = self.title.strip() or "New Chat"
-        from bson.objectid import ObjectId
-        ChatConversation.get_collection().update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": {"title": self.title}}
+            {"_id": self.id},
+            {"$set": {"messages": self.messages, "updated_at": self.updated_at}}
         )
 
     @staticmethod
     def delete_by_id(conv_id):
-        from bson.objectid import ObjectId
-        ChatConversation.get_collection().delete_one({"_id": ObjectId(conv_id)})
+        ChatConversation.get_collection().delete_one({"_id": conv_id})
+        try:
+            from bson.objectid import ObjectId
+            ChatConversation.get_collection().delete_one({"_id": ObjectId(conv_id)})
+        except Exception:
+            pass
 
     def to_dict(self):
         return {

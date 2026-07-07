@@ -1,21 +1,18 @@
-let currentConvId = null;
-let isStreaming = false;
-let isFirstMessage = true;
+var currentConvId = null;
+var isLoading = false;
 
 function initChatbot() {
-    const messages = document.getElementById("chat-messages");
-    const input = document.getElementById("chat-input");
-    const sendBtn = document.getElementById("chat-send");
-    const newBtn = document.getElementById("chat-new-btn");
-    const exportBtn = document.getElementById("chat-export-btn");
+    var messages = document.getElementById("chat-messages");
+    var input = document.getElementById("chat-input");
+    var sendBtn = document.getElementById("chat-send");
+    var newBtn = document.getElementById("chat-new-btn");
+    var exportBtn = document.getElementById("chat-export-btn");
 
     if (!messages) return;
 
-    updateConvIdFromActive();
+    updateConvId();
     if (!messages.querySelector(".chat-bubble")) {
-        showWelcome();
-    } else {
-        isFirstMessage = false;
+        showSuggestions();
     }
 
     if (sendBtn && input) {
@@ -65,30 +62,46 @@ function initChatbot() {
         });
     });
 
-    document.querySelector(".chat-export-cancel").addEventListener("click", hideExportModal);
-    document.querySelector(".chat-export-overlay").addEventListener("click", hideExportModal);
+    var cancelBtn = document.querySelector(".chat-export-cancel");
+    var overlay = document.querySelector(".chat-export-overlay");
+    if (cancelBtn) cancelBtn.addEventListener("click", hideExportModal);
+    if (overlay) overlay.addEventListener("click", hideExportModal);
+
+    updateExportBtn();
 }
 
-function updateConvIdFromActive() {
+function updateConvId() {
     var active = document.querySelector(".chat-conv-item.active");
     if (active) {
         currentConvId = active.getAttribute("data-conv-id");
     } else {
         var first = document.querySelector(".chat-conv-item");
-        currentConvId = first ? first.getAttribute("data-conv-id") : null;
+        if (first) {
+            currentConvId = first.getAttribute("data-conv-id");
+        } else {
+            currentConvId = null;
+        }
     }
 }
 
-function showWelcome() {
-    var messages = document.getElementById("chat-messages");
-    if (!messages) return;
+function showSuggestions() {
     var suggestions = document.getElementById("chat-suggestions");
-    if (suggestions) suggestions.style.display = "block";
+    if (suggestions) {
+        suggestions.style.display = "block";
+    }
+}
+
+function hideSuggestions() {
+    var suggestions = document.getElementById("chat-suggestions");
+    if (suggestions) {
+        suggestions.style.display = "none";
+    }
 }
 
 function addBubble(text, role) {
     var messages = document.getElementById("chat-messages");
     if (!messages) return;
+
     var div = document.createElement("div");
     div.className = "chat-bubble " + role;
 
@@ -111,13 +124,10 @@ function addBubble(text, role) {
 
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
-
-    var suggestions = document.getElementById("chat-suggestions");
-    if (suggestions) suggestions.style.display = "none";
 }
 
 function renderMarkdown(text) {
-    var html = text
+    var html = String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
@@ -128,119 +138,116 @@ function renderMarkdown(text) {
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
     html = html.replace(/\n/g, '<br>');
     return html;
 }
 
-function createStreamBubble() {
+function sendMessage() {
+    if (isLoading) return;
+
+    var input = document.getElementById("chat-input");
+    var message = input.value.trim();
+    if (!message) return;
+
+    hideSuggestions();
+    addBubble(message, "user");
+    input.value = "";
+    setLoading(true);
+
+    var langEl = document.documentElement;
+    var language = langEl.getAttribute("data-lang") || "en";
+    var districtBadge = document.querySelector(".chat-district-badge");
+    var district = districtBadge ? districtBadge.textContent.replace("📍", "").trim() : "";
+
+    fetch("/api/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            message: message,
+            conversation_id: currentConvId || "",
+            language: language,
+            district: district,
+        }),
+    })
+    .then(function (resp) {
+        if (!resp.ok) {
+            return resp.json().then(function (err) {
+                throw new Error(err.message || "Server error");
+            }).catch(function () {
+                throw new Error("Server returned " + resp.status);
+            });
+        }
+        return resp.json();
+    })
+    .then(function (data) {
+        if (data.success) {
+            if (data.conversation_id) {
+                currentConvId = data.conversation_id;
+            }
+            addConversationToList(data.conversation_id, data.title);
+            simulateTyping(data.reply);
+        } else {
+            showToast(data.message || "An error occurred", "error");
+            setLoading(false);
+        }
+    })
+    .catch(function (err) {
+        setLoading(false);
+        showToast(err.message || "Unable to contact the AI service at the moment. Please try again later.", "error");
+    });
+}
+
+function simulateTyping(fullText) {
     var messages = document.getElementById("chat-messages");
+    if (!messages) return;
+
     var div = document.createElement("div");
     div.className = "chat-bubble bot";
+
     var content = document.createElement("div");
     content.className = "chat-bubble-content";
-    content.id = "stream-content";
+    content.id = "typing-content";
     div.appendChild(content);
+
     var actions = document.createElement("div");
     actions.className = "chat-bubble-actions";
     var copyBtn = document.createElement("button");
     copyBtn.className = "chat-copy-btn";
     copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
     copyBtn.addEventListener("click", function () {
-        copyToClipboard(content.textContent || content.innerText);
+        copyToClipboard(fullText);
     });
     actions.appendChild(copyBtn);
     div.appendChild(actions);
+
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
-    return content;
-}
 
-function sendMessage() {
-    if (isStreaming) return;
-    var input = document.getElementById("chat-input");
-    var prompt = input.value.trim();
-    if (!prompt) return;
+    var words = fullText.split(" ");
+    var index = 0;
+    var currentText = "";
 
-    var suggestions = document.getElementById("chat-suggestions");
-    if (suggestions) suggestions.style.display = "none";
-
-    addBubble(prompt, "user");
-    input.value = "";
-    setLoading(true);
-
-    var sseUrl = "/api/chat/stream";
-    var params = new URLSearchParams();
-    fetch(sseUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt, conv_id: currentConvId }),
-    })
-    .then(function (resp) {
-        if (!resp.ok) throw new Error("Network error");
-        var reader = resp.body.getReader();
-        var decoder = new TextDecoder();
-        var streamContent = createStreamBubble();
-        var fullText = "";
-        isStreaming = true;
-
-        function readChunk() {
-            reader.read().then(function (result) {
-                if (result.done) {
-                    isStreaming = false;
-                    setLoading(false);
-                    return;
-                }
-                var text = decoder.decode(result.value, { stream: true });
-                var lines = text.split("\n");
-                for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i].trim();
-                    if (line.startsWith("data: ")) {
-                        try {
-                            var data = JSON.parse(line.substring(6));
-                            if (data.chunk) {
-                                fullText += data.chunk;
-                                streamContent.innerHTML = renderMarkdown(fullText);
-                                document.getElementById("chat-messages").scrollTop =
-                                    document.getElementById("chat-messages").scrollHeight;
-                            }
-                            if (data.done) {
-                                if (data.conv_id) {
-                                    currentConvId = data.conv_id;
-                                }
-                                var finalContent = document.createElement("div");
-                                finalContent.className = "chat-bubble-content";
-                                finalContent.innerHTML = renderMarkdown(fullText);
-                                streamContent.parentNode.replaceChild(finalContent, streamContent);
-                                finalContent.id = "stream-content-final";
-                                addConversationToList(data.conv_id, data.title);
-                                isStreaming = false;
-                                setLoading(false);
-                                updateExportBtn();
-                            }
-                        } catch (e) {
-                        }
-                    }
-                }
-                if (isStreaming) {
-                    readChunk();
-                }
-            }).catch(function () {
-                isStreaming = false;
-                setLoading(false);
-                showToast("Error reading response", "error");
-            });
+    function typeNext() {
+        if (index < words.length) {
+            currentText += (index > 0 ? " " : "") + words[index];
+            content.innerHTML = renderMarkdown(currentText);
+            messages.scrollTop = messages.scrollHeight;
+            index++;
+            var delay = Math.min(50, Math.max(10, 200 / words.length));
+            setTimeout(typeNext, delay);
+        } else {
+            content.id = "";
+            setLoading(false);
+            updateExportBtn();
         }
-        readChunk();
-    })
-    .catch(function () {
-        isStreaming = false;
-        setLoading(false);
-        showToast("Sorry, an error occurred. Please try again.", "error");
-    });
+    }
+
+    typeNext();
 }
 
 function setLoading(loading) {
+    isLoading = loading;
     var sendBtn = document.getElementById("chat-send");
     var input = document.getElementById("chat-input");
     var typing = document.getElementById("chat-typing");
@@ -259,6 +266,9 @@ function newConversation() {
         if (res.success) {
             window.location.href = "/ai-chat?conv=" + res.conversation.id;
         }
+    })
+    .catch(function () {
+        showToast("Failed to create new conversation", "error");
     });
 }
 
@@ -277,21 +287,28 @@ function deleteConversation(convId) {
             if (currentConvId === convId) {
                 window.location.href = "/ai-chat";
             }
+        } else {
+            showToast(res.message || "Failed to delete", "error");
         }
+    })
+    .catch(function () {
+        showToast("Failed to delete conversation", "error");
     });
 }
 
 function addConversationToList(convId, title) {
+    if (!convId) return;
     var existing = document.querySelector('.chat-conv-item[data-conv-id="' + convId + '"]');
     if (!existing) {
         var list = document.getElementById("chat-conversations");
+        if (!list) return;
         var empty = list.querySelector(".chat-conv-empty");
         if (empty) empty.remove();
         var div = document.createElement("div");
         div.className = "chat-conv-item active";
         div.setAttribute("data-conv-id", convId);
         div.innerHTML =
-            '<div class="chat-conv-title">' + (title || "New Chat") + '</div>' +
+            '<div class="chat-conv-title">' + escapeHtml(title || "New Chat") + '</div>' +
             '<div class="chat-conv-meta"><span>—</span>' +
             '<button class="chat-conv-delete" data-conv-id="' + convId + '"><i class="fas fa-trash"></i></button></div>';
         div.addEventListener("click", function () {
@@ -310,12 +327,20 @@ function addConversationToList(convId, title) {
     updateExportBtn();
 }
 
+function escapeHtml(text) {
+    var d = document.createElement("div");
+    d.textContent = text;
+    return d.innerHTML;
+}
+
 function showExportModal() {
-    document.getElementById("chat-export-modal").style.display = "block";
+    var modal = document.getElementById("chat-export-modal");
+    if (modal) modal.style.display = "block";
 }
 
 function hideExportModal() {
-    document.getElementById("chat-export-modal").style.display = "none";
+    var modal = document.getElementById("chat-export-modal");
+    if (modal) modal.style.display = "none";
 }
 
 function exportChat(format) {
@@ -339,7 +364,12 @@ function exportChat(format) {
             URL.revokeObjectURL(url);
             hideExportModal();
             showToast("Exported successfully!", "success");
+        } else {
+            showToast(res.message || "Export failed", "error");
         }
+    })
+    .catch(function () {
+        showToast("Export failed", "error");
     });
 }
 
@@ -365,8 +395,7 @@ function fallbackCopy(text) {
     try {
         document.execCommand("copy");
         showToast("Copied!", "success");
-    } catch (e) {
-    }
+    } catch (e) {}
     document.body.removeChild(ta);
 }
 
@@ -376,9 +405,10 @@ function showToast(msg, type) {
     toast.textContent = msg;
     toast.className = "chat-toast " + (type || "");
     toast.style.display = "block";
-    setTimeout(function () {
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(function () {
         toast.style.display = "none";
-    }, 2500);
+    }, 3000);
 }
 
 function updateExportBtn() {
