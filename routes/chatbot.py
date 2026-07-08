@@ -87,6 +87,12 @@ def chat_send():
                 "messages": [],
             })
             conv.save()
+        elif conv.title in ("New Chat", "", None):
+            title = message.strip()[:60]
+            if len(message.strip()) > 60:
+                title += "..."
+            conv.title = title
+            conv.update({"title": conv.title})
 
         conv.add_message("user", message)
         conv.add_message("assistant", response)

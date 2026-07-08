@@ -1,92 +1,63 @@
 import os
-from google import genai
-from google.genai import types
-from google.genai.errors import APIError, ClientError, ServerError
+from groq import Groq
 
 class AIService:
+    MODEL = "llama-3.3-70b-versatile"
+
     def __init__(self):
-        self.gemini_key = os.getenv("GEMINI_API_KEY", "")
-        self.openai_key = os.getenv("OPENAI_API_KEY", "")
-        self.provider = os.getenv("AI_PROVIDER", "gemini")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.api_key = os.getenv("GROQ_API_KEY", "")
         self._client = None
+        if self.api_key:
+            print(f"[AIService] Groq API key loaded ({self.api_key[:3]}...{self.api_key[-4:]}). Model: {self.MODEL}", flush=True)
+        else:
+            print("[AIService] No GROQ_API_KEY set in .env", flush=True)
 
     def _get_client(self):
         if self._client is None:
-            key = self.gemini_key
-            if not key:
-                key = self.openai_key
-            self._client = genai.Client(api_key=key)
+            self._client = Groq(api_key=self.api_key)
         return self._client
 
     def get_response(self, message, language="en", district="", history=None):
-        if not self.gemini_key:
-            return "AI service is not configured. Please set GEMINI_API_KEY in .env file."
+        if not self.api_key:
+            return "AI service is not configured. Please set GROQ_API_KEY in .env file."
 
         system_prompt = self._build_system_prompt(language, district)
 
-        config = types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.7,
-            max_output_tokens=2048,
-            top_p=0.95,
-            top_k=40,
-        )
+        messages = [{"role": "system", "content": system_prompt}]
+
+        if history:
+            for msg in history[-20:]:
+                role = "assistant" if msg["role"] == "assistant" else "user"
+                messages.append({"role": role, "content": msg["content"]})
+
+        messages.append({"role": "user", "content": message})
 
         try:
             client = self._get_client()
+            response = client.chat.completions.create(
+                model=self.MODEL,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2048,
+                top_p=0.95,
+            )
 
-            if history and len(history) > 0:
-                chat_history = []
-                for msg in history[-20:]:
-                    role = "model" if msg["role"] == "assistant" else "user"
-                    chat_history.append(
-                        types.Content(
-                            role=role,
-                            parts=[types.Part(text=msg["content"])]
-                        )
-                    )
-
-                chat = client.chats.create(
-                    model=self.gemini_model,
-                    history=chat_history,
-                    config=config,
-                )
-                response = chat.send_message(message)
-                result = response.text
-            else:
-                response = client.models.generate_content(
-                    model=self.gemini_model,
-                    contents=message,
-                    config=config,
-                )
-                result = response.text
-
+            result = response.choices[0].message.content
             if not result or not result.strip():
                 return "The AI service returned an empty response. Please try again."
 
             return result.strip()
 
-        except ServerError as e:
-            status = e.code if hasattr(e, 'code') else 0
-            print(f"[Gemini] Server error {status}: {str(e)[:200]}")
-            if status == 429:
-                return "The AI service is currently overloaded. Please wait a moment and try again."
-            if status in (403, 401):
-                return "The AI service is not properly configured. Please check your API key."
-            return "Unable to contact the AI service at the moment. Please try again later."
-        except ClientError as e:
-            err_str = str(e)
-            print(f"[Gemini] Client error: {err_str[:200]}")
-            if "UNAUTHENTICATED" in err_str or "API_KEY" in err_str:
-                return "The AI service is not properly configured. Please check your Gemini API key."
-            return "The AI service received an invalid request. Please try rephrasing your question."
-        except APIError as e:
-            print(f"[Gemini] API error: {str(e)[:200]}")
-            return "Unable to contact the AI service at the moment. Please try again later."
         except Exception as e:
-            print(f"[Gemini] Unexpected error: {type(e).__name__}: {str(e)[:200]}")
+            import traceback
+            print(f"[Groq] Error (FULL TRACEBACK):", flush=True)
+            traceback.print_exc()
+            err_str = str(e).lower()
+            if "401" in err_str or "unauthorized" in err_str or "invalid api key" in err_str:
+                return ("The AI service is not properly configured. Your Groq API key is invalid or unauthorized. "
+                        "Please check your key and try again.")
+            if "429" in err_str or "rate limit" in err_str:
+                return "The AI service is currently overloaded. Please wait a moment and try again."
             return "Unable to contact the AI service at the moment. Please try again later."
 
     def _build_system_prompt(self, language, district=""):
@@ -180,10 +151,3 @@ class AIService:
                 return zone, ZONE_INFO.get(zone)
 
         return None, None
-
-    def _build_messages(self, history=None):
-        messages = []
-        if history:
-            for msg in history[-20:]:
-                messages.append({"role": msg["role"], "content": msg["content"]})
-        return messages
