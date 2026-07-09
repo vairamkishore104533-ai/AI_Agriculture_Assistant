@@ -30,10 +30,10 @@ try:
     app.config["DB_TYPE"] = "mongodb"
     print("[OK] Connected to MongoDB Atlas - agriculture_assistant database", file=sys.stderr)
     if db["users"].count_documents({"username": "admin"}) == 0:
-        from bcrypt import hashpw, gensalt
+        from utils.auth import hash_password
         db["users"].insert_one({
             "username": "admin",
-            "password": hashpw("admin123".encode(), gensalt()),
+            "password": hash_password("admin123"),
             "is_admin": True,
             "preferred_language": "en",
             "created_at": datetime.utcnow(),

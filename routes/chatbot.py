@@ -177,6 +177,7 @@ def export_chat():
     try:
         data = request.get_json()
         conv_id = data.get("conv_id", "")
+        export_format = data.get("format", "txt")
         lang = session.get("lang", "en")
         user_id = session["user_id"]
 
@@ -185,27 +186,68 @@ def export_chat():
             msg = "Conversation not found." if lang == "en" else "உரையாடல் கிடைக்கவில்லை."
             return jsonify({"success": False, "message": msg}), 404
 
-        lines = []
         now = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
-        header = (
-            f"AI Agriculture Assistant - Chat Export\n"
-            f"Date: {now}\n"
-            f"District: {conv.district or 'Not set'}\n"
-            f"Language: {'Tamil' if lang == 'ta' else 'English'}\n"
-            f"{'=' * 50}\n\n"
-        )
-        lines.append(header)
+        lang_label = "Tamil" if lang == "ta" else "English"
 
-        for msg in conv.messages:
-            role = "You" if msg["role"] == "user" else "AI Assistant"
-            lines.append(f"[{role}]\n{msg['content']}\n\n")
+        if export_format == "pdf":
+            from fpdf import FPDF
+            from fpdf.enums import XPos, YPos
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_font("Arial", "", r"C:\Windows\Fonts\arial.ttf")
+            pdf.add_font("Arial", "B", r"C:\Windows\Fonts\arialbd.ttf")
+            pdf.set_font("Arial", "B", 16)
+            pdf.cell(0, 10, text="AI Agriculture Assistant - Chat Export", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+            pdf.set_font("Arial", "", 10)
+            pdf.cell(0, 6, text=f"Date: {now}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(0, 6, text=f"District: {conv.district or 'Not set'}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(0, 6, text=f"Language: {lang_label}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.line(10, pdf.get_y() + 2, 200, pdf.get_y() + 2)
+            pdf.ln(6)
 
-        return jsonify({
-            "success": True,
-            "export": "".join(lines),
-            "filename": f"chat_{conv_id[:8]}.txt",
-            "mime": "text/plain",
-        })
+            pdf.set_font("Arial", "", 11)
+            for msg in conv.messages:
+                role = "You" if msg["role"] == "user" else "AI Assistant"
+                pdf.set_x(pdf.l_margin)
+                pdf.set_font("Arial", "B", 11)
+                pdf.multi_cell(0, 6, text=f"[{role}]")
+                pdf.set_x(pdf.l_margin)
+                pdf.set_font("Arial", "", 11)
+                pdf.multi_cell(0, 6, text=msg.get("content", ""))
+                pdf.set_x(pdf.l_margin)
+                pdf.ln(3)
+
+            pdf_output = bytes(pdf.output())
+            import base64
+            return jsonify({
+                "success": True,
+                "export": base64.b64encode(pdf_output).decode("ascii"),
+                "filename": f"chat_{conv_id[:8]}.pdf",
+                "mime": "application/pdf",
+                "encoding": "base64",
+            })
+        else:
+            lines = []
+            header = (
+                f"AI Agriculture Assistant - Chat Export\n"
+                f"Date: {now}\n"
+                f"District: {conv.district or 'Not set'}\n"
+                f"Language: {lang_label}\n"
+                f"{'=' * 50}\n\n"
+            )
+            lines.append(header)
+
+            for msg in conv.messages:
+                role = "You" if msg["role"] == "user" else "AI Assistant"
+                lines.append(f"[{role}]\n{msg['content']}\n\n")
+
+            return jsonify({
+                "success": True,
+                "export": "".join(lines),
+                "filename": f"chat_{conv_id[:8]}.txt",
+                "mime": "text/plain",
+            })
     except Exception as e:
         print(f"[Chat Error] export: {traceback.format_exc()}")
         return jsonify({"success": False, "message": "Failed to export chat"}), 500

@@ -353,7 +353,17 @@ function exportChat(format) {
     .then(function (r) { return r.json(); })
     .then(function (res) {
         if (res.success) {
-            var blob = new Blob([res.export], { type: res.mime });
+            var content = res.export;
+            var mimeType = res.mime;
+            if (res.encoding === "base64") {
+                var binary = atob(content);
+                var array = new Uint8Array(binary.length);
+                for (var i = 0; i < binary.length; i++) {
+                    array[i] = binary.charCodeAt(i);
+                }
+                content = array;
+            }
+            var blob = new Blob([content], { type: mimeType });
             var url = URL.createObjectURL(blob);
             var a = document.createElement("a");
             a.href = url;

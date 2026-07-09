@@ -1,5 +1,6 @@
 from flask import current_app
 from datetime import datetime
+from bson.objectid import ObjectId
 
 class ChatConversation:
     def __init__(self, data=None):
@@ -17,16 +18,20 @@ class ChatConversation:
 
     @staticmethod
     def find_by_id(conv_id):
-        data = ChatConversation.get_collection().find_one({"_id": conv_id})
-        if not data:
-            from bson.objectid import ObjectId
-            data = ChatConversation.get_collection().find_one({"_id": ObjectId(conv_id)})
-        if not data:
-            try:
-                data = ChatConversation.get_collection().find_one({"_id": str(conv_id)})
-            except Exception:
-                pass
-        return ChatConversation(data) if data else None
+        try:
+            oid = ObjectId(conv_id) if isinstance(conv_id, str) else conv_id
+            data = ChatConversation.get_collection().find_one({"_id": oid})
+            if data:
+                return ChatConversation(data)
+        except Exception:
+            pass
+        try:
+            data = ChatConversation.get_collection().find_one({"_id": str(conv_id)})
+            if data:
+                return ChatConversation(data)
+        except Exception:
+            pass
+        return None
 
     @staticmethod
     def find_by_user(user_id, limit=20):
@@ -52,29 +57,43 @@ class ChatConversation:
         self.id = str(rid) if not isinstance(rid, str) else rid
         return self.id
 
+    def _object_id(self):
+        try:
+            return ObjectId(self.id) if self.id else None
+        except Exception:
+            return None
+
     def update(self, data):
+        oid = self._object_id()
+        if not oid:
+            return
         ChatConversation.get_collection().update_one(
-            {"_id": self.id},
+            {"_id": oid},
             {"$set": data}
         )
 
     def add_message(self, role, content):
+        oid = self._object_id()
+        if not oid:
+            return
         msg = {"role": role, "content": content, "timestamp": datetime.utcnow().isoformat()}
         self.messages.append(msg)
         self.updated_at = datetime.utcnow()
         ChatConversation.get_collection().update_one(
-            {"_id": self.id},
+            {"_id": oid},
             {"$set": {"messages": self.messages, "updated_at": self.updated_at}}
         )
 
     @staticmethod
     def delete_by_id(conv_id):
-        ChatConversation.get_collection().delete_one({"_id": conv_id})
         try:
-            from bson.objectid import ObjectId
-            ChatConversation.get_collection().delete_one({"_id": ObjectId(conv_id)})
+            oid = ObjectId(conv_id) if isinstance(conv_id, str) else conv_id
+            ChatConversation.get_collection().delete_one({"_id": oid})
         except Exception:
-            pass
+            try:
+                ChatConversation.get_collection().delete_one({"_id": str(conv_id)})
+            except Exception:
+                pass
 
     def to_dict(self):
         return {
