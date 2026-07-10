@@ -127,6 +127,10 @@ function addBubble(text, role) {
 }
 
 function renderMarkdown(text) {
+    if (typeof marked !== "undefined" && typeof DOMPurify !== "undefined") {
+        var html = marked.parse(String(text), { breaks: true, gfm: true });
+        return DOMPurify.sanitize(html);
+    }
     var html = String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -203,7 +207,7 @@ function simulateTyping(fullText) {
     if (!messages) return;
 
     var div = document.createElement("div");
-    div.className = "chat-bubble bot";
+    div.className = "chat-bubble assistant";
 
     var content = document.createElement("div");
     content.className = "chat-bubble-content";
@@ -428,8 +432,21 @@ function updateExportBtn() {
     btn.style.display = bubbles.length > 0 ? "flex" : "none";
 }
 
+function renderExistingMessages() {
+    var contents = document.querySelectorAll("#chat-messages .chat-bubble-content");
+    if (typeof marked !== "undefined" && typeof DOMPurify !== "undefined") {
+        contents.forEach(function (el) {
+            var raw = el.textContent;
+            if (raw.indexOf("#") >= 0 || raw.indexOf("**") >= 0 || raw.indexOf("```") >= 0 || raw.indexOf("|") >= 0 || raw.indexOf("- ") >= 0) {
+                el.innerHTML = DOMPurify.sanitize(marked.parse(raw, { breaks: true, gfm: true }));
+            }
+        });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     if (document.getElementById("chat-messages")) {
         initChatbot();
+        renderExistingMessages();
     }
 });
