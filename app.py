@@ -144,6 +144,7 @@ from routes.market import market_bp
 from routes.schemes import schemes_bp
 from routes.expenses import expenses_bp
 from routes.analytics import analytics_bp
+from routes.diagnosis import diagnosis_bp
 from routes.notifications import notifications_bp
 from routes.profile import profile_bp
 from routes.admin import admin_bp
@@ -157,6 +158,7 @@ app.register_blueprint(market_bp)
 app.register_blueprint(schemes_bp)
 app.register_blueprint(expenses_bp)
 app.register_blueprint(analytics_bp)
+app.register_blueprint(diagnosis_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(admin_bp)
@@ -192,76 +194,16 @@ def set_language():
     return jsonify({"success": True})
 
 @app.route("/crops")
-@app.route("/crop-diagnosis")
 @app.route("/fertilizer")
 @app.route("/irrigation")
 def feature_pages():
     route_map = {
         "/crops": "crops.html",
-        "/crop-diagnosis": "crop_diagnosis.html",
         "/fertilizer": "fertilizer.html",
         "/irrigation": "irrigation.html",
     }
     template = route_map.get(request.path, "index.html")
     return render_template(template, lang=session.get("lang", "en"))
-
-@app.route("/api/crop-diagnosis", methods=["POST"])
-def crop_diagnosis():
-    data = request.get_json()
-    crop = data.get("crop", "")
-    symptoms = data.get("symptoms", "")
-    lang = session.get("lang", "en")
-
-    if not crop or not symptoms:
-        msg = "Please select crop and describe symptoms." if lang == "en" else "தயவுசெய்து பயிரைத் தேர்ந்தெடுத்து அறிகுறிகளை விவரிக்கவும்."
-        return jsonify({"success": False, "message": msg})
-
-    from services.ai_service import AIService
-    ai = AIService()
-    if lang == "ta":
-        prompt = f"பயிர்: {crop}\nஅறிகுறிகள்: {symptoms}\n\nதயவுசெய்து இந்த அறிகுறிகளின் அடிப்படையில் சாத்தியமான நோய், காரணம், சிகிச்சை, தடுப்பு மற்றும் இயற்கை மாற்றுகளை பின்வரும் வடிவத்தில் வழங்கவும்:\n\nநோய்: \nகாரணம்: \nசிகிச்சை: \nதடுப்பு: \nஇயற்கை மாற்றுகள்:"
-    else:
-        prompt = f"Crop: {crop}\nSymptoms: {symptoms}\n\nBased on these symptoms, provide the possible disease, cause, treatment, prevention, and organic alternatives in the following format:\n\nDisease: \nCause: \nTreatment: \nPrevention: \nOrganic Alternatives:"
-
-    response = ai.get_response(prompt, lang)
-
-    result = {}
-    sections = response.split("\n")
-    current_key = None
-    for line in sections:
-        line = line.strip()
-        if not line:
-            continue
-        for key in ["Disease", "Cause", "Treatment", "Prevention", "Organic", "நோய்", "காரணம்", "சிகிச்சை", "தடுப்பு", "இயற்கை"]:
-            if line.startswith(key + ":") or line.startswith(key + " :") or line.startswith(key + " -"):
-                colon_idx = line.find(":")
-                if colon_idx == -1:
-                    colon_idx = line.find(" -")
-                if colon_idx > 0:
-                    val = line[colon_idx+1:].strip()
-                    if lang == "ta":
-                        map_key = {"நோய்": "disease", "காரணம்": "cause", "சிகிச்சை": "treatment", "தடுப்பு": "prevention", "இயற்கை": "organic"}.get(key, key.lower())
-                    else:
-                        map_key = key.lower()
-                    result[map_key] = val
-                break
-
-    if not result:
-        result = {
-            "disease": "Analysis based on symptoms",
-            "cause": "Further analysis needed",
-            "treatment": "Consult local agriculture officer",
-            "prevention": "Practice good farm hygiene",
-            "organic": "Use neem-based products",
-        } if lang == "en" else {
-            "disease": "அறிகுறிகளின் அடிப்படையில் பகுப்பாய்வு",
-            "cause": "மேலும் பகுப்பாய்வு தேவை",
-            "treatment": "உள்ளூர் விவசாய அலுவலரை அணுகவும்",
-            "prevention": "நல்ல விவசாய சுகாதாரத்தை கடைப்பிடிக்கவும்",
-            "organic": "வேம்பு சார்ந்த பொருட்களைப் பயன்படுத்தவும்",
-        }
-
-    return jsonify({"success": True, "result": result})
 
 @app.route("/api/fertilizer", methods=["POST"])
 def fertilizer_recommend():
