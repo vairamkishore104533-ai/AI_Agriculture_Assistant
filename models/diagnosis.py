@@ -22,6 +22,7 @@ class Diagnosis:
         self.recovery_time = data.get("recovery_time", "") if data else ""
         self.success_rate = data.get("success_rate", "") if data else ""
         self.district = data.get("district", "") if data else ""
+        self.diagnosis = data.get("diagnosis", "") if data else ""
         self.created_at = data.get("created_at", datetime.utcnow()) if data else datetime.utcnow()
 
     @staticmethod
@@ -83,6 +84,7 @@ class Diagnosis:
             "recovery_time": self.recovery_time,
             "success_rate": self.success_rate,
             "district": self.district,
+            "diagnosis": self.diagnosis,
             "created_at": self.created_at,
         }
         result = Diagnosis.get_collection().insert_one(data)
@@ -113,5 +115,6 @@ class Diagnosis:
             "recovery_time": self.recovery_time,
             "success_rate": self.success_rate,
             "district": self.district,
+            "diagnosis": self.diagnosis,
             "created_at": self.created_at,
         }

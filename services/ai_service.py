@@ -1,5 +1,4 @@
 import os
-from groq import Groq
 
 class AIService:
     MODEL = "llama-3.3-70b-versatile"
@@ -7,19 +6,35 @@ class AIService:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY", "")
         self._client = None
+        self._import_error = None
         if self.api_key:
             print(f"[AIService] Groq API key loaded ({self.api_key[:3]}...{self.api_key[-4:]}). Model: {self.MODEL}", flush=True)
         else:
             print("[AIService] No GROQ_API_KEY set in .env", flush=True)
+        try:
+            from groq import Groq
+            self._Groq = Groq
+            print(f"[AIService] Groq SDK imported successfully", flush=True)
+        except ImportError as e:
+            self._import_error = f"Groq SDK not installed: {e}"
+            print(f"[AIService] {self._import_error}", flush=True)
+        except Exception as e:
+            self._import_error = f"Groq SDK import error: {e}"
+            print(f"[AIService] {self._import_error}", flush=True)
 
     def _get_client(self):
+        if self._import_error:
+            raise RuntimeError(self._import_error)
         if self._client is None:
-            self._client = Groq(api_key=self.api_key)
+            self._client = self._Groq(api_key=self.api_key)
         return self._client
 
     def get_response(self, message, language="en", district="", history=None):
         if not self.api_key:
             return "AI service is not configured. Please set GROQ_API_KEY in .env file."
+
+        if self._import_error:
+            return f"Groq SDK import failed: {self._import_error}"
 
         system_prompt = self._build_system_prompt(language, district)
 
@@ -33,6 +48,7 @@ class AIService:
         messages.append({"role": "user", "content": message})
 
         try:
+            print(f"[AIService] Sending request to Groq model={self.MODEL} messages={len(messages)}", flush=True)
             client = self._get_client()
             response = client.chat.completions.create(
                 model=self.MODEL,
@@ -44,21 +60,25 @@ class AIService:
 
             result = response.choices[0].message.content
             if not result or not result.strip():
+                print(f"[AIService] Groq returned empty response", flush=True)
                 return "The AI service returned an empty response. Please try again."
 
+            print(f"[AIService] Groq response OK ({len(result)} chars)", flush=True)
             return result.strip()
 
         except Exception as e:
             import traceback
-            print(f"[Groq] Error (FULL TRACEBACK):", flush=True)
+            print(f"[AIService] Groq API call failed: {type(e).__name__}: {e}", flush=True)
             traceback.print_exc()
             err_str = str(e).lower()
             if "401" in err_str or "unauthorized" in err_str or "invalid api key" in err_str:
-                return ("The AI service is not properly configured. Your Groq API key is invalid or unauthorized. "
-                        "Please check your key and try again.")
+                return ("AI service configuration error: Invalid or unauthorized Groq API key. "
+                        "Please check your GROQ_API_KEY in .env file.")
             if "429" in err_str or "rate limit" in err_str:
-                return "The AI service is currently overloaded. Please wait a moment and try again."
-            return "Unable to contact the AI service at the moment. Please try again later."
+                return "AI service is currently overloaded (rate limited). Please wait and try again."
+            if "timeout" in err_str or "timed out" in err_str:
+                return "AI service request timed out. Please try again."
+            return f"AI service error: {type(e).__name__}: {str(e)}"
 
     def _build_system_prompt(self, language, district=""):
         lang_instruction = (

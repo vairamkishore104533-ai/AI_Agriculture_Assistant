@@ -291,19 +291,29 @@ def get_symptoms(crop):
 @login_required
 def analyze():
     try:
-        data = request.get_json()
-        crop = data.get("crop", "")
+        data = request.get_json(silent=True)
+        if not data:
+            print("[Diagnosis] ERROR: Invalid JSON in request body")
+            return jsonify({"success": False, "error": "Invalid JSON in request body", "message": "Request must be valid JSON."}), 400
+
+        crop = data.get("crop", "").strip()
         symptoms = data.get("symptoms", [])
         district = data.get("district", session.get("district", ""))
         lang = session.get("lang", "en")
 
+        print(f"[Diagnosis] Received diagnosis request — crop: '{crop}', symptoms: {len(symptoms)}, district: '{district}', lang: '{lang}'")
+
         if not crop:
             msg = "Please select a crop." if lang == "en" else "தயவுசெய்து ஒரு பயிரைத் தேர்ந்தெடுக்கவும்."
-            return jsonify({"success": False, "message": msg})
+            print(f"[Diagnosis] Validation error: no crop")
+            return jsonify({"success": False, "error": msg, "message": msg}), 400
 
         if not symptoms or len(symptoms) == 0:
             msg = "Please select at least one symptom." if lang == "en" else "தயவுசெய்து குறைந்தது ஒரு அறிகுறியையாவது தேர்ந்தெடுக்கவும்."
-            return jsonify({"success": False, "message": msg})
+            print(f"[Diagnosis] Validation error: no symptoms")
+            return jsonify({"success": False, "error": msg, "message": msg}), 400
+
+        print(f"[Diagnosis] Validated input — calling Groq API...")
 
         from services.ai_service import AIService
 
@@ -336,7 +346,7 @@ def analyze():
                 f"Crop: {crop}\n"
                 f"Selected Symptoms: {', '.join(symptoms)}\n"
                 f"District: {district}\n\n"
-                f"Respond ONLY in the following structure (start each section on a new line):\n\n"
+                f"Respond ONLY in the following structure (start each section on a new line, use Markdown for formatting):\n\n"
                 f"Disease: [Most likely disease name]\n"
                 f"Confidence: [High/Medium/Low]\n"
                 f"Description: [Brief description of the disease]\n"
@@ -354,8 +364,10 @@ def analyze():
                 f"Provide only agriculture-focused, non-medical recommendations."
             )
 
+        print(f"[Diagnosis] Calling Groq with prompt ({len(prompt)} chars): {prompt[:300]}...")
         ai = AIService()
         response = ai.get_response(prompt, lang)
+        print(f"[Diagnosis] Groq response received ({len(response)} chars): {response[:200]}...")
 
         result = {
             "disease": "", "confidence": "", "description": "", "severity": "",
@@ -393,44 +405,44 @@ def analyze():
             }
 
         lines = response.split("\n")
-        current_key = None
         for line in lines:
-            line = line.strip()
-            if not line:
+            raw = line.strip()
+            if not raw:
                 continue
+            # Strip markdown heading markers (#, ##, **) for matching
+            clean = raw.lstrip("#").lstrip("*").strip()
             for search_key, map_key in key_map.items():
-                if line.lower().startswith(search_key.lower()) and (":" in line or " -" in line):
-                    colon_idx = line.find(":")
-                    if colon_idx == -1:
-                        colon_idx = line.find(" -")
-                    if colon_idx > 0:
-                        val = line[colon_idx+1:].strip()
+                colon = clean.find(":")
+                if colon > 0 and clean.lower().startswith(search_key.lower()):
+                    val = clean[colon+1:].strip().lstrip("*").strip().rstrip("*").strip()
+                    if val:
                         result[map_key] = val
                     break
 
         if not result["disease"]:
-            result["disease"] = "Analysis based on symptoms"
-            result["confidence"] = "Medium"
-            result["description"] = "Based on the selected symptoms, further field analysis is recommended."
-            result["severity"] = "Medium"
-            result["causes"] = "Could not be determined from symptoms alone. Consult a local agriculture expert."
-            result["spread"] = "Varies depending on the specific disease."
-            result["treatment_immediate"] = "Isolate affected plants and consult local agriculture officer."
-            result["treatment_organic"] = "Apply neem oil spray as a general preventive measure."
-            result["treatment_chemical"] = "Consult local agriculture officer for specific fungicides."
-            result["prevention"] = "Practice crop rotation, maintain field hygiene, use disease-resistant varieties."
-            result["emergency"] = "If spread is rapid, remove infected plants immediately."
-            result["related_diseases"] = "Various fungal, bacterial, and viral diseases"
-            result["recovery_time"] = "Varies based on disease and treatment"
-            result["success_rate"] = "Varies based on early intervention"
+            print(f"[Diagnosis] No disease parsed from Groq response, using fallback. Raw: {response[:300]}")
+            result = None
+            return jsonify({
+                "success": True,
+                "result": None,
+                "diagnosis": response,
+                "fallback": False,
+            })
 
-        return jsonify({"success": True, "result": result})
+        print(f"[Diagnosis] Parsed result — disease: '{result['disease']}', severity: '{result['severity']}', confidence: '{result['confidence']}'")
+
+        return jsonify({"success": True, "result": result, "diagnosis": response, "fallback": False})
 
     except Exception as e:
-        print(f"[Diagnosis Error] analyze: {traceback.format_exc()}")
-        lang = session.get("lang", "en")
-        msg = "Failed to analyze symptoms. Please try again." if lang == "en" else "அறிகுறிகளை பகுப்பாய்வு செய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
-        return jsonify({"success": False, "message": msg}), 500
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[Diagnosis Error] analyze EXCEPTION: {tb}")
+        try:
+            lang = session.get("lang", "en")
+        except Exception:
+            lang = "en"
+        msg = f"Server error: {type(e).__name__}: {str(e)}"
+        return jsonify({"success": False, "error": msg, "message": msg}), 500
 
 
 @diagnosis_bp.route("/api/diagnosis/save", methods=["POST"])
@@ -460,6 +472,7 @@ def save_diagnosis():
         d.recovery_time = data.get("recovery_time", "")
         d.success_rate = data.get("success_rate", "")
         d.district = data.get("district", session.get("district", ""))
+        d.diagnosis = data.get("diagnosis", "")
         d.save()
 
         msg = "Diagnosis saved successfully!" if lang == "en" else "நோய் கண்டறிதல் வெற்றிகரமாக சேமிக்கப்பட்டது!"
