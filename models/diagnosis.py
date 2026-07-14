@@ -95,6 +95,11 @@ class Diagnosis:
         Diagnosis.get_collection().delete_one({"_id": ObjectId(self.id)})
 
     def to_dict(self):
+        created = self.created_at
+        if hasattr(created, "isoformat"):
+            created = created.isoformat()
+        else:
+            created = str(created)
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -116,5 +121,5 @@ class Diagnosis:
             "success_rate": self.success_rate,
             "district": self.district,
             "diagnosis": self.diagnosis,
-            "created_at": self.created_at,
+            "created_at": created,
         }
