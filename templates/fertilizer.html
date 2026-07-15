@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fertilizer.css') }}">
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
@@ -21,88 +22,217 @@
             <a href="{{ url_for('auth.logout') }}" class="sidebar-nav-item logout-item"><span class="nav-icon">🚪</span> {{ t('sidebar_logout') }}</a>
         </nav>
     </aside>
-    <main class="main-content">
-        <div class="page-header">
-            <div><button class="mobile-toggle" onclick="toggleSidebar()">☰</button><h1>{{ t('fertilizer_title') }}</h1><p>{{ t('fertilizer_subtitle') }}</p></div>
-            <div style="display:flex;gap:8px">
-                <button class="lang-toggle" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
-                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+    <main class="main-content fert-main">
+        <div class="fert-header">
+            <div class="fert-header-info">
+                <h1 class="fert-title">{{ t('fertilizer_title') }}</h1>
+                <p class="fert-subtitle">{{ t('fertilizer_subtitle') }}</p>
+            </div>
+            <div class="fert-header-actions">
+                <button class="fert-btn fert-btn-secondary" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
+                <button class="fert-btn fert-btn-secondary" onclick="toggleTheme()">🌓</button>
             </div>
         </div>
 
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3 style="margin-bottom:20px">{{ t('fertilizer_title') }}</h3>
-                <form id="fertilizer-form" style="display:flex;flex-direction:column;gap:16px">
-                    <div class="form-group">
-                        <label>{{ t('fertilizer_crop') }}</label>
-                        <select name="crop" required>
-                            <option value="paddy">{{ t('crop_paddy') }}</option>
-                            <option value="coconut">{{ t('crop_coconut') }}</option>
-                            <option value="banana">{{ t('crop_banana') }}</option>
-                            <option value="sugarcane">{{ t('crop_sugarcane') }}</option>
-                            <option value="tomato">{{ t('crop_tomato') }}</option>
-                            <option value="cotton">{{ t('crop_cotton') }}</option>
-                            <option value="groundnut">{{ t('crop_groundnut') }}</option>
-                            <option value="maize">{{ t('crop_maize') }}</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('fertilizer_soil') }}</label>
-                        <select name="soil" required>
-                            <option value="alluvial">{{ t('soil_alluvial') }}</option>
-                            <option value="black">{{ t('soil_black') }}</option>
-                            <option value="red">{{ t('soil_red') }}</option>
-                            <option value="sandy">{{ t('soil_sandy') }}</option>
-                            <option value="clay">{{ t('soil_clay') }}</option>
-                            <option value="loamy">{{ t('soil_loamy') }}</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('fertilizer_season') }}</label>
-                        <select name="season">
-                            <option value="kharif">{{ t('season_kharif') }}</option>
-                            <option value="rabi">{{ t('season_rabi') }}</option>
-                            <option value="summer">{{ t('season_summer') }}</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">{{ t('fertilizer_recommend') }}</button>
-                </form>
+        <div class="fert-stats-row">
+            <div class="fert-stat-card">
+                <div class="fert-stat-icon purple">📋</div>
+                <div class="fert-stat-info">
+                    <span class="fert-stat-label">{{ t('fertilizer_stats_total') }}</span>
+                    <span class="fert-stat-value" id="fert-stat-total">{{ stats.get('total', 0) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="fert-season-banner fert-fade-in" id="fert-season-banner" style="display:none">
+            <div class="fert-season-banner-icon" id="fert-banner-icon">🌾</div>
+            <div class="fert-season-banner-text">
+                <h4 id="fert-banner-title">{{ t('fertilizer_title') }}</h4>
+                <p id="fert-banner-desc">{{ t('fertilizer_subtitle') }}</p>
+            </div>
+        </div>
+
+        <div class="fert-card">
+            <div class="fert-card-header">
+                <h3 class="fert-section-title">{{ t('fertilizer_title') }}</h3>
             </div>
 
-            <div class="stat-card" id="fertilizer-result" style="display:none">
-                <h3 style="margin-bottom:20px">{{ t('fertilizer_result_title') }}</h3>
-                <div style="display:flex;flex-direction:column;gap:16px">
-                    <div style="padding:16px;background:var(--green-50);border-radius:var(--radius)"><strong>{{ t('fertilizer_npk') }}:</strong> <span id="result-npk"></span></div>
-                    <div style="padding:16px;background:var(--green-50);border-radius:var(--radius)"><strong>{{ t('fertilizer_organic') }}:</strong> <span id="result-organic"></span></div>
-                    <div style="padding:16px;background:var(--green-50);border-radius:var(--radius)"><strong>{{ t('fertilizer_bio') }}:</strong> <span id="result-bio"></span></div>
-                    <div style="padding:16px;background:var(--green-50);border-radius:var(--radius)"><strong>{{ t('fertilizer_schedule') }}:</strong> <span id="result-schedule"></span></div>
+            <div class="fert-step-indicator">
+                <div class="fert-step" id="fert-step-1-indicator" onclick="onFertStepClick(1)">
+                    <span class="fert-step-num">1</span>
+                    <span class="fert-step-label">{% if lang == "ta" %}பருவம்{% else %}Season{% endif %}</span>
                 </div>
+                <div class="fert-step-line"></div>
+                <div class="fert-step" id="fert-step-2-indicator" onclick="onFertStepClick(2)">
+                    <span class="fert-step-num">2</span>
+                    <span class="fert-step-label">{% if lang == "ta" %}பயிர்{% else %}Crop{% endif %}</span>
+                </div>
+                <div class="fert-step-line"></div>
+                <div class="fert-step" id="fert-step-3-indicator" onclick="onFertStepClick(3)">
+                    <span class="fert-step-num">3</span>
+                    <span class="fert-step-label">{% if lang == "ta" %}வளர்ச்சி நிலை{% else %}Growth{% endif %}</span>
+                </div>
+                <div class="fert-step-line"></div>
+                <div class="fert-step" id="fert-step-4-indicator" onclick="onFertStepClick(4)">
+                    <span class="fert-step-num">4</span>
+                    <span class="fert-step-label">{% if lang == "ta" %}நீர்ப்பாசனம்{% else %}Irrigation{% endif %}</span>
+                </div>
+                <div class="fert-step-line"></div>
+                <div class="fert-step" id="fert-step-5-indicator" onclick="onFertStepClick(5)">
+                    <span class="fert-step-num">5</span>
+                    <span class="fert-step-label">{% if lang == "ta" %}உருவாக்கு{% else %}Generate{% endif %}</span>
+                </div>
+            </div>
+
+            <div class="fert-step-content">
+                <div class="fert-step-panel" id="fert-step-1">
+                    <h3 style="margin:0 0 16px;font-size:1rem">
+                        {% if lang == "ta" %}விவசாய பருவத்தைத் தேர்ந்தெடுக்கவும்{% else %}Select Agricultural Season{% endif %}
+                    </h3>
+                    <div class="fert-select-grid" data-name="season">
+                        {% for s in seasons %}
+                        <div class="fert-select-item" data-value="{{ s.id }}">
+                            <div class="fert-select-label">{{ s.ta if lang == "ta" else s.en }}</div>
+                            <div class="fert-select-desc">{{ s.desc_ta if lang == "ta" else s.desc_en }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="fert-step-panel" id="fert-step-2">
+                    <h3 style="margin:0 0 16px;font-size:1rem">
+                        {% if lang == "ta" %}பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Select Crop{% endif %}
+                    </h3>
+                    <select class="fert-select" id="fert-crop-select" onchange="onFertCropSelect(this.value)">
+                        <option value="">-- {% if lang == "ta" %}தேர்ந்தெடுக்கவும்{% else %}Select{% endif %} --</option>
+                        {% for c in crops %}
+                        <option value="{{ c.en }}">{{ c.ta if lang == "ta" else c.en }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="fert-btn-group">
+                        <button class="fert-btn fert-btn-secondary" onclick="fertBack()">{% if lang == "ta" %}← பின்{% else %}← Back{% endif %}</button>
+                        <button class="fert-btn fert-btn-primary" id="fert-crop-next" onclick="onFertCropNext()" disabled>{% if lang == "ta" %}அடுத்து →{% else %}Next →{% endif %}</button>
+                    </div>
+                </div>
+
+                <div class="fert-step-panel" id="fert-step-3">
+                    <h3 style="margin:0 0 16px;font-size:1rem">
+                        {% if lang == "ta" %}வளர்ச்சி நிலையைத் தேர்ந்தெடுக்கவும்{% else %}Select Growth Stage{% endif %}
+                    </h3>
+                    <div class="fert-select-grid" data-name="growthStage">
+                        {% for s in growth_stages %}
+                        <div class="fert-select-item" data-value="{{ s.id }}">
+                            <div class="fert-select-label">{{ s.ta if lang == "ta" else s.en }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="fert-btn-group">
+                        <button class="fert-btn fert-btn-secondary" onclick="fertBack()">{% if lang == "ta" %}← பின்{% else %}← Back{% endif %}</button>
+                    </div>
+                </div>
+
+                <div class="fert-step-panel" id="fert-step-4">
+                    <h3 style="margin:0 0 16px;font-size:1rem">
+                        {% if lang == "ta" %}நீர்ப்பாசன முறையைத் தேர்ந்தெடுக்கவும்{% else %}Select Irrigation Method{% endif %}
+                    </h3>
+                    <div class="fert-select-grid" data-name="irrigation">
+                        {% for m in irrigation_methods %}
+                        <div class="fert-select-item" data-value="{{ m.id }}">
+                            <div class="fert-select-label">{{ m.ta if lang == "ta" else m.en }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="fert-btn-group">
+                        <button class="fert-btn fert-btn-secondary" onclick="fertBack()">{% if lang == "ta" %}← பின்{% else %}← Back{% endif %}</button>
+                    </div>
+                </div>
+
+                <div class="fert-step-panel" id="fert-step-5">
+                    <div style="text-align:center;padding:20px 0">
+                        <div style="font-size:2rem;margin-bottom:12px">🧪</div>
+                        <h3 style="margin:0 0 8px;font-size:1.1rem">
+                            {% if lang == "ta" %}உர பரிந்துரையை உருவாக்க தயார்{% else %}Ready to Generate Recommendation{% endif %}
+                        </h3>
+                        <p style="color:var(--fert-text-secondary);font-size:0.85rem;margin:0 0 20px">
+                            {% if lang == "ta" %}அனைத்து விவரங்களும் சேகரிக்கப்பட்டுள்ளன. உங்கள் உர பரிந்துரையை இப்போது உருவாக்கவும்.{% else %}All details collected. Generate your fertilizer recommendation now.{% endif %}
+                        </p>
+                        <button class="fert-btn fert-btn-primary fert-btn-large" id="fert-generate-btn" disabled onclick="generateFertilizer()">
+                            {% if lang == "ta" %}🔬 பரிந்துரையைப் பெறுக{% else %}🧪 Get Recommendation{% endif %}
+                        </button>
+                        <div class="fert-btn-group" style="justify-content:center;margin-top:12px">
+                            <button class="fert-btn fert-btn-secondary" onclick="fertBack()">{% if lang == "ta" %}← பின்{% else %}← Back{% endif %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fert-result" id="fert-result-section" style="display:none">
+            <div class="fert-card fert-result-header" style="text-align:center">
+                <div class="fert-result-header-icon">🌱</div>
+                <h2>{{ t('fertilizer_result_title') }}</h2>
+                <div class="fert-result-meta">
+                    <span>🌾 <span id="fert-result-crop">-</span></span>
+                    <span>📅 <span id="fert-result-season">-</span></span>
+                    <span>🌿 <span id="fert-result-stage">-</span></span>
+                    <span>💧 <span id="fert-result-irrigation">-</span></span>
+                </div>
+                <div style="margin-top:12px">
+                    <span class="fert-confidence-badge high" id="fert-confidence-badge">High</span>
+                </div>
+                <div class="fert-btn-group" style="justify-content:center;margin-top:16px">
+                    <button class="fert-btn fert-btn-success" id="fert-save-btn" onclick="saveFertilizer()">💾 {{ t('fertilizer_save') if lang == "ta" else "Save" }}</button>
+                    <div class="fert-export-dropdown" style="position:relative;display:inline-block" id="fert-export-group">
+                        <button class="fert-btn fert-btn-secondary" onclick="toggleExportMenu(this)">📄 {% if lang == "ta" %}ஏற்றுமதி{% else %}Export{% endif %} ▼</button>
+                        <div class="fert-export-menu" style="display:none;position:absolute;right:0;top:100%;background:var(--fert-card-bg);border:1px solid var(--fert-border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;min-width:120px;overflow:hidden">
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('txt');fertCloseMenus()">📄 TXT</button>
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('pdf');fertCloseMenus()">📄 PDF</button>
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('csv');fertCloseMenus()">📄 CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fert-card fert-result-body" id="fert-result-body">
+                <div class="fert-markdown">{{ t('fertilizer_generating') }}</div>
+            </div>
+        </div>
+
+        <div class="fert-card" id="fert-history-section">
+            <div class="fert-card-header">
+                <h3 class="fert-section-title">📋 {{ t('fertilizer_history') if lang == "ta" else "History" }}</h3>
+            </div>
+            <div class="fert-history-tools">
+                <div class="fert-history-search">
+                    <span class="fert-history-search-icon">🔍</span>
+                    <input type="text" id="fert-history-search-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search...{% endif %}">
+                </div>
+                <div class="fert-history-filters">
+                    <select class="fert-select" id="fert-season-filter" style="width:140px;padding:8px 12px;font-size:0.8rem">
+                        <option value="">{% if lang == "ta" %}அனைத்து பருவங்கள்{% else %}All Seasons{% endif %}</option>
+                        {% for s in seasons %}
+                        <option value="{{ s.id }}">{{ s.ta if lang == "ta" else s.en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="fert-history-list" id="fert-history-list">
+                <div class="fert-empty">{% if lang == "ta" %}இதுவரை பரிந்துரைகள் இல்லை.{% else %}No recommendations yet.{% endif %}</div>
             </div>
         </div>
     </main>
 </div>
 
-<script>
-document.getElementById("fertilizer-form")?.addEventListener("submit", function(e){
-    e.preventDefault();
-    const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = "{{ t('loading') }}";
-    const data = Object.fromEntries(new FormData(this));
+<div class="fert-modal-overlay" id="fert-view-modal" onclick="if(event.target===this)closeFertViewModal()">
+    <div class="fert-modal">
+        <div class="fert-modal-header">
+            <h2>📋 {% if lang == "ta" %}விவரங்கள்{% else %}Details{% endif %}</h2>
+            <button class="fert-modal-close" onclick="closeFertViewModal()">✕</button>
+        </div>
+        <div class="fert-modal-body" id="fert-view-modal-body"></div>
+    </div>
+</div>
 
-    fetch("/api/fertilizer", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})
-    .then(r=>r.json()).then(res=>{
-        btn.disabled = false;
-        btn.textContent = "{{ t('fertilizer_recommend') }}";
-        if(res.success){
-            document.getElementById("result-npk").textContent = res.result.npk || "-";
-            document.getElementById("result-organic").textContent = res.result.organic || "-";
-            document.getElementById("result-bio").textContent = res.result.bio || "-";
-            document.getElementById("result-schedule").textContent = res.result.schedule || "-";
-            document.getElementById("fertilizer-result").style.display = "block";
-        } else showToast(res.message, "error");
-    });
-});
-</script>
+<div class="fert-toast" id="fert-toast"></div>
+
+<script src="{{ url_for('static', filename='js/fertilizer.js') }}"></script>
 {% endblock %}

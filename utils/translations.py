@@ -225,6 +225,7 @@ TRANSLATIONS = {
         "fertilizer_organic": "Organic Fertilizers",
         "fertilizer_bio": "Bio Fertilizers",
         "fertilizer_schedule": "Application Schedule",
+        "fertilizer_stats_total": "Total Recommendations",
 
         # Irrigation
         "irrigation_title": "Irrigation Planner",
@@ -618,6 +619,7 @@ TRANSLATIONS = {
         "fertilizer_organic": "கரிம உரங்கள்",
         "fertilizer_bio": "உயிர் உரங்கள்",
         "fertilizer_schedule": "பயன்பாட்டு அட்டவணை",
+        "fertilizer_stats_total": "மொத்த பரிந்துரைகள்",
 
         # Irrigation
         "irrigation_title": "நீர்ப்பாசன திட்டமிடல்",

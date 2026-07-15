@@ -148,6 +148,7 @@ from routes.diagnosis import diagnosis_bp
 from routes.notifications import notifications_bp
 from routes.profile import profile_bp
 from routes.admin import admin_bp
+from routes.fertilizer import fertilizer_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
@@ -162,6 +163,7 @@ app.register_blueprint(diagnosis_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(fertilizer_bp)
 
 from utils.translations import TRANSLATIONS
 from models.notification import Notification
@@ -194,72 +196,14 @@ def set_language():
     return jsonify({"success": True})
 
 @app.route("/crops")
-@app.route("/fertilizer")
 @app.route("/irrigation")
 def feature_pages():
     route_map = {
         "/crops": "crops.html",
-        "/fertilizer": "fertilizer.html",
         "/irrigation": "irrigation.html",
     }
     template = route_map.get(request.path, "index.html")
     return render_template(template, lang=session.get("lang", "en"))
-
-@app.route("/api/fertilizer", methods=["POST"])
-def fertilizer_recommend():
-    data = request.get_json()
-    crop = data.get("crop", "")
-    soil = data.get("soil", "")
-    season = data.get("season", "")
-    lang = session.get("lang", "en")
-
-    if not crop or not soil:
-        msg = "Please select crop and soil type." if lang == "en" else "தயவுசெய்து பயிர் மற்றும் மண் வகையைத் தேர்ந்தெடுக்கவும்."
-        return jsonify({"success": False, "message": msg})
-
-    from services.ai_service import AIService
-    ai = AIService()
-
-    if lang == "ta":
-        prompt = f"பயிர்: {crop}, மண்: {soil}, பருவம்: {season}\n\nஇந்த தகவல்களின் அடிப்படையில் NPK விகிதம், கரிம உரங்கள், உயிர் உரங்கள் மற்றும் பயன்பாட்டு அட்டவணையை வழங்கவும்."
-    else:
-        prompt = f"Crop: {crop}, Soil: {soil}, Season: {season}\n\nBased on this information, provide NPK ratio, organic fertilizers, bio fertilizers, and application schedule."
-
-    response = ai.get_response(prompt, lang)
-
-    result = {}
-    sections = response.split("\n")
-    current_lines = []
-    current_key = None
-    for line in sections:
-        line = line.strip()
-        lower = line.lower()
-        if any(k in lower for k in ["npk", "organic", "bio fertilizer", "application", "schedule", "கரிம", "உயிர்", "பயன்பாடு"]) and ":" in line:
-            if current_key and current_lines:
-                result[current_key] = "\n".join(current_lines)
-            idx = line.find(":")
-            key = line[:idx].strip().lower()
-            current_key = key
-            current_lines = [line[idx+1:].strip()]
-        elif current_key:
-            current_lines.append(line)
-    if current_key and current_lines:
-        result[current_key] = "\n".join(current_lines)
-
-    if not result:
-        result = {
-            "npk": "20:10:10 (N:P:K)",
-            "organic": "FYM 5 tons/acre, Vermicompost 2 tons/acre",
-            "bio": "Azospirillum, Phosphobacteria, Rhizobium",
-            "schedule": "Basal: Full P&K + 1/3 N | Tillering: 1/3 N | Panicle: 1/3 N",
-        } if lang == "en" else {
-            "npk": "20:10:10 (N:P:K)",
-            "organic": "சாண எரு 5 டன்/ஏக்கர், மண்புழு உரம் 2 டன்/ஏக்கர்",
-            "bio": "அசோஸ்பைரில்லம், பாஸ்போபாக்டீரியா, ரைசோபியம்",
-            "schedule": "அடி உரம்: முழு P&K + 1/3 N | தூர்க்கும் நேரம்: 1/3 N | கதிர் விடும் நேரம்: 1/3 N",
-        }
-
-    return jsonify({"success": True, "result": result})
 
 @app.route("/api/irrigation", methods=["POST"])
 def irrigation_plan():
