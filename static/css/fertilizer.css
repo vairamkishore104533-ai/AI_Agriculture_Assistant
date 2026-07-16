@@ -114,6 +114,7 @@
     box-shadow: var(--fert-shadow);
     padding: 28px;
     transition: all 0.3s ease;
+    overflow: visible;
 }
 
 .fert-input-card:hover {
@@ -196,7 +197,7 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.1);
     max-height: 240px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: 9999;
     display: none;
 }
 
