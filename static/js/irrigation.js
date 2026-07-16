@@ -227,7 +227,7 @@ function showIrrCropInfo(item) {
     var el = document.getElementById("irr-info-crop");
     if (!el) return;
     var lang = getLang();
-    var wKey = lang === "ta" ? "ta" : "en";
+    var wKey = lang === "ta" ? "water_ta" : "water_en";
     var dKey = lang === "ta" ? "duration_ta" : "duration_en";
     var distKey = lang === "ta" ? "districts_ta" : "districts_en";
     var name = lang === "ta" ? item.ta : item.en;
@@ -319,7 +319,6 @@ function generateIrrigation() {
         if (res.success) {
             irrState.recommendation = res.recommendation;
             displayIrrResult(res);
-            autoSaveIrrPlan(res);
         } else {
             var msg = res.error || t("Failed to generate plan", "திட்டத்தை உருவாக்க முடியவில்லை");
             showIrrToast(msg, "error");
@@ -353,42 +352,87 @@ function displayIrrResult(res) {
 
 function renderIrrMarkdown(text) {
     if (!text) return "";
-    var html = escapeHtml(text)
-        .replace(/^#### (.+)$/gm, "<h4>$1</h4>")
-        .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-        .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-        .replace(/^# (.+)$/gm, "<h2>$1</h2>")
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/^\|(.+)\|$/gm, function (m) {
-            var cells = m.slice(1, -1).split("|").map(function (c) { return c.trim(); });
-            if (cells.every(function (c) { return /^[- ]+$/.test(c); })) return "";
-            return "<tr><td>" + cells.join("</td><td>") + "</td></tr>";
-        })
-        .replace(/<tr><td>/g, function () {
-            if (!window._irrTableOpen) {
-                window._irrTableOpen = true;
-                return '<table><thead><tr><td>';
-            }
-            return '<tr><td>';
-        })
-        .replace(/<\/tr><\/table>/g, function () {
-            window._irrTableOpen = false;
-            return "";
-        })
-        .replace(/^[\-*] (.+)$/gm, "<li>$1</li>")
-        .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
-        .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
-        .replace(/<ul>\s*<li>(\d+\.)/g, function () { return "<ol><li>"; })
-        .replace(/<\/li>\s*<\/ul>/g, "</li></ol>")
-        .replace(/\n\n/g, "</p><p>")
-        .replace(/\n/g, "<br>");
+    var lines = escapeHtml(text).split("\n");
+    var out = [];
+    var inTable = false;
+    var listType = null;
 
-    html = html.replace(/<\/?table>(\s*<\/?table>)?/g, function (m) { return m.match(/<\/?table>/g) ? m : ""; });
-    html = html.replace(/<br><\/li>/g, "</li>");
-    html = html.replace(/<br><\/h([234])>/g, "</h$1>");
-    html = "<p>" + html + "</p>";
+    function closeList() {
+        if (listType) { out.push("</" + listType + ">"); listType = null; }
+    }
+
+    function openList(type) {
+        if (listType === type) return;
+        closeList();
+        out.push("<" + type + ">");
+        listType = type;
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+        var raw = lines[i];
+        var line = raw.trim();
+
+        if (!line) {
+            closeList();
+            if (inTable) { out.push("</table>"); inTable = false; }
+            out.push("</p><p>");
+            continue;
+        }
+
+        var h = line.match(/^(#{1,4})\s+(.+)/);
+        if (h) {
+            closeList();
+            if (inTable) { out.push("</table>"); inTable = false; }
+            var lv = Math.min(h[1].length, 4);
+            out.push("<h" + lv + ">" + h[2] + "</h" + lv + ">");
+            continue;
+        }
+
+        var t = line.match(/^\|(.+)\|$/);
+        if (t) {
+            closeList();
+            var cells = t[1].split("|").map(function (c) { return c.trim(); });
+            if (cells.every(function (c) { return /^[- ]+$/.test(c); })) continue;
+            if (!inTable) {
+                inTable = true;
+                out.push("<table><thead><tr><td>" + cells.join("</td><td>") + "</td></tr></thead>");
+            } else {
+                out.push("<tr><td>" + cells.join("</td><td>") + "</td></tr>");
+            }
+            continue;
+        }
+
+        var bolded = raw.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+        if (/^[\-*]\s/.test(line)) {
+            openList("ul");
+            out.push("<li>" + bolded.replace(/^[\-*]\s+/, "") + "</li>");
+            continue;
+        }
+
+        if (/^\d+\.\s/.test(line)) {
+            openList("ol");
+            out.push("<li>" + bolded.replace(/^\d+\.\s+/, "") + "</li>");
+            continue;
+        }
+
+        closeList();
+        if (inTable) { out.push("</table>"); inTable = false; }
+        out.push(bolded);
+    }
+
+    closeList();
+    if (inTable) out.push("</table>");
+
+    var html = out.join("\n");
+    html = html.replace(/<br>\s*<\/(h[234]|li)>/g, "</$1>");
+    html = html.replace(/<\/li>\s*<br>/g, "</li>");
     html = html.replace(/<p><\/p>/g, "");
     html = html.replace(/<table>\s*<\/table>/g, "");
+    html = html.replace(/<\/table>\s*<br>/g, "</table>");
+    html = "<p>" + html + "</p>";
+    html = html.replace(/<p>\s*<(h[234]|table|ul|ol)/g, "<$1");
+    html = html.replace(/(<\/(h[234]|table|ul|ol)>)\s*<\/p>/g, "$1");
     return html;
 }
 

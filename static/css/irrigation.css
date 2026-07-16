@@ -357,9 +357,9 @@
 
 .irr-result-header {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 16px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--irr-border);
@@ -368,6 +368,7 @@
 .irr-result-header h2 {
     margin: 0;
     font-size: 20px;
+    width: 100%;
     background: var(--irr-primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -377,8 +378,9 @@
 .irr-result-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     flex: 1;
+    min-width: 0;
 }
 
 .irr-meta-badge {
@@ -386,6 +388,7 @@
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    white-space: nowrap;
     background: var(--irr-primary-light);
     color: var(--irr-primary-dark);
     border: 1px solid rgba(var(--irr-primary-rgb), 0.2);
@@ -394,7 +397,6 @@
 .irr-result-actions {
     display: flex;
     gap: 8px;
-    margin-left: auto;
 }
 
 .irr-result-body {
@@ -652,8 +654,7 @@
 
 @media (max-width: 992px) {
     .irr-main { margin-left: 0; padding: 20px; }
-    .irr-result-header { flex-direction: column; align-items: flex-start; }
-    .irr-result-actions { margin-left: 0; }
+    .irr-result-header h2 { font-size: 18px; }
 }
 
 @media (max-width: 768px) {
