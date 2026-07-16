@@ -16,29 +16,29 @@ var fertState = {
 function fertInit() {
     console.log("fertInit called");
 
-    document.querySelectorAll(".fert-select-item").forEach(function (el) {
-        el.addEventListener("click", function () {
-            var parent = this.closest(".fert-select-grid");
-            if (!parent) return;
-            var name = parent.getAttribute("data-name");
-            if (!name) return;
-            var value = this.getAttribute("data-value") || "";
-            var labelEl = this.querySelector(".fert-select-label");
-            var displayName = labelEl ? labelEl.textContent.trim() : value;
+    document.addEventListener("click", function (e) {
+        var item = e.target.closest(".fert-select-item");
+        if (!item) return;
+        var parent = item.closest(".fert-select-grid");
+        if (!parent) return;
+        var name = parent.getAttribute("data-name");
+        if (!name) return;
+        var value = item.getAttribute("data-value") || "";
+        var labelEl = item.querySelector(".fert-select-label");
+        var displayName = labelEl ? labelEl.textContent.trim() : value;
 
-            parent.querySelectorAll(".fert-select-item").forEach(function (c) {
-                c.classList.remove("selected");
-            });
-            this.classList.add("selected");
-
-            fertState[name] = value;
-            if (name === "season") fertState.seasonName = displayName;
-            else if (name === "growthStage") fertState.growthStageName = displayName;
-            else if (name === "irrigation") fertState.irrigationName = displayName;
-
-            console.log("selected " + name + ":", value, "(", displayName + ")");
-            onFertSelect(name);
+        parent.querySelectorAll(".fert-select-item").forEach(function (c) {
+            c.classList.remove("selected");
         });
+        item.classList.add("selected");
+
+        fertState[name] = value;
+        if (name === "season") fertState.seasonName = displayName;
+        else if (name === "growthStage") fertState.growthStageName = displayName;
+        else if (name === "irrigation") fertState.irrigationName = displayName;
+
+        console.log("selected " + name + ":", value, "(", displayName + ")");
+        onFertSelect(name);
     });
 
     var cropSelect = document.getElementById("fert-crop-select");
@@ -636,27 +636,18 @@ window.showFertToast = showFertToast;
 
 console.log("fertilizer.js loaded, onFertStepClick=" + (typeof window.onFertStepClick));
 
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOMContentLoaded firing");
-    try {
-        fertInit();
-    } catch (e) {
-        console.error("fertInit error:", e);
-        showFertToast("JS init error: " + e.message, "error");
-    }
-    try {
-        goToFertStep(1);
-    } catch (e) {
-        console.error("goToFertStep error:", e);
-    }
-    try {
-        loadFertHistory();
-    } catch (e) {
-        console.error("loadFertHistory error:", e);
-    }
-    try {
-        updateFertStats();
-    } catch (e) {
-        console.error("updateFertStats error:", e);
-    }
-});
+function fertBoot() {
+    console.log("fertBoot called");
+    try { fertInit(); } catch (e) { console.error("fertInit error:", e); }
+    try { goToFertStep(1); } catch (e) { console.error("goToFertStep error:", e); }
+    try { loadFertHistory(); } catch (e) { console.error("loadFertHistory error:", e); }
+    try { updateFertStats(); } catch (e) { console.error("updateFertStats error:", e); }
+}
+
+// All DOM elements exist at this point (script at end of body), run immediately.
+// Fallback for DOMContentLoaded in case of async loading patterns.
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fertBoot);
+} else {
+    fertBoot();
+}
