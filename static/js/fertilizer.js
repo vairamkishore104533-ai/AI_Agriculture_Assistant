@@ -1,7 +1,4 @@
-console.log("fertilizer.js loading...");
-
 var fertState = {
-    currentStep: 1,
     season: "",
     crop: "",
     growthStage: "",
@@ -13,222 +10,271 @@ var fertState = {
     irrigationName: "",
 };
 
-function fertInit() {
-    console.log("fertInit called");
+function getLang() {
+    return (window.FERT_DATA && FERT_DATA.lang) || "en";
+}
 
-    document.addEventListener("click", function (e) {
-        var item = e.target.closest(".fert-select-item");
-        if (!item) return;
-        var parent = item.closest(".fert-select-grid");
-        if (!parent) return;
-        var name = parent.getAttribute("data-name");
-        if (!name) return;
-        var value = item.getAttribute("data-value") || "";
-        var labelEl = item.querySelector(".fert-select-label");
-        var displayName = labelEl ? labelEl.textContent.trim() : value;
+function t(en, ta) {
+    return getLang() === "ta" ? ta : en;
+}
 
-        parent.querySelectorAll(".fert-select-item").forEach(function (c) {
-            c.classList.remove("selected");
-        });
-        item.classList.add("selected");
+/* ── Searchable Dropdown Component ── */
 
-        fertState[name] = value;
-        if (name === "season") fertState.seasonName = displayName;
-        else if (name === "growthStage") fertState.growthStageName = displayName;
-        else if (name === "irrigation") fertState.irrigationName = displayName;
+function buildSearchSelect(config) {
+    var input = config.input;
+    var dropdown = config.dropdown;
+    var items = config.items;
+    var labelKey = config.labelKey || "en";
+    var onSelect = config.onSelect;
 
-        console.log("selected " + name + ":", value, "(", displayName + ")");
-        onFertSelect(name);
+    function renderOptions(query) {
+        var q = (query || "").toLowerCase().trim();
+        var html = "";
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            var label = item[labelKey] || item.en || item.id || "";
+            if (q && label.toLowerCase().indexOf(q) < 0) continue;
+            var displayText = item.ta && getLang() === "ta" ? item.ta : (item.en || label);
+            html += '<div class="fert-search-option" data-index="' + i + '">' + escapeHtml(displayText) + "</div>";
+        }
+        if (!html) {
+            html = '<div class="fert-search-option" style="color:var(--fert-text-secondary);cursor:default">' + t("No results found", "முடிவுகள் எதுவும் இல்லை") + "</div>";
+        }
+        dropdown.innerHTML = html;
+    }
+
+    function openDropdown() {
+        renderOptions(input.value);
+        dropdown.classList.add("open");
+    }
+
+    function closeDropdown() {
+        dropdown.classList.remove("open");
+    }
+
+    input.addEventListener("focus", function () {
+        openDropdown();
     });
 
-    var cropSelect = document.getElementById("fert-crop-select");
-    if (cropSelect) {
-        cropSelect.addEventListener("change", function () {
-            onFertCropSelect(this.value);
-        });
-    }
+    input.addEventListener("input", function () {
+        renderOptions(input.value);
+        if (!dropdown.classList.contains("open")) {
+            dropdown.classList.add("open");
+        }
+    });
 
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".fert-search-select")) {
+            closeDropdown();
+        }
+    });
+
+    dropdown.addEventListener("click", function (e) {
+        var opt = e.target.closest(".fert-search-option");
+        if (!opt || !opt.dataset.index) return;
+        var idx = parseInt(opt.dataset.index);
+        var item = items[idx];
+        var displayText = item.ta && getLang() === "ta" ? item.ta : (item.en || item.id || "");
+        input.value = displayText;
+        closeDropdown();
+        if (onSelect) onSelect(item, idx);
+    });
+}
+
+/* ── Init ── */
+
+function fertInit() {
+    var lang = getLang();
+
+    /* Season */
+    buildSearchSelect({
+        input: document.getElementById("fert-season-input"),
+        dropdown: document.getElementById("fert-season-dropdown"),
+        items: FERT_DATA.seasons,
+        labelKey: lang === "ta" ? "ta" : "en",
+        onSelect: function (item) {
+            fertState.season = item.id;
+            fertState.seasonName = item.en;
+            showSeasonInfo(item);
+            revealStep("crop");
+            updateProgress();
+        }
+    });
+
+    /* Crop */
+    buildSearchSelect({
+        input: document.getElementById("fert-crop-input"),
+        dropdown: document.getElementById("fert-crop-dropdown"),
+        items: FERT_DATA.crops,
+        labelKey: lang === "ta" ? "ta" : "en",
+        onSelect: function (item) {
+            fertState.crop = item.en;
+            fertState.cropName = item.en;
+            showCropInfo(item);
+            revealStep("stage");
+            updateProgress();
+        }
+    });
+
+    /* Growth Stage */
+    buildSearchSelect({
+        input: document.getElementById("fert-stage-input"),
+        dropdown: document.getElementById("fert-stage-dropdown"),
+        items: FERT_DATA.stages,
+        labelKey: lang === "ta" ? "ta" : "en",
+        onSelect: function (item) {
+            fertState.growthStage = item.id;
+            fertState.growthStageName = item.en;
+            showStageInfo(item);
+            revealStep("irrigation");
+            updateProgress();
+        }
+    });
+
+    /* Irrigation */
+    buildSearchSelect({
+        input: document.getElementById("fert-irrigation-input"),
+        dropdown: document.getElementById("fert-irrigation-dropdown"),
+        items: FERT_DATA.irrigation,
+        labelKey: lang === "ta" ? "ta" : "en",
+        onSelect: function (item) {
+            fertState.irrigation = item.id;
+            fertState.irrigationName = item.en;
+            showIrrigationInfo(item);
+            revealStep("generate");
+            updateProgress();
+        }
+    });
+
+    /* History listeners */
     var searchInput = document.getElementById("fert-history-search-input");
     if (searchInput) {
-        searchInput.addEventListener("input", function () {
-            loadFertHistory();
-        });
+        searchInput.addEventListener("input", function () { loadFertHistory(); });
     }
-
     var seasonFilter = document.getElementById("fert-season-filter");
     if (seasonFilter) {
-        seasonFilter.addEventListener("change", function () {
-            loadFertHistory();
-        });
+        seasonFilter.addEventListener("change", function () { loadFertHistory(); });
     }
 }
 
-function onFertStepClick(n) {
-    console.log("Step clicked:", n);
-    if (n === fertState.currentStep) return;
+/* ── Progressive Reveal ── */
 
-    var firstIncomplete = getFertFirstIncompleteStep();
-    if (n > firstIncomplete) {
-        var labels = ["", "Season", "Crop", "Growth Stage", "Irrigation", "Generate"];
-        showFertToast("Please complete " + labels[firstIncomplete] + " first.", "error");
-        return;
-    }
-    goToFertStep(n);
-}
+var stepOrder = ["season", "crop", "stage", "irrigation", "generate"];
 
-function getFertFirstIncompleteStep() {
-    if (!fertState.season) return 1;
-    if (!fertState.crop) return 2;
-    if (!fertState.growthStage) return 3;
-    if (!fertState.irrigation) return 4;
-    return 5;
-}
+function revealStep(step) {
+    var idx = stepOrder.indexOf(step);
+    var el = document.getElementById("fert-card-" + step);
+    if (el && el.style.display !== "none" && el.style.display !== "") return;
 
-function isFertStepCompleted(n) {
-    switch (n) {
-        case 1: return fertState.season !== "";
-        case 2: return fertState.crop !== "";
-        case 3: return fertState.growthStage !== "";
-        case 4: return fertState.irrigation !== "";
-        default: return false;
+    if (el) {
+        el.style.display = "block";
+        el.classList.remove("fert-fade-slide");
+        void el.offsetWidth;
+        el.classList.add("fert-fade-slide");
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 }
 
-function goToFertStep(n) {
-    console.log("goToFertStep:", n);
-    fertState.currentStep = n;
+function updateProgress() {
+    var bar = document.getElementById("fert-progress-bar");
+    var fill = document.getElementById("fert-progress-fill");
+    var label = document.getElementById("fert-progress-label");
+    var count = 0;
+    if (fertState.season) count++;
+    if (fertState.crop) count++;
+    if (fertState.growthStage) count++;
+    if (fertState.irrigation) count++;
 
-    for (var i = 1; i <= 5; i++) {
-        var indicator = document.getElementById("fert-step-" + i + "-indicator");
-        var panel = document.getElementById("fert-step-" + i);
-        var numEl = indicator ? indicator.querySelector(".fert-step-num") : null;
+    if (!bar || !fill || !label) return;
+    bar.style.display = "flex";
+    fill.style.width = (count / 4 * 100) + "%";
+    label.textContent = count + "/4 " + t("completed", "முடிந்தது");
 
-        if (indicator) {
-            indicator.classList.remove("active", "completed");
-            if (i < n && isFertStepCompleted(i)) {
-                indicator.classList.add("completed");
-                if (numEl) numEl.textContent = "\u2713";
-            } else if (i === n) {
-                indicator.classList.add("active");
-                if (numEl) numEl.textContent = i;
-            } else {
-                if (numEl) numEl.textContent = i;
-            }
-        }
-
-        if (panel) {
-            if (i === n) {
-                panel.classList.add("active");
-                panel.style.display = "block";
-            } else {
-                panel.classList.remove("active");
-                panel.style.display = "none";
-            }
-        }
+    /* Enable generate button if all 4 selected */
+    var genBtn = document.getElementById("fert-generate-btn");
+    if (genBtn) {
+        genBtn.disabled = count < 4;
     }
 
-    updateFertStepLabels();
-
-    if (n === 5) {
-        var genBtn = document.getElementById("fert-generate-btn");
-        var allFilled = fertState.season && fertState.crop && fertState.growthStage && fertState.irrigation;
-        if (genBtn) genBtn.disabled = !allFilled;
+    if (count === 4) {
+        revealStep("generate");
     }
 }
 
-function updateFertStepLabels() {
-    if (!window._fertOrigLabels) {
-        window._fertOrigLabels = {};
-        for (var i = 1; i <= 4; i++) {
-            var el = document.getElementById("fert-step-" + i + "-indicator");
-            if (el) {
-                var labelEl = el.querySelector(".fert-step-label");
-                if (labelEl) window._fertOrigLabels[i] = labelEl.textContent;
-            }
-        }
-    }
+/* ── Info Cards ── */
 
-    var mappings = [
-        { step: 1, val: fertState.seasonName },
-        { step: 2, val: fertState.cropName },
-        { step: 3, val: fertState.growthStageName },
-        { step: 4, val: fertState.irrigationName },
-    ];
-
-    for (var i = 0; i < mappings.length; i++) {
-        var el = document.getElementById("fert-step-" + mappings[i].step + "-indicator");
-        if (!el) continue;
-        var labelEl = el.querySelector(".fert-step-label");
-        if (!labelEl) continue;
-        if (mappings[i].val) {
-            labelEl.textContent = mappings[i].val;
-        } else if (window._fertOrigLabels[mappings[i].step]) {
-            labelEl.textContent = window._fertOrigLabels[mappings[i].step];
-        }
-    }
+function showSeasonInfo(item) {
+    var el = document.getElementById("fert-info-season");
+    if (!el) return;
+    var lang = getLang();
+    var months = lang === "ta" ? item.months_ta : item.months_en;
+    var rainfall = lang === "ta" ? item.rainfall_ta : item.rainfall_en;
+    var crops = lang === "ta" ? item.crops_ta : item.crops_en;
+    el.style.display = "block";
+    el.innerHTML =
+        '<div class="fert-info-grid">' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Description", "விளக்கம்") + '</span><span class="fert-info-value">' + escapeHtml(item.desc_en) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Cultivation Months", "சாகுபடி மாதங்கள்") + '</span><span class="fert-info-value">' + escapeHtml(months) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Rainfall", "மழைப்பொழிவு") + '</span><span class="fert-info-value">' + escapeHtml(rainfall) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Common Crops", "பொதுவான பயிர்கள்") + '</span><span class="fert-info-value">' + escapeHtml(crops) + '</span></div>' +
+        '</div>';
 }
 
-function onFertSelect(name) {
-    console.log("onFertSelect:", name);
-
-    if (name === "season" && fertState.season) {
-        goToFertStep(2);
-    } else if (name === "growthStage" && fertState.growthStage) {
-        goToFertStep(4);
-    } else if (name === "irrigation" && fertState.irrigation) {
-        goToFertStep(5);
-    }
+function showCropInfo(item) {
+    var el = document.getElementById("fert-info-crop");
+    if (!el) return;
+    var lang = getLang();
+    var duration = lang === "ta" ? (item.duration_ta || "-") : (item.duration_en || "-");
+    var districts = lang === "ta" ? (item.districts_ta || "-") : (item.districts_en || "-");
+    el.style.display = "block";
+    el.innerHTML =
+        '<div class="fert-info-grid">' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Crop Name", "பயிரின் பெயர்") + '</span><span class="fert-info-value">' + escapeHtml(item.en) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Scientific Name", "அறிவியல் பெயர்") + '</span><span class="fert-info-value">' + escapeHtml(item.sci || "-") + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Average Duration", "சராசரி காலம்") + '</span><span class="fert-info-value">' + escapeHtml(duration) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Major Districts", "முக்கிய மாவட்டங்கள்") + '</span><span class="fert-info-value">' + escapeHtml(districts) + '</span></div>' +
+        '</div>';
 }
 
-function onFertCropSelect(value) {
-    console.log("Crop selected:", value);
-    var nextBtn = document.getElementById("fert-crop-next");
-    if (value) {
-        fertState.crop = value;
-        var select = document.getElementById("fert-crop-select");
-        if (select) {
-            var opt = select.options[select.selectedIndex];
-            fertState.cropName = opt ? opt.textContent.trim() : value;
-        }
-        if (nextBtn) nextBtn.disabled = false;
-    } else {
-        fertState.crop = "";
-        fertState.cropName = "";
-        if (nextBtn) nextBtn.disabled = true;
-    }
+function showStageInfo(item) {
+    var el = document.getElementById("fert-info-stage");
+    if (!el) return;
+    var lang = getLang();
+    var nutrient = lang === "ta" ? (item.nutrient_ta || "") : (item.nutrient_en || "");
+    el.style.display = "block";
+    el.innerHTML =
+        '<div class="fert-info-grid">' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Stage", "நிலை") + '</span><span class="fert-info-value">' + escapeHtml(item.en) + '</span></div>' +
+            '<div class="fert-info-item" style="grid-column:1/-1"><span class="fert-info-label">' + t("Nutrient Needs", "ஊட்டச்சத்து தேவைகள்") + '</span><span class="fert-info-value">' + escapeHtml(nutrient) + '</span></div>' +
+        '</div>';
 }
 
-function onFertCropNext() {
-    console.log("Crop Next clicked, crop:", fertState.crop);
-    if (fertState.crop) {
-        goToFertStep(3);
-    } else {
-        showFertToast("Please select a crop first.", "error");
-    }
+function showIrrigationInfo(item) {
+    var el = document.getElementById("fert-info-irrigation");
+    if (!el) return;
+    var lang = getLang();
+    var water = lang === "ta" ? (item.water_ta || "") : (item.water_en || "");
+    var fert = lang === "ta" ? (item.fert_ta || "") : (item.fert_en || "");
+    el.style.display = "block";
+    el.innerHTML =
+        '<div class="fert-info-grid">' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Method", "முறை") + '</span><span class="fert-info-value">' + escapeHtml(item.en) + '</span></div>' +
+            '<div class="fert-info-item"><span class="fert-info-label">' + t("Water Requirement", "நீர் தேவை") + '</span><span class="fert-info-value">' + escapeHtml(water) + '</span></div>' +
+            '<div class="fert-info-item" style="grid-column:1/-1"><span class="fert-info-label">' + t("Fertilizer Application", "உர பயன்பாடு") + '</span><span class="fert-info-value">' + escapeHtml(fert) + '</span></div>' +
+        '</div>';
 }
 
-function fertBack() {
-    console.log("fertBack from:", fertState.currentStep);
-    if (fertState.currentStep > 1) {
-        goToFertStep(fertState.currentStep - 1);
-    }
-}
+/* ── Generate ── */
 
 function generateFertilizer() {
-    console.log("Generate clicked");
-    console.log("Season:", fertState.season);
-    console.log("Crop selected:", fertState.crop);
-    console.log("Growth selected:", fertState.growthStage);
-    console.log("Irrigation selected:", fertState.irrigation);
-
     if (!fertState.season || !fertState.crop || !fertState.growthStage || !fertState.irrigation) {
-        showFertToast("Please complete all steps first.", "error");
+        showFertToast(t("Please complete all fields first.", "தயவுசெய்து முதலில் அனைத்து புலங்களையும் நிரப்பவும்."), "error");
         return;
     }
 
     var btn = document.getElementById("fert-generate-btn");
     var resultSection = document.getElementById("fert-result-section");
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="fert-spinner"></span> Generating...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="fert-spinner"></span> ' + t("Generating...", "உருவாக்குகிறது..."); }
     if (resultSection) resultSection.style.display = "none";
 
     var payload = {
@@ -238,8 +284,6 @@ function generateFertilizer() {
         irrigation: fertState.irrigation,
     };
 
-    console.log("Calling /api/fertilizer/recommend", JSON.stringify(payload));
-
     fetch("/api/fertilizer/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -248,18 +292,16 @@ function generateFertilizer() {
     .then(function (r) {
         if (!r.ok) {
             return r.text().then(function (text) {
-                console.error("Recommend HTTP error:", r.status, text);
-                try { var j = JSON.parse(text); throw new Error(j.error || "Server error"); }
-                catch (e) { throw new Error("Server error (" + r.status + ")"); }
+                try { var j = JSON.parse(text); throw new Error(j.error || t("Server error", "சேவையக பிழை")); }
+                catch (e) { throw new Error(t("Server error", "சேவையக பிழை") + " (" + r.status + ")"); }
             });
         }
         return r.json();
     })
     .then(function (res) {
-        console.log("Recommendation generated, success:", res.success);
-        if (btn) { btn.disabled = false; btn.innerHTML = "Get Recommendation"; }
+        if (btn) { btn.disabled = false; btn.innerHTML = t("Generate AI Fertilizer Recommendation", "AI உர பரிந்துரையை உருவாக்கவும்"); }
         if (!res.success) {
-            showFertToast(res.error || "Failed to generate.", "error");
+            showFertToast(res.error || t("Failed to generate.", "உருவாக்க முடியவில்லை."), "error");
             return;
         }
         fertState.recommendation = res;
@@ -267,43 +309,12 @@ function generateFertilizer() {
         autoSaveFertilizer(res);
     })
     .catch(function (err) {
-        console.error("Generate error:", err);
-        if (btn) { btn.disabled = false; btn.innerHTML = "Get Recommendation"; }
-        showFertToast("Error: " + (err.message || "Something went wrong"), "error");
+        if (btn) { btn.disabled = false; btn.innerHTML = t("Generate AI Fertilizer Recommendation", "AI உர பரிந்துரையை உருவாக்கவும்"); }
+        showFertToast(t("Error", "பிழை") + ": " + (err.message || t("Something went wrong", "ஏதோ தவறு ஏற்பட்டது")), "error");
     });
 }
 
-function autoSaveFertilizer(res) {
-    console.log("Auto-saving to MongoDB...");
-    var payload = {
-        season: fertState.season,
-        crop: fertState.crop,
-        growth_stage: fertState.growthStage,
-        irrigation_method: fertState.irrigation,
-        recommendation: res.recommendation,
-        language: document.documentElement.getAttribute("data-lang") || "en",
-    };
-
-    fetch("/api/fertilizer/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (res) {
-        if (res.success) {
-            console.log("Saved to MongoDB:", res.message);
-            showFertToast("Recommendation saved!", "success");
-            loadFertHistory();
-            updateFertStats();
-        } else {
-            console.warn("Auto-save failed:", res.error);
-        }
-    })
-    .catch(function (err) {
-        console.warn("Auto-save error:", err);
-    });
-}
+/* ── Display Result ── */
 
 function displayFertResult(res) {
     var section = document.getElementById("fert-result-section");
@@ -315,19 +326,6 @@ function displayFertResult(res) {
     setFertText("fert-result-season", meta.season || fertState.seasonName || fertState.season);
     setFertText("fert-result-stage", meta.growth_stage || fertState.growthStageName || fertState.growthStage);
     setFertText("fert-result-irrigation", meta.irrigation || fertState.irrigationName || fertState.irrigation);
-
-    var confidenceVal = "High";
-    var confidenceClass = "high";
-    if (res.confidence) {
-        var c = ("" + res.confidence).toLowerCase();
-        if (c.indexOf("low") >= 0) { confidenceVal = "Low"; confidenceClass = "low"; }
-        else if (c.indexOf("medium") >= 0 || c.indexOf("moderate") >= 0) { confidenceVal = "Medium"; confidenceClass = "medium"; }
-    }
-    var badge = document.getElementById("fert-confidence-badge");
-    if (badge) {
-        badge.textContent = confidenceVal;
-        badge.className = "fert-confidence-badge " + confidenceClass;
-    }
 
     var body = document.getElementById("fert-result-body");
     if (body) {
@@ -347,13 +345,43 @@ function setFertText(id, val) {
     if (el) el.textContent = val || "-";
 }
 
+/* ── Auto Save ── */
+
+function autoSaveFertilizer(res) {
+    var payload = {
+        season: fertState.season,
+        crop: fertState.crop,
+        growth_stage: fertState.growthStage,
+        irrigation_method: fertState.irrigation,
+        recommendation: res.recommendation,
+        language: document.documentElement.getAttribute("data-lang") || "en",
+    };
+
+    fetch("/api/fertilizer/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+        if (res.success) {
+            showFertToast(t("Recommendation saved!", "பரிந்துரை சேமிக்கப்பட்டது!"), "success");
+            loadFertHistory();
+            updateFertStats();
+        }
+    })
+    .catch(function () {});
+}
+
+/* ── Manual Save ── */
+
 function saveFertilizer() {
     if (!fertState.recommendation) {
-        showFertToast("No recommendation to save. Generate one first.", "error");
+        showFertToast(t("No recommendation to save.", "சேமிக்க பரிந்துரை இல்லை."), "error");
         return;
     }
     var btn = document.getElementById("fert-save-btn");
-    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+    if (btn) { btn.disabled = true; btn.textContent = t("Saving...", "சேமிக்கிறது..."); }
 
     var payload = {
         season: fertState.season,
@@ -371,20 +399,22 @@ function saveFertilizer() {
     })
     .then(function (r) { return r.json(); })
     .then(function (res) {
-        if (btn) { btn.disabled = false; btn.innerHTML = "Save"; }
+        if (btn) { btn.disabled = false; btn.innerHTML = t("Save", "சேமி"); }
         if (res.success) {
-            showFertToast("Recommendation saved!", "success");
+            showFertToast(t("Recommendation saved!", "பரிந்துரை சேமிக்கப்பட்டது!"), "success");
             loadFertHistory();
             updateFertStats();
         } else {
-            showFertToast(res.error || "Failed to save.", "error");
+            showFertToast(res.error || t("Failed to save.", "சேமிக்க முடியவில்லை."), "error");
         }
     })
     .catch(function () {
-        if (btn) { btn.disabled = false; btn.innerHTML = "Save"; }
-        showFertToast("Save failed.", "error");
+        if (btn) { btn.disabled = false; btn.innerHTML = t("Save", "சேமி"); }
+        showFertToast(t("Save failed.", "சேமிப்பு தோல்வி."), "error");
     });
 }
+
+/* ── History ── */
 
 function loadFertHistory() {
     var q = "";
@@ -406,7 +436,7 @@ function loadFertHistory() {
         var list = document.getElementById("fert-history-list");
         if (!list) return;
         if (!res.success || !res.history || res.history.length === 0) {
-            list.innerHTML = '<div class="fert-empty">No recommendations yet.</div>';
+            list.innerHTML = '<div class="fert-empty">' + t("No recommendations yet.", "இதுவரை பரிந்துரைகள் இல்லை.") + '</div>';
             return;
         }
         var html = "";
@@ -415,19 +445,19 @@ function loadFertHistory() {
             var dateStr = h.created_at ? h.created_at.substring(0, 10) : "";
             html += '<div class="fert-history-item" data-id="' + h.id + '">';
             html += '<div class="fert-history-left">';
-            html += '<span class="fert-history-crop">' + htmlEscape(h.crop) + "</span>";
-            html += '<div class="fert-history-meta"><span>' + htmlEscape(h.season || "") + "</span><span>" + htmlEscape(h.growth_stage || "") + "</span><span>" + htmlEscape(h.irrigation_method || "") + "</span></div>';
+            html += '<span class="fert-history-crop">' + escapeHtml(h.crop) + "</span>";
+            html += '<div class="fert-history-meta"><span>' + escapeHtml(h.season || "") + "</span><span>" + escapeHtml(h.growth_stage || "") + "</span><span>" + escapeHtml(h.irrigation_method || "") + "</span></div>";
             html += '<span class="fert-history-date">' + dateStr + "</span></div>";
             html += '<div class="fert-history-right">';
-            html += '<button class="fert-btn-icon" title="View" onclick="viewFertHistory(\'' + h.id + '\')">\uD83D\uDC41</button>';
+            html += '<button class="fert-btn-icon" title="' + t("View", "பார்") + '" onclick="viewFertHistory(\'' + h.id + '\')">👁</button>';
             html += '<div class="fert-export-dropdown" style="position:relative;display:inline-block">';
-            html += '<button class="fert-btn-icon" title="Export" onclick="toggleExportMenu(this)">\uD83D\uDCC4</button>';
+            html += '<button class="fert-btn-icon" title="' + t("Export", "ஏற்றுமதி") + '" onclick="toggleExportMenu(this)">📄</button>';
             html += '<div class="fert-export-menu" style="display:none;position:absolute;right:0;top:100%;background:var(--fert-card-bg);border:1px solid var(--fert-border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;min-width:90px;overflow:hidden">';
-            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','txt');fertCloseMenus()">TXT</button>";
-            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','pdf');fertCloseMenus()">PDF</button>";
-            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','csv');fertCloseMenus()">CSV</button>";
+            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','txt');fertCloseMenus()\">TXT</button>";
+            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','pdf');fertCloseMenus()\">PDF</button>";
+            html += '<button class="fert-export-option" style="display:block;width:100%;padding:8px 14px;border:none;background:transparent;cursor:pointer;font-size:0.8rem;text-align:left;font-family:inherit" onclick="exportFertilizer(\'' + h.id + "','csv');fertCloseMenus()\">CSV</button>";
             html += "</div></div>";
-            html += '<button class="fert-btn-icon" title="Delete" onclick="deleteFertilizer(\'' + h.id + '\')">\uD83D\uDDD1</button>';
+            html += '<button class="fert-btn-icon" title="' + t("Delete", "நீக்கு") + '" onclick="deleteFertilizer(\'' + h.id + '\')">🗑</button>';
             html += "</div></div>";
         }
         list.innerHTML = html;
@@ -460,17 +490,17 @@ function viewFertHistory(id) {
                 if (res.history[i].id === id) { found = res.history[i]; break; }
             }
         }
-        if (!found) { showFertToast("Recommendation not found.", "error"); return; }
+        if (!found) { showFertToast(t("Recommendation not found.", "பரிந்துரை கிடைக்கவில்லை."), "error"); return; }
         var body = document.getElementById("fert-view-modal-body");
         if (!body) return;
         var html =
-            '<div class="fert-view-field"><span class="fert-view-label">Crop</span><span class="fert-view-val">' + htmlEscape(found.crop) + "</span></div>" +
-            '<div class="fert-view-field"><span class="fert-view-label">Season</span><span class="fert-view-val">' + htmlEscape(found.season) + "</span></div>" +
-            '<div class="fert-view-field"><span class="fert-view-label">Growth Stage</span><span class="fert-view-val">' + htmlEscape(found.growth_stage) + "</span></div>" +
-            '<div class="fert-view-field"><span class="fert-view-label">Irrigation</span><span class="fert-view-val">' + htmlEscape(found.irrigation_method) + "</span></div>" +
-            '<div class="fert-view-field"><span class="fert-view-label">Date</span><span class="fert-view-val">' + (found.created_at ? found.created_at.substring(0, 10) : "") + "</span></div>";
+            '<div class="fert-view-field"><span class="fert-view-label">' + t("Crop", "பயிர்") + '</span><span class="fert-view-val">' + escapeHtml(found.crop) + "</span></div>" +
+            '<div class="fert-view-field"><span class="fert-view-label">' + t("Season", "பருவம்") + '</span><span class="fert-view-val">' + escapeHtml(found.season) + "</span></div>" +
+            '<div class="fert-view-field"><span class="fert-view-label">' + t("Growth Stage", "வளர்ச்சி நிலை") + '</span><span class="fert-view-val">' + escapeHtml(found.growth_stage) + "</span></div>" +
+            '<div class="fert-view-field"><span class="fert-view-label">' + t("Irrigation", "நீர்ப்பாசனம்") + '</span><span class="fert-view-val">' + escapeHtml(found.irrigation_method) + "</span></div>" +
+            '<div class="fert-view-field"><span class="fert-view-label">' + t("Date", "தேதி") + '</span><span class="fert-view-val">' + (found.created_at ? found.created_at.substring(0, 10) : "") + "</span></div>";
         if (found.recommendation) {
-            html += '<div class="fert-view-field" style="margin-top:12px"><span class="fert-view-label">Recommendation</span><div class="fert-markdown" style="font-size:0.85rem;line-height:1.6;margin-top:4px">' + renderFertMarkdown(found.recommendation) + "</div></div>";
+            html += '<div class="fert-view-field" style="margin-top:12px"><span class="fert-view-label">' + t("Recommendation", "பரிந்துரை") + '</span><div class="fert-markdown" style="font-size:0.85rem;line-height:1.6;margin-top:4px">' + renderFertMarkdown(found.recommendation) + "</div></div>";
         }
         body.innerHTML = html;
         document.getElementById("fert-view-modal").style.display = "flex";
@@ -482,26 +512,28 @@ function closeFertViewModal() {
 }
 
 function deleteFertilizer(id) {
-    if (!confirm("Delete this recommendation?")) return;
+    if (!confirm(t("Delete this recommendation?", "இந்த பரிந்துரையை நீக்கவா?"))) return;
     fetch("/api/fertilizer/" + id, { method: "DELETE" })
     .then(function (r) { return r.json(); })
     .then(function (res) {
         if (res.success) {
-            showFertToast("Recommendation deleted!", "success");
+            showFertToast(t("Recommendation deleted!", "பரிந்துரை நீக்கப்பட்டது!"), "success");
             loadFertHistory();
             if (res.stats) updateFertStatsFromServer(res.stats);
         } else {
-            showFertToast(res.error || "Failed to delete.", "error");
+            showFertToast(res.error || t("Failed to delete.", "நீக்க முடியவில்லை."), "error");
         }
     });
 }
+
+/* ── Export ── */
 
 function exportFertilizer(id, fmt) {
     fetch("/api/fertilizer/export/" + id + "?format=" + fmt)
     .then(function (r) { return r.json(); })
     .then(function (res) {
         if (res.success) { downloadFertFile(res); }
-        else { showFertToast(res.error || "Export failed.", "error"); }
+        else { showFertToast(res.error || t("Export failed.", "ஏற்றுமதி தோல்வி."), "error"); }
     });
 }
 
@@ -523,12 +555,12 @@ function downloadFertFile(res) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showFertToast("Exported!", "success");
+    showFertToast(t("Exported!", "ஏற்றுமதி செய்யப்பட்டது!"), "success");
 }
 
 function exportCurrentResult(fmt) {
     if (!fertState.recommendation) {
-        showFertToast("No result to export.", "error");
+        showFertToast(t("No result to export.", "ஏற்றுமதி செய்ய முடிவு இல்லை."), "error");
         return;
     }
     var lines = [];
@@ -563,8 +595,10 @@ function downloadFertBlob(content, mime, filename) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showFertToast("Exported!", "success");
+    showFertToast(t("Exported!", "ஏற்றுமதி செய்யப்பட்டது!"), "success");
 }
+
+/* ── Stats ── */
 
 function updateFertStats() {
     fetch("/api/fertilizer/stats")
@@ -578,6 +612,8 @@ function updateFertStatsFromServer(stats) {
     var el = document.getElementById("fert-stat-total");
     if (el) el.textContent = stats.total || 0;
 }
+
+/* ── Markdown ── */
 
 function renderFertMarkdown(text) {
     if (!text) return "";
@@ -603,10 +639,12 @@ function renderFertMarkdown(text) {
     return html;
 }
 
-function htmlEscape(str) {
+function escapeHtml(str) {
     if (!str) return "";
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+/* ── Toast ── */
 
 function showFertToast(msg, type) {
     var toast = document.getElementById("fert-toast");
@@ -618,10 +656,8 @@ function showFertToast(msg, type) {
     toast._timer = setTimeout(function () { toast.style.display = "none"; }, 3000);
 }
 
-window.onFertStepClick = onFertStepClick;
-window.onFertCropSelect = onFertCropSelect;
-window.onFertCropNext = onFertCropNext;
-window.fertBack = fertBack;
+/* ── Boot ── */
+
 window.generateFertilizer = generateFertilizer;
 window.saveFertilizer = saveFertilizer;
 window.toggleExportMenu = toggleExportMenu;
@@ -634,18 +670,12 @@ window.closeFertViewModal = closeFertViewModal;
 window.downloadFertFile = downloadFertFile;
 window.showFertToast = showFertToast;
 
-console.log("fertilizer.js loaded, onFertStepClick=" + (typeof window.onFertStepClick));
-
 function fertBoot() {
-    console.log("fertBoot called");
     try { fertInit(); } catch (e) { console.error("fertInit error:", e); }
-    try { goToFertStep(1); } catch (e) { console.error("goToFertStep error:", e); }
     try { loadFertHistory(); } catch (e) { console.error("loadFertHistory error:", e); }
     try { updateFertStats(); } catch (e) { console.error("updateFertStats error:", e); }
 }
 
-// All DOM elements exist at this point (script at end of body), run immediately.
-// Fallback for DOMContentLoaded in case of async loading patterns.
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", fertBoot);
 } else {
