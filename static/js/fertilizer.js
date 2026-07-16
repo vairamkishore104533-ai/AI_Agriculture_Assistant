@@ -72,19 +72,21 @@ function buildSearchSelect(config) {
         }
     });
 
-    input.addEventListener("blur", function () {
-        setTimeout(closeDropdown, 180);
-    });
-
     window.addEventListener("scroll", function () {
         if (dropdown.classList.contains("open")) {
             positionDropdown();
         }
-    });
+    }, { passive: true });
 
     window.addEventListener("resize", function () {
         if (dropdown.classList.contains("open")) {
             positionDropdown();
+        }
+    }, { passive: true });
+
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".fert-search-select") && !e.target.closest(".fert-search-dropdown")) {
+            closeDropdown();
         }
     });
 
