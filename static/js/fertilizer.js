@@ -43,8 +43,16 @@ function buildSearchSelect(config) {
         dropdown.innerHTML = html;
     }
 
+    function positionDropdown() {
+        var rect = input.getBoundingClientRect();
+        dropdown.style.left = rect.left + "px";
+        dropdown.style.top = (rect.bottom + 4) + "px";
+        dropdown.style.width = rect.width + "px";
+    }
+
     function openDropdown() {
         renderOptions(input.value);
+        positionDropdown();
         dropdown.classList.add("open");
     }
 
@@ -59,13 +67,24 @@ function buildSearchSelect(config) {
     input.addEventListener("input", function () {
         renderOptions(input.value);
         if (!dropdown.classList.contains("open")) {
+            positionDropdown();
             dropdown.classList.add("open");
         }
     });
 
-    document.addEventListener("click", function (e) {
-        if (!e.target.closest(".fert-search-select")) {
-            closeDropdown();
+    input.addEventListener("blur", function () {
+        setTimeout(closeDropdown, 180);
+    });
+
+    window.addEventListener("scroll", function () {
+        if (dropdown.classList.contains("open")) {
+            positionDropdown();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (dropdown.classList.contains("open")) {
+            positionDropdown();
         }
     });
 

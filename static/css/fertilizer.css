@@ -187,17 +187,14 @@
 }
 
 .fert-search-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+    position: fixed;
     background: var(--fert-card-bg);
     border: 1px solid var(--fert-border);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.1);
     max-height: 240px;
     overflow-y: auto;
-    z-index: 9999;
+    z-index: 99999;
     display: none;
 }
 
