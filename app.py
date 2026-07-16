@@ -149,6 +149,7 @@ from routes.notifications import notifications_bp
 from routes.profile import profile_bp
 from routes.admin import admin_bp
 from routes.fertilizer import fertilizer_bp
+from routes.irrigation import irrigation_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
@@ -164,6 +165,7 @@ app.register_blueprint(notifications_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(fertilizer_bp)
+app.register_blueprint(irrigation_bp)
 
 from utils.translations import TRANSLATIONS
 from models.notification import Notification
@@ -196,56 +198,8 @@ def set_language():
     return jsonify({"success": True})
 
 @app.route("/crops")
-@app.route("/irrigation")
-def feature_pages():
-    route_map = {
-        "/crops": "crops.html",
-        "/irrigation": "irrigation.html",
-    }
-    template = route_map.get(request.path, "index.html")
-    return render_template(template, lang=session.get("lang", "en"))
-
-@app.route("/api/irrigation", methods=["POST"])
-def irrigation_plan():
-    data = request.get_json()
-    crop = data.get("crop", "")
-    soil = data.get("soil", "")
-    lang = session.get("lang", "en")
-
-    if not crop or not soil:
-        msg = "Please select crop and soil type." if lang == "en" else "தயவுசெய்து பயிர் மற்றும் மண் வகையைத் தேர்ந்தெடுக்கவும்."
-        return jsonify({"success": False, "message": msg})
-
-    from services.ai_service import AIService
-    ai = AIService()
-
-    irrigation_data = {
-        "paddy": {"water": "1200-1500 mm/season", "frequency": "Every 2-3 days", "method": "Flood irrigation / Drip", "rainwater": "Build farm ponds for rainwater harvesting"},
-        "coconut": {"water": "40-60 liters/tree/week", "frequency": "Twice a week", "method": "Drip irrigation", "rainwater": "Create ring basins around trees"},
-        "banana": {"water": "30-50 liters/plant/week", "frequency": "Every 3-4 days", "method": "Drip irrigation", "rainwater": "Use drip irrigation with rainwater harvesting"},
-        "sugarcane": {"water": "2000-2500 mm/season", "frequency": "Every 5-7 days", "method": "Furrow irrigation / Drip", "rainwater": "Construct farm ponds"},
-        "default": {"water": "Depends on crop and soil", "frequency": "Monitor soil moisture", "method": "Drip irrigation recommended", "rainwater": "Implement rainwater harvesting structures"},
-    }
-
-    crop_key = crop.lower() if crop.lower() in irrigation_data else "default"
-    plan = irrigation_data[crop_key]
-
-    if lang == "ta":
-        plan = {
-            "water": f"நீர் தேவை: {plan['water']}",
-            "frequency": f"நீர்ப்பாசன அதிர்வெண்: {plan['frequency']}",
-            "method": f"பரிந்துரைக்கப்பட்ட முறை: {plan['method']}",
-            "rainwater": f"மழைநீர் சேகரிப்பு: {plan['rainwater']}",
-        }
-    else:
-        plan = {
-            "water": f"Water Requirement: {plan['water']}",
-            "frequency": f"Irrigation Frequency: {plan['frequency']}",
-            "method": f"Recommended Method: {plan['method']}",
-            "rainwater": f"Rainwater Harvesting: {plan['rainwater']}",
-        }
-
-    return jsonify({"success": True, "result": plan})
+def feature_crops():
+    return render_template("crops.html", lang=session.get("lang", "en"))
 
 @app.route("/api/contact", methods=["POST"])
 def contact():
