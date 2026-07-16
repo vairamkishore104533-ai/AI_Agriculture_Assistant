@@ -22,10 +22,17 @@ function t(en, ta) {
 
 function buildSearchSelect(config) {
     var input = config.input;
-    var dropdown = config.dropdown;
     var items = config.items;
     var labelKey = config.labelKey || "en";
     var onSelect = config.onSelect;
+    var portalName = config.name || "dropdown";
+
+    var dropdown = document.createElement("div");
+    dropdown.className = "fert-search-dropdown";
+    dropdown.setAttribute("data-portal", portalName);
+    document.body.appendChild(dropdown);
+
+    var outsideHandler;
 
     function renderOptions(query) {
         var q = (query || "").toLowerCase().trim();
@@ -45,9 +52,11 @@ function buildSearchSelect(config) {
 
     function positionDropdown() {
         var rect = input.getBoundingClientRect();
-        dropdown.style.left = rect.left + "px";
-        dropdown.style.top = (rect.bottom + 4) + "px";
-        dropdown.style.width = rect.width + "px";
+        var top = rect.bottom + window.scrollY + 4;
+        var left = rect.left + window.scrollX;
+        dropdown.style.left = Math.max(4, left) + "px";
+        dropdown.style.top = top + "px";
+        dropdown.style.width = Math.min(rect.width, window.innerWidth - 8) + "px";
     }
 
     function openDropdown() {
@@ -60,9 +69,7 @@ function buildSearchSelect(config) {
         dropdown.classList.remove("open");
     }
 
-    input.addEventListener("focus", function () {
-        openDropdown();
-    });
+    input.addEventListener("focus", openDropdown);
 
     input.addEventListener("input", function () {
         renderOptions(input.value);
@@ -72,23 +79,21 @@ function buildSearchSelect(config) {
         }
     });
 
-    window.addEventListener("scroll", function () {
-        if (dropdown.classList.contains("open")) {
-            positionDropdown();
-        }
-    }, { passive: true });
-
     window.addEventListener("resize", function () {
         if (dropdown.classList.contains("open")) {
             positionDropdown();
         }
     }, { passive: true });
 
-    document.addEventListener("click", function (e) {
-        if (!e.target.closest(".fert-search-select") && !e.target.closest(".fert-search-dropdown")) {
+    outsideHandler = function (e) {
+        if (dropdown.classList.contains("open") &&
+            !input.contains(e.target) &&
+            !dropdown.contains(e.target)) {
             closeDropdown();
         }
-    });
+    };
+    document.addEventListener("click", outsideHandler);
+    document.addEventListener("touchstart", outsideHandler, { passive: true });
 
     dropdown.addEventListener("click", function (e) {
         var opt = e.target.closest(".fert-search-option");
@@ -107,12 +112,11 @@ function buildSearchSelect(config) {
 function fertInit() {
     var lang = getLang();
 
-    /* Season */
     buildSearchSelect({
         input: document.getElementById("fert-season-input"),
-        dropdown: document.getElementById("fert-season-dropdown"),
         items: FERT_DATA.seasons,
         labelKey: lang === "ta" ? "ta" : "en",
+        name: "season",
         onSelect: function (item) {
             fertState.season = item.id;
             fertState.seasonName = item.en;
@@ -122,12 +126,11 @@ function fertInit() {
         }
     });
 
-    /* Crop */
     buildSearchSelect({
         input: document.getElementById("fert-crop-input"),
-        dropdown: document.getElementById("fert-crop-dropdown"),
         items: FERT_DATA.crops,
         labelKey: lang === "ta" ? "ta" : "en",
+        name: "crop",
         onSelect: function (item) {
             fertState.crop = item.en;
             fertState.cropName = item.en;
@@ -137,12 +140,11 @@ function fertInit() {
         }
     });
 
-    /* Growth Stage */
     buildSearchSelect({
         input: document.getElementById("fert-stage-input"),
-        dropdown: document.getElementById("fert-stage-dropdown"),
         items: FERT_DATA.stages,
         labelKey: lang === "ta" ? "ta" : "en",
+        name: "stage",
         onSelect: function (item) {
             fertState.growthStage = item.id;
             fertState.growthStageName = item.en;
@@ -152,12 +154,11 @@ function fertInit() {
         }
     });
 
-    /* Irrigation */
     buildSearchSelect({
         input: document.getElementById("fert-irrigation-input"),
-        dropdown: document.getElementById("fert-irrigation-dropdown"),
         items: FERT_DATA.irrigation,
         labelKey: lang === "ta" ? "ta" : "en",
+        name: "irrigation",
         onSelect: function (item) {
             fertState.irrigation = item.id;
             fertState.irrigationName = item.en;

@@ -187,7 +187,7 @@
 }
 
 .fert-search-dropdown {
-    position: fixed;
+    position: absolute;
     background: var(--fert-card-bg);
     border: 1px solid var(--fert-border);
     border-radius: 12px;
