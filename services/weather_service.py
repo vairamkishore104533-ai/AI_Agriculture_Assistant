@@ -1,81 +1,176 @@
 import os
+import time
 import requests
-from datetime import datetime
-from utils.helpers import get_mock_weather
+from datetime import datetime, timedelta
 
 class WeatherService:
     def __init__(self):
         self.api_key = os.getenv("WEATHER_API_KEY", "")
+        self.base_url = "https://api.weatherapi.com/v1"
+        self.cache = {}
+        self.cache_ttl = 600
 
-    def get_current_weather(self, district="Thanjavur"):
-        if not self.api_key or self.api_key == "your-weather-api-key":
-            return get_mock_weather()
+    def _cache_key(self, district, town):
+        return (district.strip().lower(), town.strip().lower())
 
-        try:
-            url = f"http://api.openweathermap.org/data/2.5/weather?q={district},IN&appid={self.api_key}&units=metric"
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "temperature": round(data["main"]["temp"]),
-                    "humidity": data["main"]["humidity"],
-                    "wind_speed": round(data["wind"]["speed"] * 3.6, 1),
-                    "rain_probability": data.get("clouds", {}).get("all", 0),
-                    "condition": data["weather"][0]["main"].lower(),
-                    "forecast": self._get_forecast(district),
-                }
-            return get_mock_weather()
-        except Exception:
-            return get_mock_weather()
+    def _get_cached(self, district, town):
+        key = self._cache_key(district, town)
+        if key in self.cache:
+            entry = self.cache[key]
+            if time.time() - entry["ts"] < self.cache_ttl:
+                return entry["data"]
+        return None
 
-    def _get_forecast(self, district):
-        if not self.api_key or self.api_key == "your-weather-api-key":
-            return get_mock_weather()["forecast"]
+    def _set_cache(self, district, town, data):
+        key = self._cache_key(district, town)
+        self.cache[key] = {"data": data, "ts": time.time()}
 
-        try:
-            url = f"http://api.openweathermap.org/data/2.5/forecast?q={district},IN&appid={self.api_key}&units=metric"
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                forecast = []
-                for item in data["list"][:7]:
-                    from datetime import datetime
-                    day_name = datetime.fromtimestamp(item["dt"]).strftime("%a")
-                    forecast.append({
-                        "day": day_name,
-                        "temp": round(item["main"]["temp"]),
-                        "rain": round(item.get("pop", 0) * 100),
-                    })
-                return forecast
-            return get_mock_weather()["forecast"]
-        except Exception:
-            return get_mock_weather()["forecast"]
-
-    def get_ai_farming_advice(self, weather_data, language="en"):
-        temp = weather_data.get("temperature", 30)
-        humidity = weather_data.get("humidity", 60)
-        rain = weather_data.get("rain_probability", 20)
-        wind = weather_data.get("wind_speed", 10)
-
-        if language == "ta":
-            if rain > 70:
-                return "இன்று அதிக மழை வாய்ப்பு உள்ளது. பயிர்களுக்கு நீர் தேங்காமல் பார்த்துக்கொள்ளவும். நெல் வயலில் தண்ணீர் வெளியேறும் வசதி வேண்டும். பூச்சி மருந்து தெளிக்க வேண்டாம்."
-            elif temp > 35:
-                return "வெப்பநிலை அதிகமாக உள்ளது. பயிர்களுக்கு போதுமான நீர் பாய்ச்சவும். சொட்டு நீர் பாசனம் மூலம் தண்ணீர் அளிக்கலாம். காலை அல்லது மாலை நேரத்தில் மட்டும் வயலில் வேலை செய்யவும்."
-            elif rain > 40:
-                return "மழை வாய்ப்பு உள்ளது. உங்கள் வயலில் உரங்களை இடுவதை தவிர்க்கவும். விதைப்பு மற்றும் நடவு பணிகளை திட்டமிடவும்."
-            elif wind > 20:
-                return "காற்று வேகமாக வீசுகிறது. வாழை, கரும்பு போன்ற பயிர்களுக்கு ஆதரவு அளிக்கவும். தெளிப்பு பாசனம் தவிர்க்கவும்."
-            else:
-                return "வானிலை விவசாயத்திற்கு சாதகமாக உள்ளது. உங்கள் வழக்கமான விவசாய பணிகளை தொடரலாம். களை எடுத்தல், உரமிடுதல் போன்ற பணிகளை மேற்கொள்ளலாம்."
+    def clear_cache(self, district="", town=""):
+        if district and town:
+            key = self._cache_key(district, town)
+            self.cache.pop(key, None)
         else:
-            if rain > 70:
-                return "Heavy rain expected today. Ensure proper drainage for your crops. Check paddy fields for water stagnation. Avoid pesticide spraying today."
-            elif temp > 35:
-                return "High temperature detected. Ensure adequate irrigation for your crops. Use drip irrigation to conserve water and protect crops. Work in fields during morning or evening hours only."
-            elif rain > 40:
-                return "Rain likely today. Avoid applying fertilizers as they may wash away. Good day for planning sowing and transplanting activities."
-            elif wind > 20:
-                return "Strong winds detected. Provide support for banana and sugarcane crops. Avoid spraying pesticides. Consider wind breaks for sensitive crops."
+            self.cache.clear()
+
+    CONDITION_MAP = {
+        1000: "sunny", 1003: "cloudy", 1006: "cloudy", 1009: "cloudy",
+        1030: "mist", 1063: "rain", 1066: "snow", 1069: "sleet",
+        1072: "drizzle", 1087: "thunderstorm", 1114: "snow", 1117: "snow",
+        1135: "fog", 1147: "fog", 1150: "drizzle", 1153: "drizzle",
+        1168: "drizzle", 1171: "drizzle", 1180: "rain", 1183: "rain",
+        1186: "rain", 1189: "rain", 1192: "rain", 1195: "rain",
+        1198: "rain", 1201: "rain", 1204: "sleet", 1207: "sleet",
+        1210: "snow", 1213: "snow", 1216: "snow", 1219: "snow",
+        1222: "snow", 1225: "snow", 1237: "snow", 1240: "rain",
+        1243: "rain", 1246: "rain", 1249: "sleet", 1252: "sleet",
+        1255: "snow", 1258: "snow", 1261: "snow", 1264: "snow",
+        1273: "thunderstorm", 1276: "thunderstorm", 1279: "thunderstorm",
+        1282: "thunderstorm",
+    }
+
+    def _get_condition(self, code):
+        return self.CONDITION_MAP.get(code, "cloudy")
+
+    def fetch_all(self, district, town):
+        cached = self._get_cached(district, town)
+        if cached:
+            return cached
+
+        query = f"{town},{district},India"
+        results = {}
+
+        try:
+            url = f"{self.base_url}/forecast.json"
+            params = {"key": self.api_key, "q": query, "days": 7, "aqi": "no", "alerts": "yes"}
+            resp = requests.get(url, params=params, timeout=10)
+            if resp.status_code == 200:
+                d = resp.json()
+                results["current"] = self._parse_current(d)
+                results["uv"] = d.get("current", {}).get("uv")
+                results["hourly"] = self._parse_hourly(d)
+                results["daily"] = self._parse_daily(d)
             else:
-                return "Weather conditions are favorable for farming. Continue with regular agricultural activities. Good day for weeding, fertilizing, and general farm maintenance."
+                err_data = resp.json()
+                err_msg = err_data.get("error", {}).get("message", f"API returned {resp.status_code}")
+                results["error"] = err_msg
+                return results
+        except requests.Timeout:
+            results["error"] = "Weather API timed out. Please try again."
+            return results
+        except Exception as e:
+            results["error"] = f"Failed to fetch weather: {str(e)}"
+            return results
+
+        self._set_cache(district, town, results)
+        return results
+
+    def _parse_current(self, d):
+        location = d.get("location", {})
+        current = d.get("current", {})
+        cond = current.get("condition", {})
+        today = d.get("forecast", {}).get("forecastday", [{}])[0]
+        astro = today.get("astro", {}) if today else {}
+
+        def _to_epoch(time_str, date_str):
+            if not time_str or not date_str:
+                return 0
+            try:
+                dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %I:%M %p")
+                return int(dt.timestamp())
+            except ValueError:
+                return 0
+
+        date_str = today.get("date", "") if today else ""
+
+        return {
+            "temp": round(current.get("temp_c", 0)),
+            "feels_like": round(current.get("feelslike_c", 0)),
+            "condition": self._get_condition(cond.get("code", 1000)),
+            "condition_raw": cond.get("text", ""),
+            "icon": self._map_icon(cond.get("code", 1000), current.get("is_day", 1)),
+            "humidity": current.get("humidity", 0),
+            "pressure": current.get("pressure_mb", 0),
+            "visibility": int(current.get("vis_km", 0) * 1000),
+            "wind_speed": round(current.get("wind_kph", 0), 1),
+            "wind_deg": current.get("wind_degree", 0),
+            "clouds": current.get("cloud", 0),
+            "rain_1h": 0,
+            "rain_3h": current.get("precip_mm", 0),
+            "sunrise": _to_epoch(astro.get("sunrise", ""), date_str),
+            "sunset": _to_epoch(astro.get("sunset", ""), date_str),
+            "lat": location.get("lat", 0),
+            "lon": location.get("lon", 0),
+            "dt": int(datetime.now().timestamp()),
+        }
+
+    def _map_icon(self, code, is_day):
+        day_map = {1000: "01d", 1003: "02d", 1006: "03d", 1009: "04d",
+                   1030: "50d", 1063: "10d", 1087: "11d", 1135: "50d",
+                   1150: "09d", 1153: "09d", 1180: "10d", 1183: "10d",
+                   1186: "10d", 1189: "10d", 1192: "10d", 1195: "10d",
+                   1240: "10d", 1243: "10d", 1246: "10d", 1273: "11d",
+                   1276: "11d"}
+        night_map = {k: v.replace("d", "n") for k, v in day_map.items()}
+        m = day_map if is_day else night_map
+        return m.get(code, "01d" if is_day else "01n")
+
+    def _parse_hourly(self, d):
+        days = d.get("forecast", {}).get("forecastday", [])
+        result = []
+        now = datetime.now()
+        for day in days:
+            for h in day.get("hour", []):
+                h_dt = datetime.strptime(h.get("time", ""), "%Y-%m-%d %H:%M") if h.get("time") else now
+                if h_dt < now - timedelta(hours=1):
+                    continue
+                cond = h.get("condition", {})
+                result.append({
+                    "time": h_dt.strftime("%I %p").lstrip("0"),
+                    "temp": round(h.get("temp_c", 0)),
+                    "humidity": h.get("humidity", 0),
+                    "rain": h.get("chance_of_rain", 0),
+                    "condition": self._get_condition(cond.get("code", 1000)),
+                    "icon": self._map_icon(cond.get("code", 1000), h.get("is_day", 1)),
+                })
+                if len(result) >= 24:
+                    return result
+        return result
+
+    def _parse_daily(self, d):
+        days = d.get("forecast", {}).get("forecastday", [])
+        result = []
+        for day in days[:7]:
+            d_data = day.get("day", {})
+            cond = d_data.get("condition", {})
+            dt_obj = datetime.strptime(day.get("date", ""), "%Y-%m-%d") if day.get("date") else datetime.now()
+            result.append({
+                "date": day.get("date", ""),
+                "day_name": dt_obj.strftime("%a"),
+                "temp_min": round(d_data.get("mintemp_c", 0)),
+                "temp_max": round(d_data.get("maxtemp_c", 0)),
+                "humidity": d_data.get("avghumidity", 0),
+                "rain": d_data.get("daily_chance_of_rain", 0),
+                "condition": self._get_condition(cond.get("code", 1000)),
+                "icon": self._map_icon(cond.get("code", 1000), 1),
+            })
+        return result
