@@ -21,8 +21,6 @@ var mktLoadingMessages = [
     t("Preparing AI market insights...", "AI சந்தை நுண்ணறிவுகளை தயாரிக்கிறது..."),
 ];
 
-var mktSeasonalTips = [];
-
 function getLang() { return (MKT_DATA && MKT_DATA.lang) || "en"; }
 function t(en, ta) { return getLang() === "ta" ? ta : en; }
 function escapeHtml(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
@@ -48,7 +46,6 @@ function mktBoot() {
     mktLoadTopGainers();
     mktLoadTopLosers();
     loadHistory();
-    initTips();
     var hs = document.getElementById("mkt-history-search");
     if (hs) hs.addEventListener("input", function () { mktState.historyPage = 1; loadHistory(); });
     document.getElementById("mkt-table-search").addEventListener("input", function () { mktFilterTable(); });
@@ -180,35 +177,6 @@ function mktLoadInsights(p) {
     document.getElementById("mkt-ins-price").textContent = "₹" + p.price + "/" + (p.unit || "Quintal");
     var trendMap = { up: t("Increasing", "அதிகரிப்பு"), down: t("Decreasing", "குறைவு"), stable: t("Stable", "நிலையானது") };
     document.getElementById("mkt-ins-trend").textContent = trendMap[p.trend] || trendMap.stable;
-    var text = document.getElementById("mkt-insight-text");
-    text.textContent = t("Generating AI insights...", "AI நுண்ணறிவுகளை உருவாக்குகிறது...");
-    document.getElementById("mkt-ins-besttime").textContent = "--";
-    document.getElementById("mkt-ins-expected").textContent = "--";
-    document.getElementById("mkt-insight-bullets").innerHTML = "";
-    fetch("/api/market/insights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crop: p.crop, market: p.market, price: p.price, trend: p.trend, price_data: p })
-    })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (res.success) {
-                mktRenderStructuredInsight(res.insights, p);
-            } else {
-                text.textContent = t("Market conditions are normal.", "சந்தை நிலவரம் சாதாரணமாக உள்ளது.");
-            }
-        })
-        .catch(function () {
-            text.textContent = t("Market conditions are normal.", "சந்தை நிலவரம் சாதாரணமாக உள்ளது.");
-        });
-}
-
-function mktRenderStructuredInsight(aiText, p) {
-    var textEl = document.getElementById("mkt-insight-text");
-    var s = escapeHtml(aiText);
-    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    s = s.replace(/\n/g, "<br>");
-    textEl.innerHTML = s;
     var rec = mktGetRecommendation(p.trend, p.change_pct);
     var badge = document.getElementById("mkt-rec-badge");
     badge.textContent = rec.text;
@@ -224,27 +192,6 @@ function mktRenderStructuredInsight(aiText, p) {
     } else {
         document.getElementById("mkt-ins-besttime").innerHTML = "✅ " + t("Anytime - Stable market", "எந்த நேரமும் - நிலையான சந்தை");
         document.getElementById("mkt-ins-expected").innerHTML = "➡ " + t("Stable", "நிலையானது");
-    }
-    var bullets = document.getElementById("mkt-insight-bullets");
-    var tips = [];
-    if (p.trend === "up" && p.change_pct > 3) {
-        tips.push(t("Sell now to maximize profit on current high prices.", "அதிக விலையில் லாபத்தை அதிகரிக்க இப்போது விற்கவும்."));
-        tips.push(t("Monitor market closely for further price increases.", "மேலும் விலை உயர்வுக்காக சந்தையை கண்காணிக்கவும்."));
-    } else if (p.trend === "up") {
-        tips.push(t("Prices are rising. Consider selling in the next 2 days.", "விலைகள் உயர்ந்து வருகின்றன. அடுத்த 2 நாட்களில் விற்க பரிசீலிக்கவும்."));
-        tips.push(t("Demand is good. You can negotiate for better rates.", "தேவை நன்றாக உள்ளது. சிறந்த விலைக்கு பேரம் பேசலாம்."));
-    } else if (p.trend === "down" && p.change_pct < -3) {
-        tips.push(t("Avoid selling during heavy price drops. Store safely.", "அதிக விலை வீழ்ச்சியின் போது விற்பதை தவிர்க்கவும். பாதுகாப்பாக சேமிக்கவும்."));
-        tips.push(t("Wait for market to stabilize before selling.", "விற்பதற்கு முன் சந்தை நிலைப்படுத்த காத்திருக்கவும்."));
-    } else if (p.trend === "down") {
-        tips.push(t("Monitor tomorrow's market before deciding to sell.", "விற்க முடிவு செய்வதற்கு முன் நாளைய சந்தையை கண்காணிக்கவும்."));
-        tips.push(t("Consider alternative markets for better prices.", "சிறந்த விலைக்கு மாற்று சந்தைகளை பரிசீலிக்கவும்."));
-    } else {
-        tips.push(t("Market is stable. You can sell at current prices.", "சந்தை நிலையானது. தற்போதைய விலையில் விற்கலாம்."));
-        tips.push(t("No immediate price changes expected.", "உடனடி விலை மாற்றங்கள் எதிர்பார்க்கப்படவில்லை."));
-    }
-    if (tips.length) {
-        bullets.innerHTML = tips.map(function(tip) { return "<li>" + tip + "</li>"; }).join("");
     }
 }
 
@@ -279,7 +226,10 @@ function mktSortTable(key) {
 }
 
 function mktRenderTable() {
-    var data = mktState.tableData.slice().sort(function (a, b) {
+    var q = (document.getElementById("mkt-table-search").value || "").toLowerCase().trim();
+    var data = mktState.tableData.slice().filter(function (d) {
+        return (d.market || "").toLowerCase().indexOf(q) >= 0 || (d.price || "").toString().indexOf(q) >= 0 || (d.trend || "").toLowerCase().indexOf(q) >= 0;
+    }).sort(function (a, b) {
         var av, bv;
         if (mktState.sortKey === "price") { av = a.price; bv = b.price; }
         else if (mktState.sortKey === "trend") { av = a.trend; bv = b.trend; }
@@ -505,33 +455,6 @@ function mktSetLanguage(lang) {
         body: JSON.stringify({ lang: lang })
     })
         .then(function () { location.reload(); });
-}
-
-function initTips() {
-    mktSeasonalTips = [
-        t("Paddy prices generally improve after harvest season.", "அறுவடை காலத்திற்குப் பிறகு நெல் விலைகள் பொதுவாக மேம்படும்."),
-        t("Banana demand increases during festival seasons.", "பண்டிகை காலங்களில் வாழைப்பழ தேவை அதிகரிக்கிறது."),
-        t("Turmeric prices often rise during export demand periods.", "ஏற்றுமதி தேவை காலங்களில் மஞ்சள் விலைகள் உயரும்."),
-        t("Coconut prices peak during summer months.", "கோடை மாதங்களில் தேங்காய் விலைகள் உச்சத்தை அடையும்."),
-        t("Onion prices are influenced by rainfall and storage conditions.", "வெங்காய விலைகள் மழை மற்றும் சேமிப்பு நிலைமைகளால் பாதிக்கப்படுகின்றன."),
-        t("Cotton prices follow international market trends.", "பருத்தி விலைகள் சர்வதேச சந்தை போக்குகளைப் பின்பற்றுகின்றன."),
-        t("Sugarcane prices are supported by government procurement.", "கரும்பு விலைகள் அரசு கொள்முதல் மூலம் ஆதரிக்கப்படுகின்றன."),
-        t("Millets are gaining demand due to health awareness.", "ஆரோக்கிய விழிப்புணர்வு காரணமாக சிறுதானியங்களுக்கு தேவை அதிகரித்து வருகிறது."),
-        t("Tomato prices fluctuate frequently; monitor before selling.", "தக்காளி விலைகள் அடிக்கடி ஏற்ற இறக்கமாக இருக்கும்; விற்பதற்கு முன் கண்காணிக்கவும்."),
-        t("Groundnut prices rise during oil demand peaks.", "எண்ணெய் தேவை உச்சத்தின் போது வேர்க்கடலை விலைகள் உயரும்."),
-    ];
-    var tipText = document.getElementById("mkt-tip-text");
-    if (!tipText) return;
-    var idx = 0;
-    tipText.textContent = mktSeasonalTips[0];
-    setInterval(function () {
-        idx = (idx + 1) % mktSeasonalTips.length;
-        tipText.style.opacity = "0";
-        setTimeout(function () {
-            tipText.textContent = mktSeasonalTips[idx];
-            tipText.style.opacity = "1";
-        }, 300);
-    }, 6000);
 }
 
 function showLoading() { document.getElementById("mkt-loading-overlay").style.display = "flex"; }

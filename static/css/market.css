@@ -87,15 +87,10 @@
 .mkt-compare-price { font-weight: 700; color: var(--mkt-primary); }
 .mkt-compare-highlight { border: 2px solid var(--mkt-primary); background: var(--mkt-primary-light); }
 .mkt-insight-card { background: linear-gradient(135deg, var(--mkt-primary-light), #c8e6c9); border-color: rgba(var(--mkt-primary-rgb),0.3); }
-.mkt-insight-summary, .mkt-insight-analysis, .mkt-insight-recs, .mkt-insight-farmer { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(var(--mkt-primary-rgb),0.15); }
-.mkt-insight-farmer { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.mkt-insight-summary, .mkt-insight-recs { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(var(--mkt-primary-rgb),0.15); }
 .mkt-insight-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.5); border-radius: 8px; margin-bottom: 6px; }
 .mkt-insight-label { font-size: 12px; font-weight: 600; color: var(--mkt-text-secondary); }
 .mkt-insight-value { font-size: 14px; font-weight: 700; color: var(--mkt-text); }
-.mkt-insight-subtitle { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; }
-.mkt-insight-text { font-size: 14px; line-height: 1.7; margin: 0; }
-.mkt-insight-bullets { margin: 0; padding-left: 20px; }
-.mkt-insight-bullets li { font-size: 13px; line-height: 1.6; margin-bottom: 6px; color: var(--mkt-text); }
 .mkt-rec-badge { margin-top: 12px; padding: 8px 16px; border-radius: var(--mkt-radius-sm); font-size: 13px; font-weight: 600; display: inline-block; }
 .mkt-section-title { font-size: 16px; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; }
 .mkt-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -106,9 +101,6 @@
 .mkt-top-pct { font-weight: 700; }
 .mkt-up { color: #2e7d32; background: var(--mkt-green-light); }
 .mkt-down { color: #c62828; background: var(--mkt-red-light); }
-.mkt-tips-bar { display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: var(--mkt-card-bg); border-radius: var(--mkt-radius-sm); border: 1px solid var(--mkt-border); margin-bottom: 16px; box-shadow: var(--mkt-shadow); }
-.mkt-tip-icon { font-size: 20px; }
-.mkt-tip-text { font-size: 13px; color: var(--mkt-text-secondary); flex: 1; }
 .mkt-table-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .mkt-table-header .mkt-section-title { margin: 0; }
 .mkt-table-controls { flex-shrink: 0; width: 220px; }
