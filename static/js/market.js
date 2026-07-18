@@ -43,12 +43,9 @@ function mktBoot() {
         onSelect: function (item) { mktState.market = item.en; }
     });
     renderFavorites();
-    mktLoadTopGainers();
-    mktLoadTopLosers();
     loadHistory();
     var hs = document.getElementById("mkt-history-search");
     if (hs) hs.addEventListener("input", function () { mktState.historyPage = 1; loadHistory(); });
-    document.getElementById("mkt-table-search").addEventListener("input", function () { mktFilterTable(); });
     mktRenderTable();
 }
 
@@ -214,11 +211,6 @@ function mktUpdateTableForCrop(crop) {
         });
 }
 
-function mktFilterTable() {
-    mktState.page = 1;
-    mktRenderTable();
-}
-
 function mktSortTable(key) {
     if (mktState.sortKey === key) { mktState.sortDir *= -1; }
     else { mktState.sortKey = key; mktState.sortDir = 1; }
@@ -226,10 +218,7 @@ function mktSortTable(key) {
 }
 
 function mktRenderTable() {
-    var q = (document.getElementById("mkt-table-search").value || "").toLowerCase().trim();
-    var data = mktState.tableData.slice().filter(function (d) {
-        return (d.market || "").toLowerCase().indexOf(q) >= 0 || (d.price || "").toString().indexOf(q) >= 0 || (d.trend || "").toLowerCase().indexOf(q) >= 0;
-    }).sort(function (a, b) {
+    var data = mktState.tableData.slice().sort(function (a, b) {
         var av, bv;
         if (mktState.sortKey === "price") { av = a.price; bv = b.price; }
         else if (mktState.sortKey === "trend") { av = a.trend; bv = b.trend; }
@@ -260,49 +249,6 @@ function mktRenderTable() {
         phtml += '<button class="mkt-page-btn' + (i === mktState.page ? ' mkt-active' : '') + '" onclick="mktState.page=' + i + ';mktRenderTable();">' + i + '</button>';
     }
     pag.innerHTML = phtml;
-}
-
-/* ── Top Gainers / Losers ── */
-
-function mktLoadTopGainers() {
-    var list = document.getElementById("mkt-gainers-list");
-    list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("Loading...", "ஏற்றுகிறது...") + '</p>';
-    fetch("/api/market/top-gainers")
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (!res.success || !res.items || !res.items.length) {
-                list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("No significant price increase today.", "இன்று குறிப்பிடத்தக்க விலை உயர்வு இல்லை.") + '</p>';
-                return;
-            }
-            var data = res.items.slice(0, 5);
-            list.innerHTML = data.map(function (d, i) {
-                var medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
-                return '<div class="mkt-top-item mkt-up"><span class="mkt-top-rank">' + (medals[i] || (i + 1)) + '</span><span class="mkt-top-name">' + escapeHtml(d.crop) + '</span><span class="mkt-top-pct">+' + d.change_pct + '%</span></div>';
-            }).join("");
-        })
-        .catch(function () {
-            list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("Could not load gainers.", "உயர்வுகளை ஏற்ற முடியவில்லை.") + '</p>';
-        });
-}
-
-function mktLoadTopLosers() {
-    var list = document.getElementById("mkt-losers-list");
-    list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("Loading...", "ஏற்றுகிறது...") + '</p>';
-    fetch("/api/market/top-losers")
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (!res.success || !res.items || !res.items.length) {
-                list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("No significant price decrease today.", "இன்று குறிப்பிடத்தக்க விலை குறைவு இல்லை.") + '</p>';
-                return;
-            }
-            var data = res.items.slice(0, 5);
-            list.innerHTML = data.map(function (d, i) {
-                return '<div class="mkt-top-item mkt-down"><span class="mkt-top-rank">' + (i + 1) + '</span><span class="mkt-top-name">' + escapeHtml(d.crop) + '</span><span class="mkt-top-pct">' + d.change_pct + '%</span></div>';
-            }).join("");
-        })
-        .catch(function () {
-            list.innerHTML = '<p style="color:var(--mkt-text-secondary);font-size:13px">' + t("Could not load losers.", "வீழ்ச்சிகளை ஏற்ற முடியவில்லை.") + '</p>';
-        });
 }
 
 /* ── Favorites ── */

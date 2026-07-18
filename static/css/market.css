@@ -93,18 +93,9 @@
 .mkt-insight-value { font-size: 14px; font-weight: 700; color: var(--mkt-text); }
 .mkt-rec-badge { margin-top: 12px; padding: 8px 16px; border-radius: var(--mkt-radius-sm); font-size: 13px; font-weight: 600; display: inline-block; }
 .mkt-section-title { font-size: 16px; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; }
-.mkt-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.mkt-gainers-card, .mkt-losers-card { min-height: 160px; }
-.mkt-top-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: var(--mkt-radius-sm); margin-bottom: 6px; font-size: 13px; font-weight: 500; }
-.mkt-top-rank { font-size: 16px; margin-right: 10px; }
-.mkt-top-name { flex: 1; }
-.mkt-top-pct { font-weight: 700; }
-.mkt-up { color: #2e7d32; background: var(--mkt-green-light); }
-.mkt-down { color: #c62828; background: var(--mkt-red-light); }
-.mkt-table-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.mkt-table-header { display: flex; align-items: center; margin-bottom: 16px; }
 .mkt-table-header .mkt-section-title { margin: 0; }
 .mkt-table-controls { flex-shrink: 0; width: 220px; }
-.mkt-table-search { width: 100%; }
 .mkt-table-wrap { overflow-x: auto; }
 .mkt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .mkt-table th { text-align: left; padding: 12px 14px; font-weight: 600; color: var(--mkt-text-secondary); border-bottom: 2px solid var(--mkt-border); cursor: pointer; white-space: nowrap; user-select: none; }
@@ -146,7 +137,6 @@
     .mkt-main { margin-left: 0; padding: 20px; }
     .mkt-search-grid { grid-template-columns: 1fr; }
     .mkt-summary-row { grid-template-columns: repeat(2, 1fr); }
-    .mkt-top-row { grid-template-columns: 1fr; }
     .mkt-price-top { flex-direction: column; }
 }
 @media (max-width: 768px) {

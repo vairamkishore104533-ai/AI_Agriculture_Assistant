@@ -101,25 +101,10 @@
             </div>
         </div>
 
-        <!-- Top Gainers / Losers -->
-        <div class="mkt-top-row" id="mkt-top-row">
-            <div class="mkt-card mkt-gainers-card">
-                <h3 class="mkt-section-title">📈 {% if lang == 'ta' %}இன்றைய அதிக விலை உயர்வுகள்{% else %}Today's Top Gainers{% endif %}</h3>
-                <div id="mkt-gainers-list"><p style="color:var(--mkt-text-secondary);font-size:13px">{% if lang == 'ta' %}ஏற்றுகிறது...{% else %}Loading...{% endif %}</p></div>
-            </div>
-            <div class="mkt-card mkt-losers-card">
-                <h3 class="mkt-section-title">📉 {% if lang == 'ta' %}இன்றைய அதிக வீழ்ச்சிகள்{% else %}Today's Top Losers{% endif %}</h3>
-                <div id="mkt-losers-list"><p style="color:var(--mkt-text-secondary);font-size:13px">{% if lang == 'ta' %}ஏற்றுகிறது...{% else %}Loading...{% endif %}</p></div>
-            </div>
-        </div>
-
         <!-- Price Comparison Table -->
         <div class="mkt-card">
             <div class="mkt-table-header">
                 <h3 class="mkt-section-title">📋 {% if lang == 'ta' %}விலை ஒப்பீடு{% else %}Price Comparison{% endif %}</h3>
-                <div class="mkt-table-controls">
-                    <input type="text" class="mkt-search-input mkt-table-search" id="mkt-table-search" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search...{% endif %}" autocomplete="off">
-                </div>
             </div>
             <div class="mkt-table-wrap">
                 <table class="mkt-table">
