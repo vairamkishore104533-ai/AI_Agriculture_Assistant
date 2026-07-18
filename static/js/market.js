@@ -341,33 +341,38 @@ function mktExportPrice() {
 
 /* ── History ── */
 
-function loadHistory() {
+function renderHistoryList(items) {
     var list = document.getElementById("mkt-history-list");
+    if (!items || !items.length) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mkt-text-secondary)">' + t("No saved searches. Click Save after fetching a price.", "சேமித்த தேடல்கள் இல்லை. விலையைப் பெற்ற பின் சேமி என்பதைக் கிளிக் செய்யவும்.") + '</div>';
+        return;
+    }
+    var totalPages = Math.max(1, Math.ceil(items.length / mktState.historyPageSize));
+    if (mktState.historyPage > totalPages) mktState.historyPage = totalPages;
+    var start = (mktState.historyPage - 1) * mktState.historyPageSize;
+    var pageItems = items.slice(start, start + mktState.historyPageSize);
+    list.innerHTML = pageItems.map(function (h) {
+        var date = h.created_at ? h.created_at.slice(0, 10) : "";
+        return '<div class="mkt-history-item"><div class="mkt-history-info"><span class="mkt-history-location">📊 ' + escapeHtml(h.crop || "") + ' @ ' + escapeHtml(h.market || "") + ' — ₹' + h.price + '</span><span class="mkt-history-details">' + date + '</span></div><div class="mkt-history-actions" onclick="event.stopPropagation()"><button class="mkt-btn mkt-btn-ghost mkt-btn-sm" onclick="mktViewHistory(\'' + h.id + '\')">👁️ ' + t("View", "பார்க்க") + '</button><button class="mkt-btn mkt-btn-ghost mkt-btn-sm" onclick="mktDeleteHistory(\'' + h.id + '\')">🗑️ ' + t("Delete", "நீக்கு") + '</button></div></div>';
+    }).join("");
+    if (totalPages > 1) {
+        var hp = "";
+        for (var i = 1; i <= totalPages; i++) {
+            hp += '<button class="mkt-page-btn' + (i === mktState.historyPage ? ' mkt-active' : '') + '" onclick="mktState.historyPage=' + i + ';loadHistory();" style="margin:4px 2px;font-size:11px">' + i + '</button>';
+        }
+        list.innerHTML += '<div style="text-align:center;margin-top:8px">' + hp + '</div>';
+    }
+}
+
+function loadHistory() {
+    var items = (MKT_DATA && MKT_DATA.history) || [];
+    renderHistoryList(items);
     fetch("/api/market/history")
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (!res.success) return;
-            var items = res.history || [];
-            if (!items.length) {
-                list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mkt-text-secondary)">' + t("No saved searches. Click Save after fetching a price.", "சேமித்த தேடல்கள் இல்லை. விலையைப் பெற்ற பின் சேமி என்பதைக் கிளிக் செய்யவும்.") + '</div>';
-                return;
-            }
-            var totalPages = Math.max(1, Math.ceil(items.length / mktState.historyPageSize));
-            if (mktState.historyPage > totalPages) mktState.historyPage = totalPages;
-            var start = (mktState.historyPage - 1) * mktState.historyPageSize;
-            var pageItems = items.slice(start, start + mktState.historyPageSize);
-            list.innerHTML = pageItems.map(function (h) {
-                var date = h.created_at ? h.created_at.slice(0, 10) : "";
-                return '<div class="mkt-history-item"><div class="mkt-history-info"><span class="mkt-history-location">📊 ' + escapeHtml(h.crop || "") + ' @ ' + escapeHtml(h.market || "") + ' — ₹' + h.price + '</span><span class="mkt-history-details">' + date + '</span></div><div class="mkt-history-actions" onclick="event.stopPropagation()"><button class="mkt-btn mkt-btn-ghost mkt-btn-sm" onclick="mktViewHistory(\'' + h.id + '\')">👁️ ' + t("View", "பார்க்க") + '</button><button class="mkt-btn mkt-btn-ghost mkt-btn-sm" onclick="mktDeleteHistory(\'' + h.id + '\')">🗑️ ' + t("Delete", "நீக்கு") + '</button></div></div>';
-            }).join("");
-            if (totalPages > 1) {
-                var hp = "";
-                for (var i = 1; i <= totalPages; i++) {
-                    hp += '<button class="mkt-page-btn' + (i === mktState.historyPage ? ' mkt-active' : '') + '" onclick="mktState.historyPage=' + i + ';loadHistory();" style="margin:4px 2px;font-size:11px">' + i + '</button>';
-                }
-                list.innerHTML += '<div style="text-align:center;margin-top:8px">' + hp + '</div>';
-            }
-        });
+            if (res.success) renderHistoryList(res.history || []);
+        })
+        .catch(function () {});
 }
 
 function mktViewHistory(id) {
