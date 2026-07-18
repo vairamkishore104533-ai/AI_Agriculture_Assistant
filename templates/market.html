@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/market.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/market.css') }}?v=3">
 <div class="mkt-wrapper">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
@@ -124,7 +124,7 @@
         <!-- History -->
         <div class="mkt-card" id="mkt-history-section">
             <div class="mkt-table-header">
-                <h3 class="mkt-section-title">🕐 {% if lang == 'ta' %}சமீபத்திய தேடல்கள்{% else %}Recent Searches{% endif %}</h3>
+                <h3 class="mkt-section-title">💾 {% if lang == 'ta' %}சேமித்த தேடல்கள்{% else %}Saved Searches{% endif %}</h3>
             </div>
             <div id="mkt-history-list"></div>
         </div>
@@ -150,5 +150,5 @@ var MKT_DATA = {
     lang: "{{ lang }}"
 };
 </script>
-<script src="{{ url_for('static', filename='js/market.js') }}"></script>
+<script src="{{ url_for('static', filename='js/market.js') }}?v=3"></script>
 {% endblock %}

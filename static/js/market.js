@@ -113,7 +113,6 @@ function mktFetchPrice() {
                 mktLoadCompareForCrop(mktState.crop);
                 mktLoadInsights(res.price);
                 mktUpdateTableForCrop(mktState.crop);
-                mktAutoSave(res.price);
             } else {
                 mktToast(res.error || t("Failed to fetch price.", "விலையை பெற முடியவில்லை."), "error");
             }
@@ -121,12 +120,24 @@ function mktFetchPrice() {
         .catch(function () { clearInterval(msgInterval); hideLoading(); mktToast(t("Network error.", "நெட்வொர்க் பிழை."), "error"); });
 }
 
-function mktAutoSave(p) {
+function mktSaveSearch() {
+    var p = mktState.currentPrice;
+    if (!p) { mktToast(t("No data to save.", "சேமிக்க தரவு இல்லை."), "error"); return; }
     fetch("/api/market/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ crop: p.crop, market: p.market, price: p.price, unit: p.unit, trend: p.trend, market_data: p })
-    }).then(function () { loadHistory(); }).catch(function () {});
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                mktToast(t("Saved!", "சேமிக்கப்பட்டது!"), "success");
+                loadHistory();
+            } else {
+                mktToast(res.error || t("Save failed.", "சேமிப்பு தோல்வி."), "error");
+            }
+        })
+        .catch(function () { mktToast(t("Save failed.", "சேமிப்பு தோல்வி."), "error"); });
 }
 
 function mktDisplayPrice(p) {
@@ -338,7 +349,7 @@ function loadHistory() {
             if (!res.success) return;
             var items = res.history || [];
             if (!items.length) {
-                list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mkt-text-secondary)">' + t("No search history.", "தேடல் வரலாறு இல்லை.") + '</div>';
+                list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mkt-text-secondary)">' + t("No saved searches. Click Save after fetching a price.", "சேமித்த தேடல்கள் இல்லை. விலையைப் பெற்ற பின் சேமி என்பதைக் கிளிக் செய்யவும்.") + '</div>';
                 return;
             }
             var totalPages = Math.max(1, Math.ceil(items.length / mktState.historyPageSize));
