@@ -126,7 +126,7 @@
             <div class="mkt-table-header">
                 <h3 class="mkt-section-title">💾 {% if lang == 'ta' %}சேமித்த தேடல்கள்{% else %}Saved Searches{% endif %}</h3>
             </div>
-            <div id="mkt-history-list"></div>
+            <div id="mkt-history-list">{% if history %}{% for h in history %}<div class="mkt-history-item"><div class="mkt-history-info"><span class="mkt-history-location">📊 {{ h.crop }} @ {{ h.market }} — ₹{{ h.price }}</span><span class="mkt-history-details">{{ h.created_at[:10] if h.created_at else '' }}</span></div></div>{% endfor %}{% else %}<div style="text-align:center;padding:20px;color:var(--mkt-text-secondary)">{% if lang == 'ta' %}சேமித்த தேடல்கள் இல்லை. விலையைப் பெற்ற பின் சேமி என்பதைக் கிளிக் செய்யவும்.{% else %}No saved searches. Click Save after fetching a price.{% endif %}</div>{% endif %}</div>
         </div>
     </main>
 </div>

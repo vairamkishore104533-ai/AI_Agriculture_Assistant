@@ -31,21 +31,21 @@ function mktBoot() {
     var cropInput = document.getElementById("mkt-crop-input");
     var marketInput = document.getElementById("mkt-market-input");
     if (!cropInput || !marketInput) return;
-    buildMktSearchSelect({
+    try { buildMktSearchSelect({
         input: cropInput, items: MKT_DATA.crops,
         labelKey: getLang() === "ta" ? "ta" : "en",
         name: "mkt-crop",
         onSelect: function (item) { mktState.crop = item.en; mktState.cropName = (item.ta && getLang() === "ta") ? item.ta : item.en; }
-    });
-    buildMktSearchSelect({
+    }); } catch(e) {}
+    try { buildMktSearchSelect({
         input: marketInput, items: MKT_DATA.markets,
         labelKey: getLang() === "ta" ? "ta" : "en",
         name: "mkt-market",
         onSelect: function (item) { mktState.market = item.en; }
-    });
-    renderFavorites();
+    }); } catch(e) {}
+    try { renderFavorites(); } catch(e) {}
     loadHistory();
-    mktRenderTable();
+    try { mktRenderTable(); } catch(e) {}
 }
 
 function buildMktSearchSelect(config) {
