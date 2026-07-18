@@ -44,8 +44,6 @@ function mktBoot() {
     });
     renderFavorites();
     loadHistory();
-    var hs = document.getElementById("mkt-history-search");
-    if (hs) hs.addEventListener("input", function () { mktState.historyPage = 1; loadHistory(); });
     mktRenderTable();
 }
 
@@ -334,10 +332,7 @@ function mktExportPrice() {
 
 function loadHistory() {
     var list = document.getElementById("mkt-history-list");
-    var search = document.getElementById("mkt-history-search");
-    var q = search ? search.value : "";
-    var url = "/api/market/history" + (q ? "?search=" + encodeURIComponent(q) : "");
-    fetch(url)
+    fetch("/api/market/history")
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (!res.success) return;
