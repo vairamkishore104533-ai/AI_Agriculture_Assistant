@@ -11,6 +11,7 @@ var mktState = {
     favId: null,
     historyPage: 1,
     historyPageSize: 5,
+    historyItems: [],
 };
 
 var mktLoadingMessages = [
@@ -132,7 +133,7 @@ function mktSaveSearch() {
         .then(function (res) {
             if (res.success) {
                 mktToast(t("Saved!", "சேமிக்கப்பட்டது!"), "success");
-                loadHistory();
+                refreshHistory();
             } else {
                 mktToast(res.error || t("Save failed.", "சேமிப்பு தோல்வி."), "error");
             }
@@ -358,19 +359,25 @@ function renderHistoryList(items) {
     if (totalPages > 1) {
         var hp = "";
         for (var i = 1; i <= totalPages; i++) {
-            hp += '<button class="mkt-page-btn' + (i === mktState.historyPage ? ' mkt-active' : '') + '" onclick="mktState.historyPage=' + i + ';loadHistory();" style="margin:4px 2px;font-size:11px">' + i + '</button>';
+            hp += '<button class="mkt-page-btn' + (i === mktState.historyPage ? ' mkt-active' : '') + '" onclick="mktState.historyPage=' + i + ';renderHistoryList(mktState.historyItems);" style="margin:4px 2px;font-size:11px">' + i + '</button>';
         }
         list.innerHTML += '<div style="text-align:center;margin-top:8px">' + hp + '</div>';
     }
 }
 
 function loadHistory() {
-    var items = (MKT_DATA && MKT_DATA.history) || [];
-    renderHistoryList(items);
+    mktState.historyItems = (MKT_DATA && MKT_DATA.history) || [];
+    renderHistoryList(mktState.historyItems);
+}
+
+function refreshHistory() {
     fetch("/api/market/history")
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.success) renderHistoryList(res.history || []);
+            if (res.success && res.history) {
+                mktState.historyItems = res.history;
+                renderHistoryList(mktState.historyItems);
+            }
         })
         .catch(function () {});
 }
@@ -400,7 +407,7 @@ function mktDeleteHistory(id) {
     fetch("/api/market/history/" + id, { method: "DELETE" })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.success) { mktToast(t("Record deleted!", "பதிவு நீக்கப்பட்டது!"), "success"); loadHistory(); }
+            if (res.success) { mktToast(t("Record deleted!", "பதிவு நீக்கப்பட்டது!"), "success"); refreshHistory(); }
             else { mktToast(res.error || t("Delete failed.", "நீக்கம் தோல்வி."), "error"); }
         });
 }
