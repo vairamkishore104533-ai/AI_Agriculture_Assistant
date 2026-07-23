@@ -36,24 +36,42 @@ EXPENSE_CATEGORIES_TA = [
 @expenses_bp.route("/expenses")
 @login_required
 def index():
-    lang = session.get("lang", "en")
-    income_cats = []
-    for i, c in enumerate(INCOME_CATEGORIES):
-        income_cats.append({"en": c, "ta": INCOME_CATEGORIES_TA[i] if i < len(INCOME_CATEGORIES_TA) else c})
-    expense_cats = []
-    for i, c in enumerate(EXPENSE_CATEGORIES):
-        expense_cats.append({"en": c, "ta": EXPENSE_CATEGORIES_TA[i] if i < len(EXPENSE_CATEGORIES_TA) else c})
-    budgets = BudgetManager.get_budgets(session.get("user_id"))
-    return render_template(
-        "expenses.html",
-        lang=lang,
-        income_categories=income_cats,
-        income_categories_json=json.dumps(income_cats),
-        expense_categories=expense_cats,
-        expense_categories_json=json.dumps(expense_cats),
-        budgets_json=json.dumps(budgets),
-        today=datetime.utcnow().strftime("%Y-%m-%d"),
-    )
+    try:
+        lang = session.get("lang", "en")
+        income_cats = []
+        for i, c in enumerate(INCOME_CATEGORIES):
+            income_cats.append({"en": c, "ta": INCOME_CATEGORIES_TA[i] if i < len(INCOME_CATEGORIES_TA) else c})
+        expense_cats = []
+        for i, c in enumerate(EXPENSE_CATEGORIES):
+            expense_cats.append({"en": c, "ta": EXPENSE_CATEGORIES_TA[i] if i < len(EXPENSE_CATEGORIES_TA) else c})
+        budgets = BudgetManager.get_budgets(session.get("user_id"))
+        return render_template(
+            "expenses.html",
+            lang=lang,
+            income_categories=income_cats,
+            income_categories_json=json.dumps(income_cats),
+            expense_categories=expense_cats,
+            expense_categories_json=json.dumps(expense_cats),
+            budgets_json=json.dumps(budgets),
+            today=datetime.utcnow().strftime("%Y-%m-%d"),
+            page_error=None,
+        )
+    except Exception as e:
+        print(f"[Expenses Page Error] {traceback.format_exc()}")
+        # Render a minimal fallback page so the user doesn't see a 500
+        lang = session.get("lang", "en")
+        err_msg = "Failed to load finances. Please try again later." if lang == "en" else "நிதித் தகவல்களை ஏற்ற முடியவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்."
+        return render_template(
+            "expenses.html",
+            lang=lang,
+            income_categories=[],
+            income_categories_json="[]",
+            expense_categories=[],
+            expense_categories_json="[]",
+            budgets_json="[]",
+            today=datetime.utcnow().strftime("%Y-%m-%d"),
+            page_error=err_msg,
+        )
 
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
@@ -273,3 +291,17 @@ def export_expenses(fmt):
     except Exception as e:
         print(f"[Expenses Error] export: {traceback.format_exc()}")
         return jsonify({"success": False, "error": "Failed to export"}), 500
+
+
+@expenses_bp.route("/api/expenses/<expense_id>", methods=["GET"])
+@login_required
+def get_expense(expense_id):
+    try:
+        user_id = session.get("user_id")
+        e = Expense.find_by_id(expense_id)
+        if not e or e.user_id != user_id:
+            return jsonify({"success": False, "error": "Not found"}), 404
+        return jsonify({"success": True, "expense": e.to_dict()})
+    except Exception as exc:
+        print(f"[Expenses Error] get_one: {traceback.format_exc()}")
+        return jsonify({"success": False, "error": "Failed to load expense"}), 500

@@ -325,15 +325,11 @@ function expSetupFilters() {
 
 /* Edit */
 function expEdit(id) {
-    fetch("/api/expenses?search=&per_page=1000")
+    fetch("/api/expenses/" + id)
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (!res.success) return;
-            var item = null;
-            for (var i = 0; i < res.expenses.length; i++) {
-                if (res.expenses[i].id === id) { item = res.expenses[i]; break; }
-            }
-            if (!item) return;
+            if (!res.success || !res.expense) { expToast(expT("Expense not found", "செலவு கிடைக்கவில்லை"), "error"); return; }
+            var item = res.expense;
             var form = document.getElementById("exp-form");
             var typeInput = document.getElementById("exp-form-type");
             var editId = document.getElementById("exp-form-edit-id");
@@ -354,9 +350,10 @@ function expEdit(id) {
                 if (descInput) descInput.value = item.description || "";
                 if (dateInput) dateInput.value = item.date ? item.date.substring(0, 10) : "";
             }
-            window.scrollTo({ top: document.querySelector(".exp-form-tabs").offsetTop - 80, behavior: "smooth" });
+            var tabs = document.querySelector(".exp-form-tabs");
+            if (tabs) tabs.scrollIntoView({ behavior: "smooth", block: "start" });
         })
-        .catch(function () {});
+        .catch(function () { expToast("Network error", "error"); });
 }
 
 /* Delete */
@@ -564,6 +561,23 @@ function expRenderInsights() {
     expRefreshInsights();
 }
 
+function expMarkdownToHtml(text) {
+    var t = expEscapeHtml(text);
+    t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    t = t.replace(/__(.+?)__/g, "<strong>$1</strong>");
+    t = t.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    t = t.replace(/_(.+?)_/g, "<em>$1</em>");
+    t = t.replace(/^### (.+)$/gm, "<h4>$1</h4>");
+    t = t.replace(/^## (.+)$/gm, "<h3>$1</h3>");
+    t = t.replace(/^# (.+)$/gm, "<h2>$1</h2>");
+    t = t.replace(/^- (.+)$/gm, "<li>$1</li>");
+    t = t.replace(/^\* (.+)$/gm, "<li>$1</li>");
+    t = t.replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
+    t = t.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
+    t = t.replace(/\n/g, "<br>");
+    return t;
+}
+
 function expRefreshInsights() {
     var textDiv = document.getElementById("exp-insights-text");
     var loadingDiv = document.getElementById("exp-insights-loading");
@@ -575,10 +589,7 @@ function expRefreshInsights() {
         .then(function (res) {
             loadingDiv.style.display = "none";
             if (res.success) {
-                var t = expEscapeHtml(res.insights);
-                t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-                t = t.replace(/\n/g, "<br>");
-                textDiv.innerHTML = t;
+                textDiv.innerHTML = expMarkdownToHtml(res.insights);
             } else {
                 textDiv.innerHTML = res.error || "";
             }

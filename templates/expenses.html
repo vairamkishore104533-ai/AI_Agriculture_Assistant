@@ -39,6 +39,10 @@
             </div>
         </div>
 
+        {% if page_error is defined and page_error %}
+        <div class="exp-error-banner">⚠️ {{ page_error }}</div>
+        {% endif %}
+
         <!-- Financial Summary -->
         <div class="exp-summary-grid" id="exp-summary">
             <div class="exp-card exp-summary-card exp-summary-income">
@@ -189,55 +193,51 @@
             <div class="exp-budget-list" id="exp-budget-list"></div>
         </div>
 
-        <!-- Filters -->
-        <div class="exp-card" style="margin-bottom:0">
-            <div class="exp-filters">
-                <div class="exp-filter-group">
-                    <input type="text" class="exp-input exp-filter-search" id="exp-filter-search" placeholder="🔍 {% if lang == 'ta' %}குறிப்புகளில் தேடுக...{% else %}Search notes/category...{% endif %}">
+        <!-- Transactions Table -->
+        <div class="exp-card">
+            <div class="exp-table-header">
+                <h3 class="exp-section-title">📋 {% if lang == 'ta' %}பரிவர்த்தனைகள்{% else %}Transactions{% endif %} <span class="exp-count" id="exp-count"></span></h3>
+            </div>
+            <div class="exp-filter-bar">
+                <div class="exp-filter-search-wrap">
+                    <input type="text" class="exp-input" id="exp-filter-search" placeholder="🔍 {% if lang == 'ta' %}தேடுக...{% else %}Search...{% endif %}">
                 </div>
-                <div class="exp-filter-group">
+                <div class="exp-filter-select-wrap">
                     <select class="exp-select" id="exp-filter-type">
-                        <option value="">{% if lang == 'ta' %}அனைத்து வகைகள்{% else %}All Types{% endif %}</option>
+                        <option value="">{% if lang == 'ta' %}வகை{% else %}Type{% endif %}</option>
                         <option value="income">📈 {% if lang == 'ta' %}வருமானம்{% else %}Income{% endif %}</option>
                         <option value="expense">📉 {% if lang == 'ta' %}செலவு{% else %}Expense{% endif %}</option>
                     </select>
                 </div>
-                <div class="exp-filter-group">
+                <div class="exp-filter-select-wrap">
                     <select class="exp-select" id="exp-filter-category">
-                        <option value="">{% if lang == 'ta' %}அனைத்து பிரிவுகள்{% else %}All Categories{% endif %}</option>
+                        <option value="">{% if lang == 'ta' %}பிரிவு{% else %}Category{% endif %}</option>
                     </select>
                 </div>
-                <div class="exp-filter-group">
+                <div class="exp-filter-select-wrap">
                     <select class="exp-select" id="exp-filter-month">
-                        <option value="">{% if lang == 'ta' %}அனைத்து மாதங்கள்{% else %}All Months{% endif %}</option>
+                        <option value="">{% if lang == 'ta' %}மாதம்{% else %}Month{% endif %}</option>
                         {% for m in range(1,13) %}
                         <option value="{{ '%02d' % m }}">{{ m }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="exp-filter-group">
+                <div class="exp-filter-select-wrap">
                     <select class="exp-select" id="exp-filter-year">
-                        <option value="">{% if lang == 'ta' %}அனைத்து ஆண்டுகள்{% else %}All Years{% endif %}</option>
+                        <option value="">{% if lang == 'ta' %}ஆண்டு{% else %}Year{% endif %}</option>
                         {% for y in range(2022, 2027) %}
                         <option value="{{ y }}">{{ y }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="exp-filter-group">
+                <div class="exp-filter-select-wrap">
                     <select class="exp-select" id="exp-filter-sort">
                         <option value="date_desc">🕐 {% if lang == 'ta' %}புதியது{% else %}Newest{% endif %}</option>
                         <option value="date_asc">🕐 {% if lang == 'ta' %}பழையது{% else %}Oldest{% endif %}</option>
-                        <option value="amount_desc">💰 {% if lang == 'ta' %}அதிக தொகை{% else %}Highest Amount{% endif %}</option>
-                        <option value="amount_asc">💰 {% if lang == 'ta' %}குறைந்த தொகை{% else %}Lowest Amount{% endif %}</option>
+                        <option value="amount_desc">💰 {% if lang == 'ta' %}அதிக தொகை{% else %}Highest{% endif %}</option>
+                        <option value="amount_asc">💰 {% if lang == 'ta' %}குறைந்த தொகை{% else %}Lowest{% endif %}</option>
                     </select>
                 </div>
-            </div>
-        </div>
-
-        <!-- Transactions Table -->
-        <div class="exp-card">
-            <div class="exp-table-header">
-                <h3 class="exp-section-title">📋 {% if lang == 'ta' %}பரிவர்த்தனைகள்{% else %}Transactions{% endif %} <span class="exp-count" id="exp-count"></span></h3>
             </div>
             <div class="exp-table-wrap">
                 <table class="exp-table">

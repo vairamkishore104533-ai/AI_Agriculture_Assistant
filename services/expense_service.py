@@ -108,7 +108,10 @@ class BudgetManager:
     def get_budgets(user_id):
         db = Expense.get_collection().database
         budgets_coll = db["expense_budgets"]
-        return list(budgets_coll.find({"user_id": user_id}))
+        docs = list(budgets_coll.find({"user_id": user_id}))
+        for d in docs:
+            d["_id"] = str(d["_id"])
+        return docs
 
     @staticmethod
     def save_budgets(user_id, budgets):
