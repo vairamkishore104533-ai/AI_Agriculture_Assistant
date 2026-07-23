@@ -6,8 +6,12 @@ class Notification:
         self.id = str(data.get("_id", "")) if data else ""
         self.user_id = data.get("user_id", "") if data else ""
         self.type = data.get("type", "info") if data else "info"
+        self.category = data.get("category", "info") if data else "info"
         self.title = data.get("title", "") if data else ""
         self.message = data.get("message", "") if data else ""
+        self.priority = data.get("priority", "low") if data else "low"
+        self.related_crop = data.get("related_crop", "") if data else ""
+        self.related_id = data.get("related_id", "") if data else ""
         self.is_read = data.get("is_read", False) if data else False
         self.created_at = data.get("created_at", datetime.utcnow()) if data else datetime.utcnow()
 
@@ -33,8 +37,12 @@ class Notification:
         data = {
             "user_id": self.user_id,
             "type": self.type,
+            "category": self.category,
             "title": self.title,
             "message": self.message,
+            "priority": self.priority,
+            "related_crop": self.related_crop,
+            "related_id": self.related_id,
             "is_read": self.is_read,
             "created_at": self.created_at,
         }
@@ -66,22 +74,35 @@ class Notification:
         Notification.get_collection().delete_many({"user_id": user_id})
 
     @staticmethod
-    def create_notification(user_id, notif_type, title, message):
+    def create_notification(user_id, notif_type, title, message, category="info", priority="low", related_crop="", related_id=""):
         notif = Notification()
         notif.user_id = user_id
         notif.type = notif_type
+        notif.category = category
         notif.title = title
         notif.message = message
+        notif.priority = priority
+        notif.related_crop = related_crop
+        notif.related_id = related_id
         notif.created_at = datetime.utcnow()
         return notif.save()
 
     def to_dict(self):
+        created = self.created_at
+        if hasattr(created, "isoformat"):
+            created = created.isoformat()
+        else:
+            created = str(created)
         return {
             "id": self.id,
             "user_id": self.user_id,
             "type": self.type,
+            "category": self.category,
             "title": self.title,
             "message": self.message,
+            "priority": self.priority,
+            "related_crop": self.related_crop,
+            "related_id": self.related_id,
             "is_read": self.is_read,
-            "created_at": self.created_at,
+            "created_at": created,
         }

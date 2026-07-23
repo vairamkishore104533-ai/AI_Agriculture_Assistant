@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="dashboard-wrapper">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+<div class="notif-wrapper">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
@@ -21,59 +22,62 @@
             <a href="{{ url_for('auth.logout') }}" class="sidebar-nav-item logout-item"><span class="nav-icon">🚪</span> {{ t('sidebar_logout') }}</a>
         </nav>
     </aside>
-    <main class="main-content">
-        <div class="page-header">
-            <div><button class="mobile-toggle" onclick="toggleSidebar()">☰</button><h1>{{ t('notifications_title') }}</h1></div>
-            <div style="display:flex;gap:8px">
-                <button class="btn" style="background:var(--gray-100);padding:8px 16px;font-size:0.85rem" onclick="markAllRead()">{{ t('notifications_mark_read') }}</button>
-                <button class="btn" style="background:#fef2f2;color:#ef4444;padding:8px 16px;font-size:0.85rem" onclick="clearAll()">{{ t('notifications_clear') }}</button>
-                <button class="lang-toggle" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
-                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+    <main class="notif-main">
+        <div class="notif-header">
+            <div>
+                <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+                <h1>🔔 {% if lang == 'ta' %}அறிவிப்புகள்{% else %}Notifications{% endif %}</h1>
+                <p class="notif-header-sub">{% if lang == 'ta' %}உங்கள் பண்ணை செயல்பாடுகள் பற்றிய முக்கிய புதுப்பிப்புகள்{% else %}Important updates about your farm activities{% endif %}</p>
+            </div>
+            <div class="notif-header-actions">
+                <button class="notif-btn notif-btn-ghost" onclick="notifSetLanguage()">🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span></button>
+                <button class="notif-btn notif-btn-ghost" onclick="toggleTheme()">🌓</button>
             </div>
         </div>
-        <div class="stat-card" id="notifications-list"></div>
+
+        <!-- Stats -->
+        <div class="notif-stats">
+            <div class="notif-stat-card">
+                <span class="notif-stat-icon">📬</span>
+                <div>
+                    <div class="notif-stat-value" id="notif-total-count">0</div>
+                    <div class="notif-stat-label">{% if lang == 'ta' %}மொத்த அறிவிப்புகள்{% else %}Total Notifications{% endif %}</div>
+                </div>
+            </div>
+            <div class="notif-stat-card">
+                <span class="notif-stat-icon">🔴</span>
+                <div>
+                    <div class="notif-stat-value" id="notif-unread-count">0</div>
+                    <div class="notif-stat-label">{% if lang == 'ta' %}படிக்காதவை{% else %}Unread{% endif %}</div>
+                </div>
+            </div>
+            <div class="notif-stat-card">
+                <button class="notif-btn notif-btn-primary" onclick="notifGenerate()">🔄 {% if lang == 'ta' %}புதுப்பிப்புகளை சரிபார்க்க{% else %}Check Updates{% endif %}</button>
+            </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="notif-category-tabs">
+            <button class="notif-cat-tab active" data-cat="" onclick="notifFilter('')">{% if lang == 'ta' %}அனைத்தும்{% else %}All{% endif %}</button>
+            <button class="notif-cat-tab" data-cat="scheme" onclick="notifFilter('scheme')">🏛️ {% if lang == 'ta' %}திட்டங்கள்{% else %}Schemes{% endif %}</button>
+            <button class="notif-cat-tab" data-cat="market" onclick="notifFilter('market')">📊 {% if lang == 'ta' %}சந்தை{% else %}Market{% endif %}</button>
+            <button class="notif-cat-tab" data-cat="irrigation" onclick="notifFilter('irrigation')">💧 {% if lang == 'ta' %}நீர்ப்பாசனம்{% else %}Irrigation{% endif %}</button>
+            <button class="notif-cat-tab" data-cat="fertilizer" onclick="notifFilter('fertilizer')">🧪 {% if lang == 'ta' %}உரம்{% else %}Fertilizer{% endif %}</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="notif-actions">
+            <button class="notif-btn notif-btn-sm notif-btn-ghost" onclick="notifMarkAllRead()">✅ {% if lang == 'ta' %}அனைத்தையும் படித்ததாக குறிக்க{% else %}Mark All Read{% endif %}</button>
+            <button class="notif-btn notif-btn-sm notif-btn-danger" onclick="notifClearAll()">🗑️ {% if lang == 'ta' %}அனைத்தையும் அழிக்க{% else %}Clear All{% endif %}</button>
+        </div>
+
+        <!-- Notification List -->
+        <div class="notif-list" id="notif-list"></div>
     </main>
 </div>
-<script>
-function loadNotifications() {
-    fetch("/api/notifications").then(r=>r.json()).then(res=>{
-        if(!res.success) return;
-        const container = document.getElementById("notifications-list");
-        if(res.notifications.length === 0) {
-            container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔔</div><h3>{{ t('notifications_no') }}</h3></div>';
-        } else {
-            container.innerHTML = res.notifications.map(n => {
-                const icons = {weather:"🌤️", rain:"🌧️", harvest:"🌾", water:"💧", fertilizer:"🧪", govt:"🏛️", info:"ℹ️"};
-                return `
-                <div style="display:flex;align-items:flex-start;gap:12px;padding:16px;border-bottom:1px solid var(--border-color);${!n.is_read ? 'background:var(--green-50);' : ''}">
-                    <span style="font-size:1.5rem">${icons[n.type] || "ℹ️"}</span>
-                    <div style="flex:1">
-                        <div style="font-weight:${!n.is_read ? '600' : '400'}">${n.title}</div>
-                        <div style="color:var(--text-secondary);font-size:0.85rem">${n.message}</div>
-                        <div style="color:var(--gray-400);font-size:0.75rem;margin-top:4px">${new Date(n.created_at).toLocaleString()}</div>
-                    </div>
-                    ${!n.is_read ? `<button class="btn" style="padding:4px 10px;font-size:0.75rem" onclick="markRead('${n.id}')">{{ t('notifications_mark_read') }}</button>` : ''}
-                </div>`;
-            }).join("");
-        }
-    });
-}
 
-function markRead(id) {
-    fetch("/api/notifications/read", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({notification_id:id})})
-    .then(r=>r.json()).then(res=>{if(res.success) loadNotifications()});
-}
+<div class="notif-toast" id="notif-toast"></div>
 
-function markAllRead() {
-    fetch("/api/notifications/read", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})})
-    .then(r=>r.json()).then(res=>{if(res.success) loadNotifications()});
-}
-
-function clearAll() {
-    if(!confirm("{{ t('notifications_clear') }}?")) return;
-    fetch("/api/notifications/clear", {method:"POST"}).then(r=>r.json()).then(res=>{if(res.success) loadNotifications()});
-}
-
-document.addEventListener("DOMContentLoaded", loadNotifications);
-</script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 {% endblock %}
