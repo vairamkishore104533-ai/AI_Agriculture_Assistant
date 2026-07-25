@@ -1081,7 +1081,105 @@
     border-color: rgba(74,222,128,0.3);
 }
 
+/* District switcher dropdown */
+.sd-switcher-wrap {
+    position: relative;
+}
+
+.sd-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 500;
+    width: 300px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    display: none;
+    overflow: hidden;
+    animation: ddIn 0.2s ease;
+}
+
+.sd-dropdown.open { display: block; }
+
+@keyframes ddIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sd-dropdown-search {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sd-dropdown-search input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.sd-dropdown-search input:focus {
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
+}
+
+.sd-dropdown-list {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.sd-dropdown-list::-webkit-scrollbar { width: 5px; }
+.sd-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+.sd-dropdown-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+.sd-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    transition: all 0.15s ease;
+}
+
+.sd-dropdown-item:hover {
+    background: var(--green-50);
+    color: var(--emerald-dark);
+}
+
+[data-theme="dark"] .sd-dropdown-item:hover {
+    background: rgba(16,185,129,0.08);
+}
+
+.sd-dropdown-item.sd-active {
+    background: var(--green-50);
+    font-weight: 600;
+    color: var(--emerald-dark);
+}
+
+[data-theme="dark"] .sd-dropdown-item.sd-active {
+    background: rgba(16,185,129,0.12);
+}
+
+.sd-dot {
+    margin-left: auto;
+    color: var(--emerald);
+    font-weight: 700;
+}
+
 @media (max-width: 768px) {
+    .sd-dropdown { right: auto; left: 0; width: 260px; }
     .sd-header-inner {
         flex-wrap: wrap;
         gap: 12px;

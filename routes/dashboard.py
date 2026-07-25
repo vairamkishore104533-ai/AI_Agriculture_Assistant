@@ -4,6 +4,7 @@ from utils.helpers import get_current_season, get_mock_weather, get_season_name
 from models.crop import Crop
 from models.expense import Expense
 from models.notification import Notification
+from models.user import User
 from services.weather_service import WeatherService
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -146,6 +147,13 @@ def index():
         selected_district = ""
     if selected_district:
         session["district"] = selected_district
+    else:
+        selected_district = session.get("district", "")
+    if not selected_district:
+        user = User.find_by_id(user_id)
+        if user and user.district and user.district in ALL_DISTRICTS:
+            selected_district = user.district
+            session["district"] = selected_district
 
     zone = None
     zone_info = None
