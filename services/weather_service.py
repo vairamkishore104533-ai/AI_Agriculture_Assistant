@@ -25,6 +25,44 @@ class WeatherService:
         key = self._cache_key(district, town)
         self.cache[key] = {"data": data, "ts": time.time()}
 
+    def get_current_weather(self, district="", town=""):
+        data = self.fetch_all(district, town)
+        if data.get("error"):
+            return None
+        current = data.get("current", {})
+        if not current:
+            return None
+        return {
+            "temperature": current.get("temp", 0),
+            "condition": current.get("condition_raw", current.get("condition", "unknown")),
+            "humidity": current.get("humidity", 0),
+            "wind_speed": current.get("wind_speed", 0),
+            "rain_probability": data.get("daily", [{}])[0].get("rain", 0) if data.get("daily") else 0,
+        }
+
+    def get_ai_farming_advice(self, weather_data, lang="en"):
+        if not weather_data:
+            return ""
+        from models.crop import Crop
+        from flask import session
+        try:
+            user_id = session.get("user_id")
+            crops = Crop.find_by_user(user_id) if user_id else []
+            crop_names = ", ".join([c.get("crop_name", "") for c in crops]) if crops else "general crops"
+            temp = weather_data.get("temp", 0)
+            humidity = weather_data.get("humidity", 0)
+            condition = weather_data.get("condition_raw", weather_data.get("condition", "unknown"))
+            prompt = (
+                f"Given current weather: {temp}C, {humidity}% humidity, {condition}. "
+                f"Farmer is growing: {crop_names}. "
+                f"Provide 2-3 short actionable farming tips in {'Tamil' if lang == 'ta' else 'English'}."
+            )
+            from services.ai_service import AIService
+            ai = AIService()
+            return ai.get_response(prompt)
+        except Exception:
+            return ""
+
     def clear_cache(self, district="", town=""):
         if district and town:
             key = self._cache_key(district, town)
