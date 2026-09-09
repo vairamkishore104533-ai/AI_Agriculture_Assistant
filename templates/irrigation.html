@@ -6,7 +6,6 @@
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
@@ -46,75 +45,54 @@
             </div>
         </div>
 
-        <div class="irr-progress-bar">
-            <div class="irr-progress-fill" id="irr-progress-fill" style="width:0%"></div>
-            <span class="irr-progress-label" id="irr-progress-label">0/4 {% if lang == 'ta' %}முடிந்தது{% else %}Completed{% endif %}</span>
-        </div>
+        
 
         <div class="irr-input-section">
-
-            <!-- Step 1: Crop -->
-            <div class="irr-card irr-card-step" id="irr-card-crop">
-                <div class="irr-card-header">
-                    <span class="irr-step-num">1</span>
-                    <div>
-                        <h3 class="irr-card-title">{% if lang == 'ta' %}பயிர் தேர்வு{% else %}Select Crop{% endif %}</h3>
-                        <p class="irr-card-desc">{% if lang == 'ta' %}உங்கள் பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Choose your crop{% endif %}</p>
-                    </div>
-                </div>
-                <div class="irr-search-select">
-                    <input type="text" class="irr-search-input" id="irr-crop-input" placeholder="{% if lang == 'ta' %}பயிரை தேடுங்கள்...{% else %}Search crop...{% endif %}" autocomplete="off">
-                </div>
-                <div class="irr-info-card irr-info-card-sm" id="irr-info-crop" style="display:none"></div>
+    <div class="irr-card glass">
+        <div class="irr-card-header"><h3 class="irr-section-title">💧 Irrigation Planner</h3></div>
+        <div class="irr-step-indicator">
+            <div class="irr-step active" id="step-1-indicator"><span class="step-num">1</span><span class="step-label">Crop</span></div>
+            <div class="irr-step-line"></div>
+            <div class="irr-step" id="step-2-indicator"><span class="step-num">2</span><span class="step-label">District</span></div>
+            <div class="irr-step-line"></div>
+            <div class="irr-step" id="step-3-indicator"><span class="step-num">3</span><span class="step-label">Season</span></div>
+            <div class="irr-step-line"></div>
+            <div class="irr-step" id="step-4-indicator"><span class="step-num">4</span><span class="step-label">Method</span></div>
+        </div>
+        
+        <!-- Step 1: Crop -->
+        <div class="irr-step-content" id="irr-card-crop">
+            <div class="irr-search-select">
+                <input type="text" class="irr-search-input" id="irr-crop-input" placeholder="{% if lang == 'ta' %}பயிரை தேடுங்கள்...{% else %}Search crop...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 2: District -->
-            <div class="irr-card irr-card-step irr-fade-slide" id="irr-card-district" style="display:none">
-                <div class="irr-card-header">
-                    <span class="irr-step-num">2</span>
-                    <div>
-                        <h3 class="irr-card-title">{% if lang == 'ta' %}மாவட்டம்{% else %}Select District{% endif %}</h3>
-                        <p class="irr-card-desc">{% if lang == 'ta' %}உங்கள் மாவட்டத்தைத் தேர்ந்தெடுக்கவும்{% else %}Choose your district{% endif %}</p>
-                    </div>
-                </div>
-                <div class="irr-search-select">
-                    <input type="text" class="irr-search-input" id="irr-district-input" placeholder="{% if lang == 'ta' %}மாவட்டத்தை தேடுங்கள்...{% else %}Search district...{% endif %}" autocomplete="off">
-                </div>
-                <div class="irr-info-card irr-info-card-sm" id="irr-info-district" style="display:none"></div>
+            <div class="irr-info-card irr-info-card-sm" id="irr-info-crop" style="display:none"></div>
+        </div>
+        
+        <!-- Step 2: District -->
+        <div class="irr-step-content" id="irr-card-district" style="display:none">
+            <div class="irr-search-select">
+                <input type="text" class="irr-search-input" id="irr-district-input" placeholder="{% if lang == 'ta' %}மாவட்டத்தை தேடுங்கள்...{% else %}Search district...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 3: Season -->
-            <div class="irr-card irr-card-step irr-fade-slide" id="irr-card-season" style="display:none">
-                <div class="irr-card-header">
-                    <span class="irr-step-num">3</span>
-                    <div>
-                        <h3 class="irr-card-title">{% if lang == 'ta' %}விவசாய பருவம்{% else %}Agricultural Season{% endif %}</h3>
-                        <p class="irr-card-desc">{% if lang == 'ta' %}உங்கள் பயிரிடும் பருவத்தைத் தேர்ந்தெடுக்கவும்{% else %}Select your cultivation season{% endif %}</p>
-                    </div>
-                </div>
-                <div class="irr-search-select">
-                    <input type="text" class="irr-search-input" id="irr-season-input" placeholder="{% if lang == 'ta' %}பருவத்தை தேடுங்கள்...{% else %}Search season...{% endif %}" autocomplete="off">
-                </div>
-                <div class="irr-info-card irr-info-card-sm" id="irr-info-season" style="display:none"></div>
+            <div class="irr-info-card irr-info-card-sm" id="irr-info-district" style="display:none"></div>
+        </div>
+        
+        <!-- Step 3: Season -->
+        <div class="irr-step-content" id="irr-card-season" style="display:none">
+            <div class="irr-search-select">
+                <input type="text" class="irr-search-input" id="irr-season-input" placeholder="{% if lang == 'ta' %}பருவத்தை தேடுங்கள்...{% else %}Search season...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 4: Irrigation Method -->
-            <div class="irr-card irr-card-step irr-fade-slide" id="irr-card-method" style="display:none">
-                <div class="irr-card-header">
-                    <span class="irr-step-num">4</span>
-                    <div>
-                        <h3 class="irr-card-title">{% if lang == 'ta' %}நீர்ப்பாசன முறை{% else %}Irrigation Method{% endif %}</h3>
-                        <p class="irr-card-desc">{% if lang == 'ta' %}உங்கள் நீர்ப்பாசன முறையைத் தேர்ந்தெடுக்கவும்{% else %}Select your irrigation method{% endif %}</p>
-                    </div>
-                </div>
-                <div class="irr-search-select">
-                    <input type="text" class="irr-search-input" id="irr-method-input" placeholder="{% if lang == 'ta' %}முறையை தேடுங்கள்...{% else %}Search method...{% endif %}" autocomplete="off">
-                </div>
-                <div class="irr-info-card irr-info-card-sm" id="irr-info-method" style="display:none"></div>
+            <div class="irr-info-card irr-info-card-sm" id="irr-info-season" style="display:none"></div>
+        </div>
+        
+        <!-- Step 4: Irrigation Method -->
+        <div class="irr-step-content" id="irr-card-method" style="display:none">
+            <div class="irr-search-select">
+                <input type="text" class="irr-search-input" id="irr-method-input" placeholder="{% if lang == 'ta' %}முறையை தேடுங்கள்...{% else %}Search method...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 5: Generate -->
-            <div class="irr-card irr-card-step irr-fade-slide" id="irr-card-generate" style="display:none">
+            <div class="irr-info-card irr-info-card-sm" id="irr-info-method" style="display:none"></div>
+        </div>
+        <!-- Step 5: Generate -->
+            <div class="irr-step-content" id="irr-card-generate" style="display:none; padding: 20px 0;">
                 <div class="irr-generate-section">
                     <div class="irr-generate-icon">💧</div>
                     <h3>{% if lang == 'ta' %}அனைத்து விவரங்களும் சேகரிக்கப்பட்டன{% else %}All Details Collected{% endif %}</h3>
@@ -125,6 +103,7 @@
                 </div>
             </div>
         </div>
+</div>
 
         <!-- Result Section -->
         <div class="irr-result-section" id="irr-result-section" style="display:none">

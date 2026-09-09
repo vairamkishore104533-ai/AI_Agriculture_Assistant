@@ -114,7 +114,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .notif-main { margin-left: 0; padding: 16px; }
+    .notif-main { padding: 16px; }
     .notif-stats { flex-direction: column; }
     .notif-stat-card { min-width: auto; }
     .notif-category-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }

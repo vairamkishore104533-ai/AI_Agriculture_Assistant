@@ -133,7 +133,7 @@
     .anl-quick-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 768px) {
-    .anl-main { margin-left: 0; padding: 16px; }
+    .anl-main { padding: 16px; }
     .anl-overview-grid { grid-template-columns: repeat(2, 1fr); }
     .anl-charts-grid { grid-template-columns: 1fr; }
     .anl-quick-grid { grid-template-columns: repeat(2, 1fr); }

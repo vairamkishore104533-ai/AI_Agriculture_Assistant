@@ -1,40 +1,50 @@
 import os
+import requests
 
 class AIService:
-    MODEL = "llama-3.3-70b-versatile"
+    OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct"
+    GROQ_MODEL = "llama-3.3-70b-versatile"
+    DEEPSEEK_MODEL = "deepseek-chat"
 
     def __init__(self):
-        self.api_key = os.getenv("GROQ_API_KEY", "")
+        self.api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("DEEPSEEK_API_KEY") or os.getenv("AI_API_KEY") or os.getenv("GROQ_API_KEY", "")
         self._client = None
         self._import_error = None
+
         if self.api_key:
-            print(f"[AIService] Groq API key loaded ({self.api_key[:3]}...{self.api_key[-4:]}). Model: {self.MODEL}", flush=True)
+            masked = f"{self.api_key[:10]}...{self.api_key[-4:]}"
+            if self.api_key.startswith("sk-or-v1-"):
+                self.provider = "openrouter"
+                print(f"[AIService] OpenRouter API key loaded ({masked}). Model: {self.OPENROUTER_MODEL}", flush=True)
+            elif self.api_key.startswith("sk-"):
+                self.provider = "deepseek"
+                print(f"[AIService] DeepSeek API key loaded ({masked}). Model: {self.DEEPSEEK_MODEL}", flush=True)
+            else:
+                self.provider = "groq"
+                print(f"[AIService] Groq API key loaded ({masked}). Model: {self.GROQ_MODEL}", flush=True)
         else:
-            print("[AIService] No GROQ_API_KEY set in .env", flush=True)
+            self.provider = "groq"
+            print("[AIService] No API key set in .env", flush=True)
+
         try:
             from groq import Groq
             self._Groq = Groq
             print(f"[AIService] Groq SDK imported successfully", flush=True)
-        except ImportError as e:
-            self._import_error = f"Groq SDK not installed: {e}"
-            print(f"[AIService] {self._import_error}", flush=True)
         except Exception as e:
             self._import_error = f"Groq SDK import error: {e}"
-            print(f"[AIService] {self._import_error}", flush=True)
 
     def _get_client(self):
-        if self._import_error:
-            raise RuntimeError(self._import_error)
-        if self._client is None:
-            self._client = self._Groq(api_key=self.api_key)
-        return self._client
+        if self.provider == "groq":
+            if self._import_error:
+                raise RuntimeError(self._import_error)
+            if self._client is None:
+                self._client = self._Groq(api_key=self.api_key)
+            return self._client
+        return None
 
     def get_response(self, message, language="en", district="", history=None):
         if not self.api_key:
-            return "AI service is not configured. Please set GROQ_API_KEY in .env file."
-
-        if self._import_error:
-            return f"Groq SDK import failed: {self._import_error}"
+            return "AI service is not configured. Please set API key in .env file."
 
         system_prompt = self._build_system_prompt(language, district)
 
@@ -47,11 +57,75 @@ class AIService:
 
         messages.append({"role": "user", "content": message})
 
+        # Call OpenRouter API directly via requests if using sk-or-v1- key
+        if self.provider == "openrouter":
+            try:
+                print(f"[AIService] Sending request to OpenRouter model={self.OPENROUTER_MODEL} messages={len(messages)}", flush=True)
+                res = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "http://localhost:5000",
+                        "X-Title": "TN Agri Assistant"
+                    },
+                    json={
+                        "model": self.OPENROUTER_MODEL,
+                        "messages": messages,
+                        "temperature": 0.7,
+                        "max_tokens": 2048,
+                    },
+                    timeout=30
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    result = data["choices"][0]["message"]["content"]
+                    print(f"[AIService] OpenRouter response OK ({len(result)} chars)", flush=True)
+                    return result.strip()
+                elif res.status_code == 402:
+                    return ("OpenRouter API error: Insufficient account balance. "
+                            "Please check your OpenRouter account at https://openrouter.ai/")
+                else:
+                    return f"OpenRouter API error (status {res.status_code}): {res.text}"
+            except Exception as e:
+                print(f"[AIService] OpenRouter API call failed: {e}", flush=True)
+                return f"AI service error: {type(e).__name__}: {str(e)}"
+
+        # Call DeepSeek API directly via requests if using sk- key
+        if self.provider == "deepseek":
+            try:
+                print(f"[AIService] Sending request to DeepSeek API model={self.DEEPSEEK_MODEL} messages={len(messages)}", flush=True)
+                res = requests.post(
+                    "https://api.deepseek.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": self.DEEPSEEK_MODEL,
+                        "messages": messages,
+                        "temperature": 0.7,
+                        "max_tokens": 2048,
+                    },
+                    timeout=30
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    result = data["choices"][0]["message"]["content"]
+                    print(f"[AIService] DeepSeek response OK ({len(result)} chars)", flush=True)
+                    return result.strip()
+                elif res.status_code == 402:
+                    return ("DeepSeek API error: Insufficient account balance. "
+                            "Please check your DeepSeek billing at https://platform.deepseek.com/")
+                else:
+                    return f"DeepSeek API error (status {res.status_code}): {res.text}"
+            except Exception as e:
+                print(f"[AIService] DeepSeek API call failed: {e}", flush=True)
+                return f"AI service error: {type(e).__name__}: {str(e)}"
+
+        # Call Groq API via SDK if using gsk_ key
         try:
-            print(f"[AIService] Sending request to Groq model={self.MODEL} messages={len(messages)}", flush=True)
+            print(f"[AIService] Sending request to Groq model={self.GROQ_MODEL} messages={len(messages)}", flush=True)
             client = self._get_client()
             response = client.chat.completions.create(
-                model=self.MODEL,
+                model=self.GROQ_MODEL,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2048,
@@ -72,8 +146,8 @@ class AIService:
             traceback.print_exc()
             err_str = str(e).lower()
             if "401" in err_str or "unauthorized" in err_str or "invalid api key" in err_str:
-                return ("AI service configuration error: Invalid or unauthorized Groq API key. "
-                        "Please check your GROQ_API_KEY in .env file.")
+                return ("AI service configuration error: Invalid or unauthorized API key. "
+                        "Please check your API key in .env file.")
             if "429" in err_str or "rate limit" in err_str:
                 return "AI service is currently overloaded (rate limited). Please wait and try again."
             if "timeout" in err_str or "timed out" in err_str:

@@ -6,7 +6,6 @@
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="{{ url_for('diagnosis.index') }}" class="sidebar-nav-item active"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
@@ -164,6 +163,14 @@
                 {% else %}
                 <div class="diag-empty">No previous diagnoses. Start by selecting a crop above.</div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="diag-loading-overlay" id="diag-loading-overlay" style="display:none">
+            <div class="diag-loading-card">
+                <div class="diag-spinner"></div>
+                <p id="diag-loading-text">{% if lang == 'ta' %}பயிர்களை பகுப்பாய்வு செய்கிறது...{% else %}Analyzing crop data...{% endif %}</p>
             </div>
         </div>
     </main>

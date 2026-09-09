@@ -6,7 +6,6 @@
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item active"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
@@ -45,68 +44,51 @@
         </div>
 
         <div id="fert-input-section">
-            <!-- Step 1: Season -->
-            <div class="fert-input-card fert-fade-slide" id="fert-card-season">
-                <div class="fert-input-card-header">
-                    <span class="fert-input-step">1</span>
-                    <div>
-                        <h3 class="fert-input-title">{% if lang == 'ta' %}விவசாய பருவம்{% else %}Agricultural Season{% endif %}</h3>
-                        <p class="fert-input-desc">{% if lang == 'ta' %}உங்கள் பயிரிடும் பருவத்தைத் தேர்ந்தெடுக்கவும்{% else %}Select your cultivation season{% endif %}</p>
-                    </div>
-                </div>
-                <div class="fert-search-select" id="fert-season-search">
-                    <input type="text" class="fert-search-input" id="fert-season-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search season...{% endif %}" autocomplete="off">
-                </div>
-                <div class="fert-info-card" id="fert-info-season" style="display:none"></div>
+    <div class="fert-card glass">
+        <div class="fert-card-header"><h3 class="fert-section-title">🧪 Fertilizer Recommendation</h3></div>
+        <div class="fert-step-indicator">
+            <div class="fert-step active" id="step-1-indicator"><span class="step-num">1</span><span class="step-label">Season</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-2-indicator"><span class="step-num">2</span><span class="step-label">Crop</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-3-indicator"><span class="step-num">3</span><span class="step-label">Stage</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-4-indicator"><span class="step-num">4</span><span class="step-label">Irrigation</span></div>
+        </div>
+        
+        <!-- Step 1: Season -->
+        <div class="fert-step-content" id="fert-card-season">
+            <div class="fert-search-select" id="fert-season-search">
+                <input type="text" class="fert-search-input" id="fert-season-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search season...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 2: Crop -->
-            <div class="fert-input-card fert-fade-slide" id="fert-card-crop" style="display:none">
-                <div class="fert-input-card-header">
-                    <span class="fert-input-step">2</span>
-                    <div>
-                        <h3 class="fert-input-title">{% if lang == 'ta' %}பயிர் தேர்வு{% else %}Crop Selection{% endif %}</h3>
-                        <p class="fert-input-desc">{% if lang == 'ta' %}உங்கள் பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Select your crop{% endif %}</p>
-                    </div>
-                </div>
-                <div class="fert-search-select" id="fert-crop-search">
-                    <input type="text" class="fert-search-input" id="fert-crop-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search crop...{% endif %}" autocomplete="off">
-                </div>
-                <div class="fert-info-card" id="fert-info-crop" style="display:none"></div>
+            <div class="fert-info-card" id="fert-info-season" style="display:none"></div>
+        </div>
+        
+        <!-- Step 2: Crop -->
+        <div class="fert-step-content" id="fert-card-crop" style="display:none">
+            <div class="fert-search-select" id="fert-crop-search">
+                <input type="text" class="fert-search-input" id="fert-crop-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search crop...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 3: Growth Stage -->
-            <div class="fert-input-card fert-fade-slide" id="fert-card-stage" style="display:none">
-                <div class="fert-input-card-header">
-                    <span class="fert-input-step">3</span>
-                    <div>
-                        <h3 class="fert-input-title">{% if lang == 'ta' %}வளர்ச்சி நிலை{% else %}Growth Stage{% endif %}</h3>
-                        <p class="fert-input-desc">{% if lang == 'ta' %}தற்போதைய வளர்ச்சி நிலையைத் தேர்ந்தெடுக்கவும்{% else %}Select current growth stage{% endif %}</p>
-                    </div>
-                </div>
-                <div class="fert-search-select" id="fert-stage-search">
-                    <input type="text" class="fert-search-input" id="fert-stage-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search growth stage...{% endif %}" autocomplete="off">
-                </div>
-                <div class="fert-info-card" id="fert-info-stage" style="display:none"></div>
+            <div class="fert-info-card" id="fert-info-crop" style="display:none"></div>
+        </div>
+        
+        <!-- Step 3: Growth Stage -->
+        <div class="fert-step-content" id="fert-card-stage" style="display:none">
+            <div class="fert-search-select" id="fert-stage-search">
+                <input type="text" class="fert-search-input" id="fert-stage-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search growth stage...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Step 4: Irrigation -->
-            <div class="fert-input-card fert-fade-slide" id="fert-card-irrigation" style="display:none">
-                <div class="fert-input-card-header">
-                    <span class="fert-input-step">4</span>
-                    <div>
-                        <h3 class="fert-input-title">{% if lang == 'ta' %}நீர்ப்பாசன முறை{% else %}Irrigation Method{% endif %}</h3>
-                        <p class="fert-input-desc">{% if lang == 'ta' %}உங்கள் நீர்ப்பாசன முறையைத் தேர்ந்தெடுக்கவும்{% else %}Select your irrigation method{% endif %}</p>
-                    </div>
-                </div>
-                <div class="fert-search-select" id="fert-irrigation-search">
-                    <input type="text" class="fert-search-input" id="fert-irrigation-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search irrigation method...{% endif %}" autocomplete="off">
-                </div>
-                <div class="fert-info-card" id="fert-info-irrigation" style="display:none"></div>
+            <div class="fert-info-card" id="fert-info-stage" style="display:none"></div>
+        </div>
+        
+        <!-- Step 4: Irrigation -->
+        <div class="fert-step-content" id="fert-card-irrigation" style="display:none">
+            <div class="fert-search-select" id="fert-irrigation-search">
+                <input type="text" class="fert-search-input" id="fert-irrigation-input" placeholder="{% if lang == 'ta' %}தேடு...{% else %}Search irrigation method...{% endif %}" autocomplete="off">
             </div>
-
-            <!-- Generate Button -->
-            <div class="fert-input-card fert-fade-slide" id="fert-card-generate" style="display:none">
+            <div class="fert-info-card" id="fert-info-irrigation" style="display:none"></div>
+        </div>
+        <!-- Generate Button -->
+            <div class="fert-step-content" id="fert-card-generate" style="display:none; padding: 20px 0;">
                 <div class="fert-generate-section">
                     <div class="fert-generate-icon">🧪</div>
                     <h3>{% if lang == 'ta' %}அனைத்து விவரங்களும் சேகரிக்கப்பட்டன{% else %}All Details Collected{% endif %}</h3>
@@ -117,13 +99,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="fert-card" id="fert-progress-bar" style="display:none;margin-bottom:20px">
-            <div class="fert-progress-track">
-                <div class="fert-progress-fill" id="fert-progress-fill" style="width:0%"></div>
-            </div>
-            <span class="fert-progress-label" id="fert-progress-label">0/4 {% if lang == 'ta' %}முடிந்தது{% else %}completed{% endif %}</span>
-        </div>
+    </div>
 
         <div class="fert-result" id="fert-result-section" style="display:none">
             <div class="fert-card fert-result-header" style="text-align:center">
@@ -175,6 +151,14 @@
             </div>
             <div class="fert-history-list" id="fert-history-list">
                 <div class="fert-empty">{% if lang == 'ta' %}இதுவரை பரிந்துரைகள் இல்லை.{% else %}No recommendations yet.{% endif %}</div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="fert-loading-overlay" id="fert-loading-overlay" style="display:none">
+            <div class="fert-loading-card">
+                <div class="fert-spinner"></div>
+                <p id="fert-loading-text">{% if lang == 'ta' %}மண் தரவுகளை சரிபார்க்கிறது...{% else %}Analyzing soil and crop data...{% endif %}</p>
             </div>
         </div>
     </main>

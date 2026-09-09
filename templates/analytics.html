@@ -6,7 +6,6 @@
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
@@ -122,7 +121,7 @@
                 <div class="anl-card-header">
                     <h3>🤖 {% if lang == 'ta' %}AI நுண்ணறிவுகள்{% else %}AI Insights{% endif %}</h3>
                     <div class="anl-insights-header-right">
-                        <span class="anl-confidence-badge" id="anl-confidence-badge">🎯 0%</span>
+                        <span class="anl-confidence-badge" id="anl-confidence-badge">🎯 Analyzing...</span>
                         <button class="anl-btn anl-btn-sm anl-btn-ghost" onclick="anlRefreshInsights()">🔄 {% if lang == 'ta' %}புதுப்பிக்க{% else %}Refresh{% endif %}</button>
                     </div>
                 </div>

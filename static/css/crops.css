@@ -1090,7 +1090,7 @@
 }
 
 @media (max-width: 992px) {
-    .crops-main { margin-left: 0; padding: 20px; }
+    .crops-main { padding: 20px; }
     .crops-tools { flex-direction: column; align-items: stretch; }
     .crops-tools-left, .crops-tools-right { flex-wrap: wrap; }
     .crops-search input { width: 100%; }

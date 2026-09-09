@@ -19,7 +19,7 @@ function renderExpensePie(container) {
             if (!res.success || !res.category_breakdown) return;
             const labels = res.category_breakdown.map((c) => c._id);
             const data = res.category_breakdown.map((c) => c.total);
-            const colors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+            const colors = ["#2E7D32", "#66BB6A", "#A5D6A7", "#C8E6C9", "#E8F5E9"];
             renderPieChart(container, labels, data, colors);
         });
 }
@@ -31,7 +31,7 @@ function renderIncomeBar(container) {
             if (!res.success) return;
             const labels = ["Income", "Expenses"];
             const data = [res.summary.income || 0, res.summary.expense || 0];
-            const colors = ["#10b981", "#ef4444"];
+            const colors = ["#2E7D32", "#A5D6A7"];
             renderBarChart(container, labels, data, colors);
         });
 }
@@ -45,8 +45,8 @@ function renderMonthlyChart(container) {
             const income = res.monthly.map((m) => m.income);
             const expense = res.monthly.map((m) => m.expense);
             renderLineChart(container, months, [
-                { label: "Income", data: income, color: "#10b981" },
-                { label: "Expenses", data: expense, color: "#ef4444" },
+                { label: "Income", data: income, color: "#2E7D32" },
+                { label: "Expenses", data: expense, color: "#A5D6A7" },
             ]);
         });
 }
@@ -58,7 +58,7 @@ function renderCropDist(container) {
             if (!res.success || !res.crop_distribution) return;
             const labels = Object.keys(res.crop_distribution);
             const data = Object.values(res.crop_distribution);
-            const colors = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
+            const colors = ["#2E7D32", "#66BB6A", "#A5D6A7", "#C8E6C9", "#E8F5E9"];
             renderPieChart(container, labels, data, colors);
         });
 }
@@ -123,7 +123,7 @@ function renderBarChart(container, labels, data, colors) {
         options: {
             responsive: true,
             plugins: {
-                legend: { display: false },
+                legend: { position: "bottom" },
             },
             scales: {
                 y: {

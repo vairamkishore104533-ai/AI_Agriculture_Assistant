@@ -8,13 +8,13 @@
     width: 260px;
     background: var(--bg-card);
     border-right: 1px solid var(--border-color);
-    padding: 20px 0;
+    padding: 91px 0 20px 0; /* 71px for navbar + 20px original padding */
     position: fixed;
-    top: 70px;
+    top: 0;
     left: 0;
-    bottom: 0;
+    height: 100vh;
     overflow-y: auto;
-    z-index: 100;
+    z-index: 99; /* Below navbar (1000) */
     transition: var(--transition);
 }
 
@@ -89,6 +89,7 @@
 
 [data-theme="dark"] .sidebar-nav-item:hover {
     background: rgba(16,185,129,0.1);
+    color: var(--emerald-light);
 }
 
 .sidebar-nav-item.active {
@@ -101,6 +102,7 @@
 [data-theme="dark"] .sidebar-nav-item.active {
     background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.08));
     border-left-color: var(--emerald);
+    color: var(--emerald-light);
 }
 
 .sidebar-nav-item .nav-icon {
@@ -125,6 +127,10 @@
 
 .sidebar-nav-item.logout-item:hover {
     background: #fef2f2;
+}
+
+[data-theme="dark"] .sidebar-nav-item.logout-item:hover {
+    background: rgba(239, 68, 68, 0.1);
 }
 
 /* Main Content */
@@ -210,13 +216,13 @@
 }
 
 .stat-card-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 }
 
 .stat-card-value {
@@ -238,12 +244,14 @@
 
 /* Weather Card */
 .weather-card {
-    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 28px 28px 24px;
-    color: white;
+    padding: 32px 32px 28px;
+    color: var(--text-primary);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 .weather-card .weather-illustration {
@@ -252,7 +260,7 @@
     right: -10px;
     top: -10px;
     line-height: 1;
-    opacity: 0.1;
+    opacity: 0.05;
     pointer-events: none;
     user-select: none;
     transform: rotate(8deg);
@@ -307,20 +315,20 @@
 .weather-card .weather-detail {
     text-align: center;
     padding: 12px;
-    background: rgba(255,255,255,0.15);
+    background: #F3F4F6;
     border-radius: var(--radius);
-    backdrop-filter: blur(4px);
 }
 
 .weather-card .weather-detail .detail-label {
     font-size: 0.75rem;
-    opacity: 0.8;
+    color: var(--text-secondary);
 }
 
 .weather-card .weather-detail .detail-value {
     font-size: 1.1rem;
     font-weight: 600;
     margin-top: 4px;
+    color: var(--text-primary);
 }
 
 /* Quick Actions */

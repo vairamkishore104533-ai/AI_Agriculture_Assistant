@@ -317,13 +317,26 @@ function anlRefreshInsights() {
     var p = new URLSearchParams();
     if (anlState.crop) p.set("crop", anlState.crop);
     if (anlState.district) p.set("district", anlState.district);
+    
     loading.style.display = "flex";
     body.innerHTML = "";
-    fetch("/api/analytics/insights?" + p.toString())
-        .then(function (r) { return r.json(); })
+    if (badge) badge.textContent = "🎯 Analyzing...";
+    
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+
+    fetch("/api/analytics/insights?" + p.toString(), { signal: controller.signal })
+        .then(function (r) { 
+            clearTimeout(timeoutId);
+            return r.json(); 
+        })
         .then(function (res) {
             loading.style.display = "none";
-            if (!res.success) return;
+            if (!res.success) {
+                if (badge) badge.textContent = "🎯 Failed";
+                body.innerHTML = '<p class="anl-insights-placeholder">' + anlEscapeHtml(res.message || anlT("Could not generate insights", "நுண்ணறிவுகளை உருவாக்க முடியவில்லை")) + "</p>";
+                return;
+            }
             if (badge) badge.textContent = "🎯 " + (res.confidence || 0) + "%";
             if (res.insights) {
                 var t = anlEscapeHtml(res.insights);
@@ -339,9 +352,11 @@ function anlRefreshInsights() {
                 }
             }
         })
-        .catch(function () {
+        .catch(function (err) {
             loading.style.display = "none";
-            body.innerHTML = '<p class="anl-insights-placeholder">' + anlT("Could not generate insights", "நுண்ணறிவுகளை உருவாக்க முடியவில்லை") + "</p>";
+            if (badge) badge.textContent = "🎯 Error";
+            var msg = err.name === 'AbortError' ? anlT("Request timed out.", "கோரிக்கை நேரம் முடிந்தது.") : anlT("Could not generate insights", "நுண்ணறிவுகளை உருவாக்க முடியவில்லை");
+            body.innerHTML = '<p class="anl-insights-placeholder">' + msg + "</p>";
         });
 }
 

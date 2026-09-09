@@ -164,14 +164,16 @@ function analyzeDiagnosis() {
                 } catch (e) {
                     showDiagToast("Server error (" + r.status + "): " + text.substring(0, 200), "error");
                 }
-                if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
+                hideLoading();
+          if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
                 return null;
             });
         }
         return r.json();
     })
     .then(function (res) {
-        if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
+        hideLoading();
+          if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
         if (!res) return;
 
         console.log("[Diagnosis] Response received:", res);
@@ -206,7 +208,8 @@ function analyzeDiagnosis() {
     })
     .catch(function (err) {
         console.error("[Diagnosis] Network/fetch error:", err);
-        if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
+        hideLoading();
+          if (btn) { btn.disabled = false; btn.textContent = "\uD83D\uDD2C Diagnose Crop"; }
         showDiagToast("Network error: " + (err.message || "Please try again."), "error");
     });
 }
@@ -558,3 +561,27 @@ function showDiagToast(msg, type) {
 }
 
 initCropSelect();
+
+
+var diagLoadingMessages = [
+    t("Analyzing crop data...", "பயிர்களை பகுப்பாய்வு செய்கிறது..."),
+    t("Identifying symptoms...", "அறிகுறிகளை சரிபார்க்கிறது..."),
+    t("Consulting database...", "தரவுத்தளத்துடன் இணைக்கிறது..."),
+    t("Generating diagnosis...", "முடிவுகளை உருவாக்குகிறது...")
+];
+function showLoading() {
+    var overlay = document.getElementById("diag-loading-overlay");
+    var text = document.getElementById("diag-loading-text");
+    if (!overlay || !text) return;
+    overlay.style.display = "flex";
+    var msgIdx = 0;
+    window.diagLoadingInterval = setInterval(function() {
+        msgIdx = (msgIdx + 1) % diagLoadingMessages.length;
+        text.textContent = diagLoadingMessages[msgIdx];
+    }, 2000);
+}
+function hideLoading() {
+    var overlay = document.getElementById("diag-loading-overlay");
+    if (overlay) overlay.style.display = "none";
+    if (window.diagLoadingInterval) clearInterval(window.diagLoadingInterval);
+}

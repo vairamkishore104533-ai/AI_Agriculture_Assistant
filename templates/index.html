@@ -16,8 +16,12 @@
                 🌐 <span>{{ "English" if lang == "ta" else "தமிழ்" }}</span>
             </button>
             <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+            {% if session.get('user_id') %}
+            <a href="{{ url_for('dashboard.index') }}" class="tierris-btn-dark">{{ t('sidebar_dashboard') if t('sidebar_dashboard') else 'Dashboard' }}</a>
+            {% else %}
             <a href="{{ url_for('auth.login') }}" class="tierris-btn-outline">{{ t('nav_login') }}</a>
             <a href="{{ url_for('auth.register') }}" class="tierris-btn-dark">{{ t('nav_register') }}</a>
+            {% endif %}
             <button class="mobile-toggle tierris-mobile-toggle" onclick="toggleMobileNav()">☰</button>
         </div>
     </div>
@@ -39,7 +43,7 @@
             <div class="tierris-badge">🌱 AI-Powered Smart Farming</div>
             <h1>{{ t('hero_title') }}</h1>
             <p>{{ t('hero_subtitle') }}</p>
-            <a href="{{ url_for('auth.register') }}" class="tierris-cta">
+            <a href="{{ url_for('dashboard.index') if session.get('user_id') else url_for('auth.register') }}" class="tierris-cta">
                 {{ t('hero_get_started') }} <span class="tierris-arrow">→</span>
             </a>
         </div>
@@ -363,6 +367,7 @@
         </div>
         <div class="footer-bottom">
             <p>© {{ current_year }} AI Agriculture Assistant. {{ t('footer_rights') }}</p>
+            <p style="margin-top: 8px; font-size: 0.9em; opacity: 0.8;">Developed By <strong>Vairam Kishore J</strong></p>
         </div>
     </div>
 </footer>

@@ -813,7 +813,7 @@
 
 /* Responsive */
 @media (max-width: 992px) {
-    .diag-main { margin-left: 0; padding: 20px; }
+    .diag-main { padding: 20px; }
     .diag-stats-row { grid-template-columns: repeat(2, 1fr); }
     .diag-treatment-grid { grid-template-columns: 1fr; }
 }
@@ -835,3 +835,9 @@
     .diag-main { padding: 14px; }
     .diag-card { padding: 20px; }
 }
+
+.diag-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100000; }
+.diag-loading-card { background: var(--diag-card-bg); border-radius: 16px; padding: 40px 48px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-width: 400px; }
+.diag-spinner { width: 48px; height: 48px; border: 4px solid var(--diag-border); border-top-color: var(--diag-primary); border-radius: 50%; animation: diagSpin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes diagSpin { to { transform: rotate(360deg); } }
+.diag-loading-card p { margin: 0; font-size: 14px; color: var(--diag-text-secondary); }

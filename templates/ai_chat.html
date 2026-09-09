@@ -13,7 +13,6 @@
         </div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item active"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>

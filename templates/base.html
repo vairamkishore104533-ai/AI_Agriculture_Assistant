@@ -7,11 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat-widget.css') }}">
     <style>
         body {
             background: var(--bg-primary);
@@ -23,9 +25,46 @@
     <div class="toast-container"></div>
     {% block content %}{% endblock %}
 
+    
+    {% if session.get('user_id') %}
+    <!-- Floating Chat Widget -->
+    <div class="floating-chat-panel" id="chat-widget-panel">
+        <div class="chat-panel-header">
+            <div class="chat-panel-header-left">
+                <div class="chat-panel-avatar">🤖</div>
+                <div>
+                    <div class="chat-panel-title">AI Farming Assistant</div>
+                    <div class="chat-panel-status">Online • Ready to help</div>
+                </div>
+            </div>
+            <button class="chat-panel-lang-toggle" onclick="setLanguage('{{ "ta" if lang == "en" else "en" }}')">
+                {{ "English" if lang == "ta" else "தமிழ்" }}
+            </button>
+        </div>
+        <div class="chat-panel-body" id="chat-widget-body">
+            <div class="widget-chat-bubble bot">
+                {{ t('chat_subtitle') }}
+            </div>
+        </div>
+        <div class="chat-panel-suggestions">
+            <span class="chat-panel-suggestion" data-text="{{ t('chat_suggestion_1') }}">{{ t('chat_suggestion_1') }}</span>
+            <span class="chat-panel-suggestion" data-text="{{ t('chat_suggestion_2') }}">{{ t('chat_suggestion_2') }}</span>
+            <span class="chat-panel-suggestion" data-text="{{ t('chat_suggestion_3') }}">{{ t('chat_suggestion_3') }}</span>
+        </div>
+        <div class="chat-panel-footer">
+            <input type="text" id="chat-widget-input" class="chat-panel-input" placeholder="{{ t('chat_placeholder') }}">
+            <button id="chat-widget-send" class="chat-panel-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    <button class="floating-chat-fab" id="chat-widget-fab">
+        <i class="fas fa-comment-dots"></i>
+        <div class="unread-dot"></div>
+    </button>
+    {% endif %}
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat-widget.js') }}"></script>
     <script src="{{ url_for('static', filename='js/weather.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 </body>

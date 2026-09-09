@@ -135,11 +135,12 @@
 .exp-filter-select-wrap .exp-select { width: 100%; padding: 9px 10px; font-size: 13px; }
 
 /* Table */
-.exp-table-wrap { overflow-x: auto; margin-top: 16px; }
+.exp-table-wrap { overflow-x: auto; margin-top: 16px; background: #FFFFFF; border: 1px solid var(--exp-border); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .exp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.exp-table th { text-align: left; padding: 12px 14px; font-weight: 600; font-size: 12px; color: var(--exp-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--exp-border); white-space: nowrap; }
-.exp-table td { padding: 12px 14px; border-bottom: 1px solid var(--exp-border); vertical-align: middle; }
-.exp-table tr:hover { background: var(--exp-bg); }
+.exp-table th { text-align: left; padding: 14px 16px; font-weight: 600; font-size: 12px; color: var(--exp-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--exp-border); white-space: nowrap; background: rgba(0,0,0,0.01); }
+.exp-table td { padding: 14px 16px; border-bottom: 1px solid var(--exp-border); vertical-align: middle; }
+.exp-table tr:nth-child(even) { background: rgba(0,0,0,0.015); }
+.exp-table tr:hover { background: rgba(16,185,129,0.04); }
 .exp-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .exp-badge-income { background: rgba(16,185,129,0.15); color: var(--exp-green); }
 .exp-badge-expense { background: rgba(239,68,68,0.15); color: var(--exp-red); }
@@ -200,7 +201,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .exp-main { margin-left: 0; padding: 16px; }
+    .exp-main { padding: 16px; }
     .exp-summary-grid { grid-template-columns: 1fr; }
     .exp-stats-row { grid-template-columns: repeat(2, 1fr); }
     .exp-form-grid { grid-template-columns: 1fr 1fr; }

@@ -145,7 +145,7 @@
 @keyframes wthFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 992px) {
-    .wth-main { margin-left: 0; padding: 20px; }
+    .wth-main { padding: 20px; }
     .wth-current-top { flex-direction: column; }
     .wth-search-grid { grid-template-columns: 1fr; }
     .wth-daily-grid { grid-template-columns: repeat(4, 1fr); }

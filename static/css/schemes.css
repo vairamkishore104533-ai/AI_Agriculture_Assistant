@@ -163,7 +163,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .scm-main { margin-left: 0; padding: 16px; }
+    .scm-main { padding: 16px; }
     .scm-search-row { flex-direction: column; }
     .scm-search-field { width: 100%; }
     .scm-ai-grid { grid-template-columns: 1fr; }

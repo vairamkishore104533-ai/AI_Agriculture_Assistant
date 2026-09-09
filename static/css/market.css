@@ -134,7 +134,7 @@
 .mkt-search-option { padding: 10px 16px; cursor: pointer; font-size: 14px; transition: background 0.15s; }
 .mkt-search-option:hover { background: var(--mkt-primary-light); color: var(--mkt-primary-dark); }
 @media (max-width: 992px) {
-    .mkt-main { margin-left: 0; padding: 20px; }
+    .mkt-main { padding: 20px; }
     .mkt-search-grid { grid-template-columns: 1fr; }
     .mkt-summary-row { grid-template-columns: repeat(2, 1fr); }
     .mkt-price-top { flex-direction: column; }

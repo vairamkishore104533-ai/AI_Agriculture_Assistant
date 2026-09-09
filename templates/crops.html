@@ -6,7 +6,6 @@
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
         <nav class="sidebar-nav">
             <a href="{{ url_for('dashboard.index') }}" class="sidebar-nav-item"><span class="nav-icon">📊</span> {{ t('sidebar_dashboard') }}</a>
-            <a href="{{ url_for('chatbot.index') }}" class="sidebar-nav-item"><span class="nav-icon">🤖</span> {{ t('sidebar_ai_chat') }}</a>
             <a href="{{ url_for('crops.index') }}" class="sidebar-nav-item active"><span class="nav-icon">🌾</span> {{ t('sidebar_my_crops') }}</a>
             <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> {{ t('sidebar_crop_diagnosis') }}</a>
             <a href="/fertilizer" class="sidebar-nav-item"><span class="nav-icon">🧪</span> {{ t('sidebar_fertilizer') }}</a>
@@ -122,7 +121,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="10"><div class="crops-empty">🌾 No crops yet. Add your first crop to get started.</div></td></tr>
+                    <tr><td colspan="10"><div class="crops-empty">🌾 No crops yet. Add your first crop to get started.<br><br><button class="crops-btn crops-btn-primary" onclick="openAddModal()">Add your first crop</button></div></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -196,6 +195,7 @@
                         <div class="rec-placeholder-icon">🌾</div>
                         <h4>District-wise Crop Recommendations</h4>
                         <p>Select any Tamil Nadu district to view recommended crops, suitable soil types, growing seasons, water requirements, expected yield, and farming insights.</p>
+                        <button class="crops-btn crops-btn-primary" onclick="document.getElementById('rec-search-input').focus()" style="margin-top: 12px;">Choose District</button>
                     </div>
                 </div>
             </div>
@@ -215,7 +215,10 @@
                         </div>
                         {% endfor %}
                     {% else %}
-                    <div class="crops-empty">No upcoming activities. Add crops with dates.</div>
+                    <div class="crops-empty" style="text-align:center;">
+                        No upcoming activities. Add crops with dates.<br><br>
+                        <button class="crops-btn crops-btn-primary" onclick="openAddModal()">Add your first crop</button>
+                    </div>
                     {% endif %}
                 </div>
             </div>
