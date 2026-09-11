@@ -12,6 +12,8 @@ class NotificationService:
         NotificationService._generate_market_notifications(user_id, lang)
         NotificationService._generate_irrigation_notifications(user_id, lang)
         NotificationService._generate_fertilizer_notifications(user_id, lang)
+        NotificationService._generate_harvest_notifications(user_id, lang)
+        NotificationService._generate_watering_notifications(user_id, lang)
 
     @staticmethod
     def _exists(user_id, notif_type, title, hours=24):
@@ -26,26 +28,44 @@ class NotificationService:
     def _generate_scheme_notifications(user_id, lang):
         db = current_app.config["MONGO"]
         crops = list(db["crops"].find({"user_id": user_id}))
-        if not crops:
-            return
         user_districts = list(set(c.get("district", "") for c in crops if c.get("district")))
         schemes = SchemeService.get_all_schemes(lang)[:5]
         for s in schemes:
             title = s.get("title_en" if lang == "en" else "title_ta", "")
+            deadline = s.get("deadline", "")
             if not title:
                 continue
-            if NotificationService._exists(user_id, "scheme", title, 168):
-                continue
-            if lang == "ta":
-                msg = f"{title} திட்டம் உங்கள் மாவட்டத்திற்கு கிடைக்கிறது. விவரங்களைப் பார்க்கவும்."
+            
+            if deadline:
+                key = f"scheme_end_{title}"
+                if NotificationService._exists(user_id, "scheme_ending", key, 168):
+                    continue
+                if lang == "ta":
+                    msg = f"{title} திட்டம் முடிவடையும் தேதி நெருங்குகிறது: {deadline}. உடனே விண்ணப்பிக்கவும்."
+                    t_title = f"முடிவடைகிறது: {title}"
+                else:
+                    msg = f"{title} scheme is ending soon (Deadline: {deadline}). Apply now."
+                    t_title = f"Ending Soon: {title}"
+                Notification.create_notification(
+                    user_id=user_id, notif_type="scheme_ending",
+                    title=t_title, message=msg, category="scheme", priority="high",
+                    related_id=s.get("id", ""),
+                )
             else:
-                msg = f"{title} scheme is available. Check details."
-            Notification.create_notification(
-                user_id=user_id, notif_type="scheme",
-                title=title if lang == "en" else s.get("title_ta", title),
-                message=msg, category="scheme", priority="medium",
-                related_id=s.get("id", ""),
-            )
+                key = f"scheme_new_{title}"
+                if NotificationService._exists(user_id, "scheme_new", key, 168):
+                    continue
+                if lang == "ta":
+                    msg = f"புதிய திட்டம்: {title} திட்டம் இப்போது உள்ளது. விவரங்களை பார்க்கவும்."
+                    t_title = "புதிய திட்டம்"
+                else:
+                    msg = f"New scheme available: {title}. Check details."
+                    t_title = "New Scheme"
+                Notification.create_notification(
+                    user_id=user_id, notif_type="scheme_new",
+                    title=t_title, message=msg, category="scheme", priority="medium",
+                    related_id=s.get("id", ""),
+                )
 
         saved = list(db["saved_schemes"].find({"user_id": user_id}))
         for s in saved:
@@ -67,12 +87,76 @@ class NotificationService:
                 related_id=str(s.get("_id", "")),
             )
 
+
+    @staticmethod
+    def _generate_harvest_notifications(user_id, lang):
+        db = current_app.config["MONGO"]
+        crops = list(db["crops"].find({"user_id": user_id}))
+        for c in crops:
+            crop_name = c.get("crop_name", "")
+            status = c.get("status", "").lower()
+            harvest_date_str = c.get("harvest_date", "")
+            if not crop_name or status == "harvested" or not harvest_date_str:
+                continue
+            
+            try:
+                hd = datetime.strptime(harvest_date_str, "%Y-%m-%d")
+                today = datetime.utcnow()
+                diff = (hd - today).days
+                if 0 <= diff <= 3:
+                    key = f"harvest_{crop_name}_{user_id[:8]}"
+                    if NotificationService._exists(user_id, "harvest", key, 24):
+                        continue
+                    if lang == "ta":
+                        title = f"{crop_name} அறுவடை நேரம்"
+                        msg = f"{crop_name} அறுவடைக்கு இன்னும் {diff} நாட்களே உள்ளன! தேவையான முன்னேற்பாடுகளை செய்யவும்."
+                    else:
+                        title = f"{crop_name} Harvest Reminder"
+                        msg = f"Your {crop_name} is near harvest in {diff} days! Prepare accordingly."
+                    
+                    Notification.create_notification(
+                        user_id=user_id, notif_type="harvest",
+                        title=title, message=msg,
+                        category="crop", priority="high",
+                        related_crop=crop_name,
+                    )
+            except Exception:
+                pass
+
+    @staticmethod
+    def _generate_watering_notifications(user_id, lang):
+        db = current_app.config["MONGO"]
+        crops = list(db["crops"].find({"user_id": user_id}))
+        live_crops = [c.get("crop_name", "") for c in crops if c.get("status", "").title() in ["Seeded", "Growing", "Flowering", "Harvest Ready"] and c.get("crop_name")]
+        
+        if not live_crops:
+            return
+            
+        key = f"water_crops_{user_id[:8]}"
+        if NotificationService._exists(user_id, "watering", key, 24):
+            return
+            
+        crop_names = ", ".join(live_crops[:3])
+        if len(live_crops) > 3:
+            crop_names += f" and {len(live_crops) - 3} others"
+            
+        if lang == "ta":
+            title = "பயிர்களுக்கு நீர் பாய்ச்ச நினைவூட்டல்"
+            msg = f"உங்கள் நேரடி பயிர்களுக்கு (live crops - {crop_names}) நீர் பாய்ச்ச மறக்க வேண்டாம்."
+        else:
+            title = "Watering Reminder"
+            msg = f"Don't forget to water all your live crops: {crop_names}."
+            
+        Notification.create_notification(
+            user_id=user_id, notif_type="watering",
+            title=title, message=msg,
+            category="irrigation", priority="medium",
+        )
+
     @staticmethod
     def _generate_market_notifications(user_id, lang):
         db = current_app.config["MONGO"]
         crops = list(db["crops"].find({"user_id": user_id}))
-        if not crops:
-            return
         user_crops = list(set(c.get("crop_name", "").lower() for c in crops if c.get("crop_name")))
         market_history = list(db["market_history"].find({"user_id": user_id}).sort("created_at", -1).limit(50))
         for crop_name in user_crops:
