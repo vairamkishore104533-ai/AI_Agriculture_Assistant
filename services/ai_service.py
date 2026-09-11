@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 
 class AIService:
     OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct"
@@ -38,7 +39,7 @@ class AIService:
             if self._import_error:
                 raise RuntimeError(self._import_error)
             if self._client is None:
-                self._client = self._Groq(api_key=self.api_key)
+                self._client = self._Groq(api_key=self.api_key, max_retries=3)
             return self._client
         return None
 
@@ -59,66 +60,74 @@ class AIService:
 
         # Call OpenRouter API directly via requests if using sk-or-v1- key
         if self.provider == "openrouter":
-            try:
-                print(f"[AIService] Sending request to OpenRouter model={self.OPENROUTER_MODEL} messages={len(messages)}", flush=True)
-                res = requests.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "http://localhost:5000",
-                        "X-Title": "TN Agri Assistant"
-                    },
-                    json={
-                        "model": self.OPENROUTER_MODEL,
-                        "messages": messages,
-                        "temperature": 0.7,
-                        "max_tokens": 2048,
-                    },
-                    timeout=30
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    result = data["choices"][0]["message"]["content"]
-                    print(f"[AIService] OpenRouter response OK ({len(result)} chars)", flush=True)
-                    return result.strip()
-                elif res.status_code == 402:
-                    return ("OpenRouter API error: Insufficient account balance. "
-                            "Please check your OpenRouter account at https://openrouter.ai/")
-                else:
-                    return f"OpenRouter API error (status {res.status_code}): {res.text}"
-            except Exception as e:
-                print(f"[AIService] OpenRouter API call failed: {e}", flush=True)
-                return f"AI service error: {type(e).__name__}: {str(e)}"
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    print(f"[AIService] Sending request to OpenRouter model={self.OPENROUTER_MODEL} messages={len(messages)} (Attempt {attempt+1})", flush=True)
+                    res = requests.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "http://localhost:5000",
+                            "X-Title": "TN Agri Assistant"
+                        },
+                        json={
+                            "model": self.OPENROUTER_MODEL,
+                            "messages": messages,
+                            "temperature": 0.7,
+                            "max_tokens": 2048,
+                        },
+                        timeout=30
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        result = data["choices"][0]["message"]["content"]
+                        print(f"[AIService] OpenRouter response OK ({len(result)} chars)", flush=True)
+                        return result.strip()
+                    elif res.status_code == 402:
+                        return ("OpenRouter API error: Insufficient account balance. "
+                                "Please check your OpenRouter account at https://openrouter.ai/")
+                    else:
+                        return f"OpenRouter API error (status {res.status_code}): {res.text}"
+                except Exception as e:
+                    print(f"[AIService] OpenRouter API call failed on attempt {attempt+1}: {e}", flush=True)
+                    if attempt == max_retries - 1:
+                        return f"AI service error: {type(e).__name__}: {str(e)}"
+                    time.sleep(1)
 
         # Call DeepSeek API directly via requests if using sk- key
         if self.provider == "deepseek":
-            try:
-                print(f"[AIService] Sending request to DeepSeek API model={self.DEEPSEEK_MODEL} messages={len(messages)}", flush=True)
-                res = requests.post(
-                    "https://api.deepseek.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
-                    json={
-                        "model": self.DEEPSEEK_MODEL,
-                        "messages": messages,
-                        "temperature": 0.7,
-                        "max_tokens": 2048,
-                    },
-                    timeout=30
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    result = data["choices"][0]["message"]["content"]
-                    print(f"[AIService] DeepSeek response OK ({len(result)} chars)", flush=True)
-                    return result.strip()
-                elif res.status_code == 402:
-                    return ("DeepSeek API error: Insufficient account balance. "
-                            "Please check your DeepSeek billing at https://platform.deepseek.com/")
-                else:
-                    return f"DeepSeek API error (status {res.status_code}): {res.text}"
-            except Exception as e:
-                print(f"[AIService] DeepSeek API call failed: {e}", flush=True)
-                return f"AI service error: {type(e).__name__}: {str(e)}"
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    print(f"[AIService] Sending request to DeepSeek API model={self.DEEPSEEK_MODEL} messages={len(messages)} (Attempt {attempt+1})", flush=True)
+                    res = requests.post(
+                        "https://api.deepseek.com/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                        json={
+                            "model": self.DEEPSEEK_MODEL,
+                            "messages": messages,
+                            "temperature": 0.7,
+                            "max_tokens": 2048,
+                        },
+                        timeout=30
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        result = data["choices"][0]["message"]["content"]
+                        print(f"[AIService] DeepSeek response OK ({len(result)} chars)", flush=True)
+                        return result.strip()
+                    elif res.status_code == 402:
+                        return ("DeepSeek API error: Insufficient account balance. "
+                                "Please check your DeepSeek billing at https://platform.deepseek.com/")
+                    else:
+                        return f"DeepSeek API error (status {res.status_code}): {res.text}"
+                except Exception as e:
+                    print(f"[AIService] DeepSeek API call failed on attempt {attempt+1}: {e}", flush=True)
+                    if attempt == max_retries - 1:
+                        return f"AI service error: {type(e).__name__}: {str(e)}"
+                    time.sleep(1)
 
         # Call Groq API via SDK if using gsk_ key
         try:
