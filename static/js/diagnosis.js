@@ -585,3 +585,115 @@ function hideLoading() {
     if (overlay) overlay.style.display = "none";
     if (window.diagLoadingInterval) clearInterval(window.diagLoadingInterval);
 }
+
+
+// --- Live Crops Integration ---
+function filterLiveCrops(q) {
+    var lower = q.toLowerCase();
+    var items = document.querySelectorAll('.diag-live-crop-item');
+    var count = 0;
+    var list = document.getElementById('live-crop-dropdown-list');
+    var backdrop = document.getElementById('floating-crop-picker-backdrop');
+    
+    // Auto-open if typing
+    if (q.length > 0 && list && list.style.display === 'none') {
+        openLiveCropDropdown();
+    }
+    
+    items.forEach(function(item) {
+        var cropName = item.getAttribute('data-crop');
+        if (cropName.indexOf(lower) >= 0) {
+            item.style.display = 'block';
+            count++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function openLiveCropDropdown() {
+    var btn = document.getElementById('live-crop-dropdown-btn');
+    var list = document.getElementById('live-crop-dropdown-list');
+    var backdrop = document.getElementById('floating-crop-picker-backdrop');
+    
+    if (!btn || !list) return;
+    
+    if (window.innerWidth <= 768) {
+        // Mobile bottom sheet style
+        list.style.top = 'auto';
+        list.style.bottom = '20px';
+        list.style.left = '5%';
+        list.style.width = '90%';
+        list.style.maxHeight = '50vh';
+        if (backdrop) {
+            backdrop.style.background = 'rgba(0,0,0,0.4)';
+        }
+    } else {
+        // Desktop floating panel relative to viewport
+        var rect = btn.getBoundingClientRect();
+        list.style.left = rect.left + 'px';
+        list.style.width = rect.width + 'px';
+        
+        var spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 250) { // If less than 250px below, open upwards
+            list.style.top = 'auto';
+            list.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        } else {
+            list.style.top = (rect.bottom + 4) + 'px';
+            list.style.bottom = 'auto';
+        }
+        if (backdrop) {
+            backdrop.style.background = 'transparent';
+        }
+    }
+    
+    list.style.display = 'block';
+    if(backdrop) backdrop.style.display = 'block';
+}
+
+function closeLiveCropDropdown() {
+    var list = document.getElementById('live-crop-dropdown-list');
+    var backdrop = document.getElementById('floating-crop-picker-backdrop');
+    if (list) list.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+function toggleLiveCropDropdown(e) {
+    if (e) e.stopPropagation();
+    var list = document.getElementById('live-crop-dropdown-list');
+    if (list && list.style.display === 'block') {
+        closeLiveCropDropdown();
+    } else {
+        openLiveCropDropdown();
+    }
+}
+
+function selectLiveCrop(cropName) {
+    var btn = document.getElementById('live-crop-dropdown-btn');
+    if (btn) btn.innerHTML = '🌱 <strong>' + escapeHtml(cropName) + '</strong> <span>▼</span>';
+    
+    closeLiveCropDropdown();
+    
+    // Connect to existing Diagnose Your Crop block
+    var cropSelect = document.getElementById('crop-select');
+    if (cropSelect) {
+        cropSelect.value = cropName;
+        cropSelect.dispatchEvent(new Event('change'));
+        showDiagToast(cropName + ' selected for diagnosis', 'success');
+    }
+}
+
+// Window resize handling
+window.addEventListener('resize', function() {
+    var list = document.getElementById('live-crop-dropdown-list');
+    if (list && list.style.display === 'block') {
+        openLiveCropDropdown(); // reposition
+    }
+});
+
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeLiveCropDropdown();
+    }
+});

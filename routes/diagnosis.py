@@ -259,9 +259,15 @@ def index():
     user_id = session.get("user_id")
     stats = Diagnosis.get_stats(user_id)
     diseases_list = Diagnosis.find_by_user(user_id)
+    from models.crop import Crop
+    crops_db = Crop.find_by_user(user_id)
+    # Consider live crops as ones that aren't harvested or completed/cancelled
+    live_crops = [c.to_dict() for c in crops_db if c.status.lower() not in ["harvested", "cancelled", "completed"]]
+    
     return render_template(
         "crop_diagnosis.html",
         crops=CROPS,
+        live_crops=live_crops,
         districts=get_districts(),
         stats=stats,
         diseases=[d.to_dict() for d in diseases_list],
@@ -316,122 +322,142 @@ def analyze():
         print(f"[Diagnosis] Validated input — calling Groq API...")
 
         from services.ai_service import AIService
+        import json
+        import re
 
-        if lang == "ta":
-            prompt = (
-                f"நீங்கள் தமிழ்நாட்டின் முன்னணி விவசாய நோய் கண்டறியும் நிபுணர்.\n\n"
-                f"பயிர்: {crop}\n"
-                f"தேர்ந்தெடுக்கப்பட்ட அறிகுறிகள்: {', '.join(symptoms)}\n"
-                f"மாவட்டம்: {district}\n\n"
-                f"பின்வரும் கட்டமைப்பில் மட்டுமே பதிலளிக்கவும் (ஒவ்வொரு பகுதியையும் ஒரு வரியில் தொடங்கவும்):\n\n"
-                f"நோய்: [மிகவும் சாத்தியமான நோயின் பெயர்]\n"
-                f"நம்பிக்கை: [அதிக/நடுத்தர/குறைவு]\n"
-                f"விளக்கம்: [நோயின் சுருக்கமான விளக்கம்]\n"
-                f"தீவிரம்: [குறைவு/நடுத்தர/அதிக/முக்கியமானது]\n"
-                f"காரணங்கள்: [முக்கிய காரணங்கள்]\n"
-                f"பரவல்: [நோய் எவ்வாறு பரவுகிறது]\n"
-                f"உடனடி நடவடிக்கைகள்: [உடனடி சிகிச்சை பரிந்துரைகள்]\n"
-                f"இயற்கை சிகிச்சை: [இயற்கை மற்றும் கரிம சிகிச்சைகள்]\n"
-                f"இரசாயன சிகிச்சை: [பரிந்துரைக்கப்பட்ட இரசாயன சிகிச்சைகள், ஏதேனும் இருந்தால்]\n"
-                f"தடுப்பு: [தடுப்பு நடவடிக்கைகள்]\n"
-                f"அவசர நடவடிக்கைகள்: [தீவிரமாக இருந்தால் எடுக்க வேண்டிய அவசர நடவடிக்கைகள்]\n"
-                f"தொடர்புடைய நோய்கள்: [இதே போன்ற அறிகுறிகளைக் கொண்ட பிற நோய்கள்]\n"
-                f"மீட்பு நேரம்: [மதிப்பிடப்பட்ட மீட்பு நேரம்]\n"
-                f"வெற்றி விகிதம்: [சிகிச்சையின் மதிப்பிடப்பட்ட வெற்றி விகிதம்]\n\n"
-                f"மருத்துவம் அல்லாத, விவசாயம் சார்ந்த பரிந்துரைகளை மட்டுமே வழங்கவும்."
-            )
-        else:
-            prompt = (
-                f"You are a leading agricultural crop disease diagnosis expert for Tamil Nadu, India.\n\n"
-                f"Crop: {crop}\n"
-                f"Selected Symptoms: {', '.join(symptoms)}\n"
-                f"District: {district}\n\n"
-                f"Respond ONLY in the following structure (start each section on a new line, use Markdown for formatting):\n\n"
-                f"Disease: [Most likely disease name]\n"
-                f"Confidence: [High/Medium/Low]\n"
-                f"Description: [Brief description of the disease]\n"
-                f"Severity: [Low/Medium/High/Critical]\n"
-                f"Causes: [Main causes of the disease]\n"
-                f"Spread: [How the disease spreads]\n"
-                f"Immediate Actions: [Immediate treatment recommendations]\n"
-                f"Organic Treatment: [Natural and organic treatment options]\n"
-                f"Chemical Treatment: [Recommended chemical treatments if applicable]\n"
-                f"Prevention: [Preventive measures and best practices]\n"
-                f"Emergency Actions: [Emergency actions to take if severe]\n"
-                f"Related Diseases: [Other diseases with similar symptoms]\n"
-                f"Recovery Time: [Estimated recovery time]\n"
-                f"Success Rate: [Estimated success rate of treatment]\n\n"
-                f"Provide only agriculture-focused, non-medical recommendations."
-            )
+        def get_prompt(missing_keys=None, previous_response=None):
+            req_format = """{
+  "disease": "",
+  "confidence": "High/Medium/Low",
+  "description": "",
+  "severity": "Low/Medium/High/Critical",
+  "causes": "",
+  "spread": "",
+  "treatment_immediate": "",
+  "treatment_organic": "",
+  "treatment_chemical": "",
+  "prevention": "",
+  "emergency": "",
+  "related_diseases": "",
+  "recovery_time": "",
+  "success_rate": ""
+}"""
+            if lang == "ta":
+                base = (
+                    f"நீங்கள் தமிழ்நாட்டின் முன்னணி விவசாய நோய் கண்டறியும் நிபுணர்.\n\n"
+                    f"பயிர்: {crop}\n"
+                    f"தேர்ந்தெடுக்கப்பட்ட அறிகுறிகள்: {', '.join(symptoms)}\n"
+                    f"மாவட்டம்: {district}\n\n"
+                    f"கண்டிப்பான விதி: நீங்கள் ஒரு சரியான JSON வடிவத்தில் மட்டுமே பதிலளிக்க வேண்டும். எந்தவொரு markdown குறிச்சொற்களையும் (```json) பயன்படுத்த வேண்டாம்.\n"
+                    f"அனைத்து புலங்களும் கட்டாயமானவை. எந்த புலத்தையும் காலியாக விடக்கூடாது. உண்மையான, பயிர் சார்ந்த தகவல்களை வழங்கவும்.\n"
+                    f"JSON வடிவம் இதோ:\n{req_format}\n"
+                )
+            else:
+                base = (
+                    f"You are a leading agricultural crop disease diagnosis expert for Tamil Nadu, India.\n\n"
+                    f"Crop: {crop}\n"
+                    f"Selected Symptoms: {', '.join(symptoms)}\n"
+                    f"District: {district}\n\n"
+                    f"STRICT RULE: You MUST respond ONLY with valid JSON. Do NOT wrap the JSON in markdown blocks like ```json.\n"
+                    f"EVERY field is mandatory. Never return null, empty string, or placeholder values. Provide actual, disease-specific information for every field.\n"
+                    f"Use this exact JSON schema:\n{req_format}\n"
+                )
+            
+            if missing_keys and previous_response:
+                retry_msg = f"\n\nYour previous response was incomplete. The following fields were missing or empty: {', '.join(missing_keys)}.\nPlease provide a complete JSON response filling in ALL fields including the missing ones. Here was your previous response:\n{previous_response}"
+                return base + retry_msg
+            return base
 
-        print(f"[Diagnosis] Calling Groq with prompt ({len(prompt)} chars): {prompt[:300]}...")
         ai = AIService()
-        response = ai.get_response(prompt, lang)
-        print(f"[Diagnosis] Groq response received ({len(response)} chars): {response[:200]}...")
-
-        result = {
-            "disease": "", "confidence": "", "description": "", "severity": "",
-            "causes": "", "spread": "", "treatment_immediate": "",
-            "treatment_organic": "", "treatment_chemical": "",
-            "prevention": "", "emergency": "", "related_diseases": "",
-            "recovery_time": "", "success_rate": "",
-        }
-
-        if lang == "ta":
-            key_map = {
-                "நோய்": "disease", "நம்பிக்கை": "confidence", "விளக்கம்": "description",
-                "தீவிரம்": "severity", "காரணங்கள்": "causes", "பரவல்": "spread",
-                "உடனடி நடவடிக்கைகள்": "treatment_immediate",
-                "இயற்கை சிகிச்சை": "treatment_organic",
-                "இரசாயன சிகிச்சை": "treatment_chemical",
-                "தடுப்பு": "prevention",
-                "அவசர நடவடிக்கைகள்": "emergency",
-                "தொடர்புடைய நோய்கள்": "related_diseases",
-                "மீட்பு நேரம்": "recovery_time",
-                "வெற்றி விகிதம்": "success_rate",
-            }
-        else:
-            key_map = {
-                "disease": "disease", "confidence": "confidence", "description": "description",
-                "severity": "severity", "causes": "causes", "spread": "spread",
-                "immediate actions": "treatment_immediate",
-                "organic treatment": "treatment_organic",
-                "chemical treatment": "treatment_chemical",
-                "prevention": "prevention",
-                "emergency actions": "emergency",
-                "related diseases": "related_diseases",
-                "recovery time": "recovery_time",
-                "success rate": "success_rate",
-            }
-
-        lines = response.split("\n")
-        for line in lines:
-            raw = line.strip()
-            if not raw:
-                continue
-            # Strip markdown heading markers (#, ##, **) for matching
-            clean = raw.lstrip("#").lstrip("*").strip()
-            for search_key, map_key in key_map.items():
-                colon = clean.find(":")
-                if colon > 0 and clean.lower().startswith(search_key.lower()):
-                    val = clean[colon+1:].strip().lstrip("*").strip().rstrip("*").strip()
-                    if val:
-                        result[map_key] = val
+        max_retries = 2
+        
+        required_keys = [
+            "disease", "confidence", "description", "severity",
+            "causes", "spread", "treatment_immediate", "treatment_organic",
+            "treatment_chemical", "prevention", "emergency", "related_diseases",
+            "recovery_time", "success_rate"
+        ]
+        
+        result = None
+        raw_response = ""
+        
+        for attempt in range(max_retries + 1):
+            if attempt == 0:
+                prompt = get_prompt()
+            else:
+                prompt = get_prompt(missing_keys, raw_response)
+                
+            print(f"[Diagnosis] Calling Groq (Attempt {attempt+1}/{max_retries+1})...")
+            response = ai.get_response(prompt, lang)
+            raw_response = response
+            
+            # Try to parse JSON
+            try:
+                # Strip markdown json blocks if AI included them despite instructions
+                json_str = response.strip()
+                if json_str.startswith("```json"):
+                    json_str = json_str[7:]
+                if json_str.startswith("```"):
+                    json_str = json_str[3:]
+                if json_str.endswith("```"):
+                    json_str = json_str[:-3]
+                json_str = json_str.strip()
+                
+                # Extract json object if there's leading/trailing text
+                start_brace = json_str.find('{')
+                end_brace = json_str.rfind('}')
+                if start_brace != -1 and end_brace != -1:
+                    json_str = json_str[start_brace:end_brace+1]
+                
+                parsed_json = json.loads(json_str)
+                
+                missing_keys = []
+                for k in required_keys:
+                    val = parsed_json.get(k)
+                    if val is None or str(val).strip() in ["", "[]", "null", "None", "-", "N/A"]:
+                        if k != "emergency": # Allow emergency to be empty if they really want
+                            missing_keys.append(k)
+                
+                if not missing_keys:
+                    # Success!
+                    result = parsed_json
                     break
-
-        if not result["disease"]:
-            print(f"[Diagnosis] No disease parsed from Groq response, using fallback. Raw: {response[:300]}")
-            result = None
+                else:
+                    print(f"[Diagnosis] Attempt {attempt+1} missing keys: {missing_keys}")
+                    if attempt == max_retries:
+                        result = parsed_json
+                        break
+            except Exception as e:
+                print(f"[Diagnosis] JSON parse failed on attempt {attempt+1}: {e}")
+                if attempt == max_retries:
+                    # Fallback on final failure
+                    pass
+        
+        if not result or not result.get("disease"):
+            print(f"[Diagnosis] No disease parsed from Groq response, using fallback.")
             return jsonify({
                 "success": True,
                 "result": None,
-                "diagnosis": response,
+                "diagnosis": raw_response,
                 "fallback": False,
             })
+            
+        # Clean up values to ensure no '-' or empty strings in final result
+        for k in required_keys:
+            if not result.get(k) or str(result[k]).strip() in ["", "-", "N/A", "None", "null", "[]"]:
+                if k == "emergency":
+                    result[k] = ""
+                else:
+                    result[k] = "Specific information unavailable, consult local agricultural extension officer."
+                
+        # Handle stringification for UI
+        for k in required_keys:
+            if isinstance(result[k], list):
+                result[k] = ", ".join(result[k])
 
-        print(f"[Diagnosis] Parsed result — disease: '{result['disease']}', severity: '{result['severity']}', confidence: '{result['confidence']}'")
+        print(f"[Diagnosis] Parsed result — disease: '{result.get('disease')}', severity: '{result.get('severity')}', confidence: '{result.get('confidence')}'")
 
-        return jsonify({"success": True, "result": result, "diagnosis": response, "fallback": False})
+        return jsonify({"success": True, "result": result, "diagnosis": raw_response, "fallback": False})
 
     except Exception as e:
         import traceback
