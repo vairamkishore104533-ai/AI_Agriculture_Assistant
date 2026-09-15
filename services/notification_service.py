@@ -100,25 +100,28 @@ class NotificationService:
                 continue
             
             try:
-                hd = datetime.strptime(harvest_date_str, "%Y-%m-%d")
-                today = datetime.utcnow()
+                hd = datetime.strptime(harvest_date_str, "%Y-%m-%d").date()
+                today = datetime.utcnow().date()
                 diff = (hd - today).days
-                if 0 <= diff <= 3:
-                    key = f"harvest_{crop_name}_{user_id[:8]}"
-                    if NotificationService._exists(user_id, "harvest", key, 24):
-                        continue
+                
+                if diff == 7:
                     if lang == "ta":
-                        title = f"{crop_name} அறுவடை நேரம்"
-                        msg = f"{crop_name} அறுவடைக்கு இன்னும் {diff} நாட்களே உள்ளன! தேவையான முன்னேற்பாடுகளை செய்யவும்."
+                        title = f"{crop_name} அறுவடை 7 நாட்களில் ({hd.strftime('%d %b')}) உள்ளது"
+                        msg = f"{crop_name} அறுவடை 7 நாட்களில் ({hd.strftime('%d %b')}) உள்ளது."
                     else:
-                        title = f"{crop_name} Harvest Reminder"
-                        msg = f"Your {crop_name} is near harvest in {diff} days! Prepare accordingly."
+                        title = f"{crop_name} harvest is in 7 days ({hd.strftime('%d %b')})"
+                        msg = f"{crop_name} harvest is in 7 days ({hd.strftime('%d %b')})."
+                        
+                    # Check if this exact reminder (by title) was generated recently
+                    if NotificationService._exists(user_id, "harvest", title, 24 * 10):
+                        continue
                     
                     Notification.create_notification(
                         user_id=user_id, notif_type="harvest",
                         title=title, message=msg,
                         category="crop", priority="high",
                         related_crop=crop_name,
+                        related_id=str(c.get("_id", ""))
                     )
             except Exception:
                 pass

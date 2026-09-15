@@ -547,6 +547,15 @@ TRANSLATIONS = {
         "soil_clay": "Clay Soil",
         "soil_loamy": "Loamy Soil",
 
+        # Village Validation
+        "village_verified": "Village Verified",
+        "district_mismatch": "District Mismatch",
+        "village_not_found": "Village Not Found",
+        "location_unclear": "Location Unclear",
+        "verification_unavailable": "Verification Unavailable",
+        "verifying_village": "Verifying Village",
+        "village_and_district_required": "Village and district are required",
+
         # Crops
         "crop_paddy": "Paddy",
         "crop_wheat": "Wheat",
@@ -1112,6 +1121,15 @@ TRANSLATIONS = {
         "soil_sandy": "மணல் மண்",
         "soil_clay": "களிமண்",
         "soil_loamy": "களர் மண்",
+
+        # Village Validation
+        "village_verified": "கிராமம் சரிபார்க்கப்பட்டது",
+        "district_mismatch": "மாவட்ட பொருத்தமின்மை",
+        "village_not_found": "கிராமம் கிடைக்கவில்லை",
+        "location_unclear": "இடம் தெளிவாக இல்லை",
+        "verification_unavailable": "சரிபார்ப்பு தற்போது கிடைக்கவில்லை",
+        "verifying_village": "கிராமத்தை சரிபார்க்கிறது",
+        "village_and_district_required": "கிராமம் மற்றும் மாவட்டம் தேவை",
 
         # Crops
         "crop_paddy": "நெல்",

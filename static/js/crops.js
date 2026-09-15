@@ -392,17 +392,24 @@ function loadActivities() {
             var list = document.getElementById("activities-list");
             if (!list) return;
             if (!res.success || !res.activities || res.activities.length === 0) {
-                list.innerHTML = '<div class="crops-empty">No upcoming activities. Add crops with dates.</div>';
+                list.innerHTML = '<div class="crops-empty" style="text-align:center;">No upcoming activities this month.</div>';
                 return;
             }
             var html = "";
-            res.activities.forEach(function (a) {
-                html += '<div class="activity-item activity-' + a.urgency + '">';
-                html += '<div class="activity-icon">' + (a.type === "harvest" ? "🌾" : "💧") + '</div>';
-                html += '<div class="activity-info">';
-                html += '<span class="activity-action">' + escapeHtml(a.action) + " " + escapeHtml(a.crop) + '</span>';
-                html += '<span class="activity-time">' + (a.days === 0 ? "Today" : "In " + a.days + " days") + '</span>';
-                html += '</div></div>';
+            res.activities.forEach(function (group) {
+                html += '<div class="activity-month-group" style="margin-bottom: 15px;">';
+                html += '<h4 style="font-size: 0.95rem; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">' + escapeHtml(group.month) + '</h4>';
+                group.items.forEach(function (a) {
+                    var borderCol = a.type === "harvest" ? "#f59e0b" : "#10b981";
+                    var icon = a.type === "harvest" ? "🌾" : "🌱";
+                    html += '<div class="activity-item" style="padding: 10px; background: var(--bg-color); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; border-left: 3px solid ' + borderCol + ';">';
+                    html += '<div class="activity-icon" style="font-size: 1.2rem; min-width: 24px;">' + icon + '</div>';
+                    html += '<div class="activity-info" style="display: flex; flex-direction: column;">';
+                    html += '<span class="activity-action" style="font-weight: 500; font-size: 0.9rem;">' + escapeHtml(a.crop) + " &mdash; " + escapeHtml(a.action) + '</span>';
+                    html += '<span class="activity-time" style="font-size: 0.8rem; color: var(--text-muted);">' + escapeHtml(a.date_str) + '</span>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
             });
             list.innerHTML = html;
         });

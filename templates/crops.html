@@ -149,23 +149,20 @@
             <div class="crops-calendar glass">
                 <h3 class="section-title">📅 Crop Calendar</h3>
                 <div class="calendar-months" id="crop-calendar">
-                    {% for i in range(1, 13) %}
-                    <div class="cal-month{% if i == current_month %} cal-current{% endif %}">
-                        <span class="cal-month-name">{{ month_names_en[i] }}</span>
-                        <div class="cal-activities" data-month="{{ i }}">
-                            {% for c in crops %}
-                                {% if c.planting_date %}
-                                    {% set pm = c.planting_date[:7] %}
-                                    {% set hm = c.harvest_date[:7] %}
-                                    {% set ym = "%04d-%02d"|format(now_year, i) %}
-                                    {% if pm <= ym <= hm or pm == ym %}
-                                    <span class="cal-dot" style="background:#10b981" title="{{ c.crop_name }}"></span>
-                                    {% endif %}
-                                {% endif %}
-                            {% endfor %}
+                    {% if not active_crops %}
+                    <div class="crops-empty" style="text-align:center; width:100%;">🌾 No crops added yet.</div>
+                    {% else %}
+                        {% for cm in calendar_months %}
+                        <div class="cal-month{% if cm.is_current_month %} cal-current{% endif %}">
+                            <span class="cal-month-name">{{ month_names_ta[cm.month_num] if lang == 'ta' else month_names_en[cm.month_num] }} {{ cm.year }}</span>
+                            <div class="cal-activities">
+                                {% for _ in range(cm.crop_count) %}
+                                <span class="cal-dot" style="background:#10b981"></span>
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
                 <div class="calendar-legend">
                     <span><span class="legend-dot" style="background:#10b981"></span> Growing</span>
@@ -205,19 +202,23 @@
                 <h3 class="section-title">⏰ Upcoming Activities</h3>
                 <div class="activities-list" id="activities-list">
                     {% if activities %}
-                        {% for a in activities %}
-                        <div class="activity-item activity-{{ a.urgency }}">
-                            <div class="activity-icon">{% if a.type == 'harvest' %}🌾{% else %}💧{% endif %}</div>
-                            <div class="activity-info">
-                                <span class="activity-action">{{ a.action }} {{ a.crop }}</span>
-                                <span class="activity-time">{% if a.days == 0 %}Today{% else %}In {{ a.days }} days{% endif %}</span>
+                        {% for group in activities %}
+                        <div class="activity-month-group" style="margin-bottom: 15px;">
+                            <h4 style="font-size: 0.95rem; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">{{ group.month }}</h4>
+                            {% for a in group['items'] %}
+                            <div class="activity-item" style="padding: 10px; background: var(--bg-color); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; border-left: 3px solid {% if a.type == 'harvest' %}#f59e0b{% else %}#10b981{% endif %};">
+                                <div class="activity-icon" style="font-size: 1.2rem; min-width: 24px;">{% if a.type == 'harvest' %}🌾{% else %}🌱{% endif %}</div>
+                                <div class="activity-info" style="display: flex; flex-direction: column;">
+                                    <span class="activity-action" style="font-weight: 500; font-size: 0.9rem;">{{ a.crop }} &mdash; {{ a.action }}</span>
+                                    <span class="activity-time" style="font-size: 0.8rem; color: var(--text-muted);">{{ a.date_str }}</span>
+                                </div>
                             </div>
+                            {% endfor %}
                         </div>
                         {% endfor %}
                     {% else %}
                     <div class="crops-empty" style="text-align:center;">
-                        No upcoming activities. Add crops with dates.<br><br>
-                        <button class="crops-btn crops-btn-primary" onclick="openAddModal()">Add your first crop</button>
+                        No upcoming activities this month.
                     </div>
                     {% endif %}
                 </div>
@@ -246,7 +247,11 @@
                 </div>
                 <div class="form-group">
                     <label>Village Name</label>
-                    <input type="text" id="village" placeholder="e.g. Thiruvaiyaru">
+                    <div style="display:flex;gap:10px;">
+                        <input type="text" id="village" placeholder="e.g. Thiruvaiyaru" style="flex:1">
+                        <button type="button" class="crops-btn crops-btn-primary" id="btn-verify-village-crop" style="white-space:nowrap; padding: 0 12px; background:var(--emerald);">Verify</button>
+                    </div>
+                    <div id="crop-village-verify-result" style="margin-top:8px;font-size:0.9rem;display:none;padding:8px;border-radius:4px;"></div>
                 </div>
             </div>
             <div class="form-row">

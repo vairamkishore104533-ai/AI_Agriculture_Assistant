@@ -150,6 +150,7 @@ from routes.profile import profile_bp
 from routes.admin import admin_bp
 from routes.fertilizer import fertilizer_bp
 from routes.irrigation import irrigation_bp
+from routes.validation import validation_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
@@ -166,6 +167,7 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(fertilizer_bp)
 app.register_blueprint(irrigation_bp)
+app.register_blueprint(validation_bp)
 
 from utils.translations import TRANSLATIONS
 from models.notification import Notification

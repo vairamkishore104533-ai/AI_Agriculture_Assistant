@@ -107,8 +107,57 @@ def index():
     activities = Crop.get_upcoming_activities(user_id) if user_id else []
     from utils.helpers import get_current_season
     current_season = get_current_season()
-    now_year = datetime.utcnow().year
-    current_month = datetime.utcnow().month
+    now = datetime.utcnow()
+    current_year = now.year
+    current_month = now.month
+    
+    calendar_months = []
+    active_crops = [c for c in crops if c.status.lower() != 'harvested']
+    farthest_date = None
+    
+    for c in active_crops:
+        if c.harvest_date:
+            try:
+                hd = datetime.strptime(c.harvest_date[:10], '%Y-%m-%d')
+                if farthest_date is None or hd > farthest_date:
+                    farthest_date = hd
+            except ValueError:
+                pass
+                
+    if farthest_date:
+        end_year = farthest_date.year
+        end_month = farthest_date.month
+    else:
+        end_year = current_year
+        end_month = current_month
+        
+    if end_year < current_year or (end_year == current_year and end_month < current_month):
+        end_year = current_year
+        end_month = current_month
+        
+    y, m = current_year, current_month
+    while y < end_year or (y == end_year and m <= end_month):
+        ym_str = f"{y:04d}-{m:02d}"
+        crop_count = 0
+        for c in active_crops:
+            if c.planting_date and c.harvest_date:
+                pm = c.planting_date[:7]
+                hm = c.harvest_date[:7]
+                if pm <= ym_str <= hm:
+                    crop_count += 1
+        
+        calendar_months.append({
+            "month_num": m,
+            "year": y,
+            "crop_count": crop_count,
+            "is_current_month": (y == current_year and m == current_month)
+        })
+        
+        m += 1
+        if m > 12:
+            m = 1
+            y += 1
+
     return render_template(
         "crops.html",
         crops=[c.to_dict() for c in crops],
@@ -125,8 +174,10 @@ def index():
         month_names_en=MONTH_NAMES_EN,
         month_names_ta=MONTH_NAMES_TA,
         current_season=current_season,
-        now_year=now_year,
+        now_year=current_year,
         current_month=current_month,
+        calendar_months=calendar_months,
+        active_crops=active_crops,
         lang=lang,
     )
 
@@ -184,7 +235,40 @@ def add_crop():
         crop.harvest_date = data["harvest_date"]
         crop.status = data["status"]
         crop.notes = data.get("notes", "")
-        crop.save()
+        from models.notification import Notification
+        
+        crop_id = crop.save()
+        # Generate Notification based on status
+        if crop.status == "Planned":
+            title = f"Crop Initialized"
+            msg_en = f"{crop.crop_name} crop added to your planning list."
+            msg_ta = f"{crop.crop_name} பயிர் உங்கள் திட்டமிடல் பட்டியலில் சேர்க்கப்பட்டுள்ளது."
+        elif crop.status == "Seeded":
+            title = f"Cultivation Started"
+            msg_en = f"{crop.crop_name} seeds planted on {crop.planting_date}."
+            msg_ta = f"{crop.crop_name} விதைகள் {crop.planting_date} அன்று நடப்பட்டன."
+        elif crop.status in ["Growing", "Flowering"]:
+            title = f"Crop Growing"
+            msg_en = f"{crop.crop_name} is actively growing. Harvest expected on {crop.harvest_date}."
+            msg_ta = f"{crop.crop_name} வளர்கிறது. அறுவடை {crop.harvest_date} அன்று எதிர்பார்க்கப்படுகிறது."
+        elif crop.status == "Harvest Ready":
+            title = f"Crop Ready for Harvest"
+            msg_en = f"{crop.crop_name} is ready for harvesting."
+            msg_ta = f"{crop.crop_name} அறுவடைக்கு தயாராக உள்ளது."
+        else:
+            title = f"Crop Status Update"
+            msg_en = f"{crop.crop_name} status is now {crop.status}."
+            msg_ta = f"{crop.crop_name} நிலை இப்போது {crop.status}."
+
+        Notification.create_notification(
+            user_id=user_id,
+            notif_type="crop_update",
+            title=title if lang == "en" else title,  # Keep title simple or translate later
+            message=msg_en if lang == "en" else msg_ta,
+            category="success",
+            related_crop=crop.crop_name,
+            related_id=crop_id
+        )
 
         stats = Crop.get_stats(user_id)
         msg = "Crop added successfully!" if lang == "en" else "பயிர் வெற்றிகரமாக சேர்க்கப்பட்டது!"

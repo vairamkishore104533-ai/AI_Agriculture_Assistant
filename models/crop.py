@@ -108,35 +108,58 @@ class Crop:
 
     @staticmethod
     def get_upcoming_activities(user_id):
-        from datetime import timedelta
+        from datetime import datetime
         crops = Crop.find_by_user(user_id)
         activities = []
         today = datetime.utcnow().date()
         for c in crops:
-            if c.status == "Growing" or c.status == "Flowering":
-                activities.append({
-                    "type": "irrigate",
-                    "crop": c.crop_name,
-                    "action": "Irrigate",
-                    "days": 0,
-                    "urgency": "today",
-                })
-            if c.harvest_date:
+            if c.status.lower() == "harvested":
+                continue
+            
+            if c.planting_date:
                 try:
-                    hd = datetime.strptime(c.harvest_date, "%Y-%m-%d").date()
-                    diff = (hd - today).days
-                    if 0 <= diff <= 30:
+                    pd = datetime.strptime(c.planting_date[:10], "%Y-%m-%d").date()
+                    if pd.year == today.year and pd.month == today.month:
                         activities.append({
-                            "type": "harvest",
+                            "type": "cultivation",
                             "crop": c.crop_name,
-                            "action": "Harvest",
-                            "days": diff,
-                            "urgency": "soon" if diff > 7 else "imminent",
+                            "date": pd,
+                            "action": "Cultivation",
                         })
                 except ValueError:
                     pass
-        activities.sort(key=lambda a: a["days"])
-        return activities[:10]
+            
+            if c.harvest_date:
+                try:
+                    hd = datetime.strptime(c.harvest_date[:10], "%Y-%m-%d").date()
+                    if hd.year == today.year and hd.month == today.month:
+                        activities.append({
+                            "type": "harvest",
+                            "crop": c.crop_name,
+                            "date": hd,
+                            "action": "Harvesting",
+                        })
+                except ValueError:
+                    pass
+                    
+        activities.sort(key=lambda a: a["date"])
+        
+        grouped = []
+        current_group = None
+        for a in activities:
+            month_year = a["date"].strftime("%B %Y")
+            if current_group is None or current_group["month"] != month_year:
+                current_group = {"month": month_year, "items": []}
+                grouped.append(current_group)
+            
+            current_group["items"].append({
+                "crop": a["crop"],
+                "action": a["action"],
+                "date_str": a["date"].strftime("%d %b"),
+                "type": a["type"]
+            })
+            
+        return grouped
 
     def save(self):
         now = datetime.utcnow()
