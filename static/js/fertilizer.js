@@ -228,7 +228,7 @@ function updateProgress() {
 
     var genBtn = document.getElementById("fert-generate-btn");
     if (genBtn) {
-        genBtn.disabled = count < 4;
+        genBtn.disabled = false; // Never disable the button silently
     }
 
     if (count === 4) {
@@ -301,9 +301,77 @@ function showIrrigationInfo(item) {
 
 /* ── Generate ── */
 
+function syncFertState() {
+    var lang = getLang();
+    
+    // Sync Season
+    var sInput = document.getElementById("fert-season-input");
+    if (sInput && sInput.value) {
+        var sVal = sInput.value.toLowerCase().trim();
+        for (var i = 0; i < FERT_DATA.seasons.length; i++) {
+            var c = FERT_DATA.seasons[i];
+            if ((c.en && c.en.toLowerCase().trim() === sVal) || (c.ta && c.ta.toLowerCase().trim() === sVal) || (c.id && c.id.toLowerCase().trim() === sVal)) {
+                fertState.season = c.id;
+                fertState.seasonName = c.en;
+                break;
+            }
+        }
+    }
+    
+    // Sync Crop
+    var cInput = document.getElementById("fert-crop-input");
+    if (cInput && cInput.value) {
+        var cVal = cInput.value.toLowerCase().trim();
+        for (var i = 0; i < FERT_DATA.crops.length; i++) {
+            var c = FERT_DATA.crops[i];
+            if ((c.en && c.en.toLowerCase().trim() === cVal) || (c.ta && c.ta.toLowerCase().trim() === cVal)) {
+                fertState.crop = c.en;
+                fertState.cropName = c.en;
+                break;
+            }
+        }
+    }
+    
+    // Sync Stage
+    var stInput = document.getElementById("fert-stage-input");
+    if (stInput && stInput.value) {
+        var stVal = stInput.value.toLowerCase().trim();
+        for (var i = 0; i < FERT_DATA.stages.length; i++) {
+            var c = FERT_DATA.stages[i];
+            if ((c.en && c.en.toLowerCase().trim() === stVal) || (c.ta && c.ta.toLowerCase().trim() === stVal) || (c.id && c.id.toLowerCase().trim() === stVal)) {
+                fertState.growthStage = c.id;
+                fertState.growthStageName = c.en;
+                break;
+            }
+        }
+    }
+    
+    // Sync Irrigation
+    var iInput = document.getElementById("fert-irrigation-input");
+    if (iInput && iInput.value) {
+        var iVal = iInput.value.toLowerCase().trim();
+        for (var i = 0; i < FERT_DATA.irrigation.length; i++) {
+            var c = FERT_DATA.irrigation[i];
+            if ((c.en && c.en.toLowerCase().trim() === iVal) || (c.ta && c.ta.toLowerCase().trim() === iVal) || (c.id && c.id.toLowerCase().trim() === iVal)) {
+                fertState.irrigation = c.id;
+                fertState.irrigationName = c.en;
+                break;
+            }
+        }
+    }
+}
+
 function generateFertilizer() {
-    if (!fertState.season || !fertState.crop || !fertState.growthStage || !fertState.irrigation) {
-        showFertToast(t("Please complete all fields first.", "தயவுசெய்து முதலில் அனைத்து புலங்களையும் நிரப்பவும்."), "error");
+    syncFertState();
+    
+    var missing = [];
+    if (!fertState.season) missing.push(t("Season", "பருவம்"));
+    if (!fertState.crop) missing.push(t("Crop", "பயிர்"));
+    if (!fertState.growthStage) missing.push(t("Growth Stage", "வளர்ச்சி நிலை"));
+    if (!fertState.irrigation) missing.push(t("Irrigation", "பாசன முறை"));
+    
+    if (missing.length > 0) {
+        showFertToast(t("Please provide: ", "தயவுசெய்து வழங்கவும்: ") + missing.join(", "), "error");
         return;
     }
 
@@ -342,7 +410,6 @@ function generateFertilizer() {
         }
         fertState.recommendation = res;
         displayFertResult(res);
-        autoSaveFertilizer(res);
     })
     .catch(function (err) {
         hideLoading();
@@ -370,7 +437,11 @@ function displayFertResult(res) {
     }
 
     var saveBtn = document.getElementById("fert-save-btn");
-    if (saveBtn) saveBtn.style.display = "inline-flex";
+    if (saveBtn) {
+        saveBtn.style.display = "inline-flex";
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = "💾 " + t("Save Recommendation", "பரிந்துரையைச் சேமி");
+    }
     var exportGroup = document.getElementById("fert-export-group");
     if (exportGroup) exportGroup.style.display = "inline-flex";
 
@@ -382,33 +453,7 @@ function setFertText(id, val) {
     if (el) el.textContent = val || "-";
 }
 
-/* ── Auto Save ── */
-
-function autoSaveFertilizer(res) {
-    var payload = {
-        season: fertState.season,
-        crop: fertState.crop,
-        growth_stage: fertState.growthStage,
-        irrigation_method: fertState.irrigation,
-        recommendation: res.recommendation,
-        language: document.documentElement.getAttribute("data-lang") || "en",
-    };
-
-    fetch("/api/fertilizer/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (res) {
-        if (res.success) {
-            showFertToast(t("Recommendation saved!", "பரிந்துரை சேமிக்கப்பட்டது!"), "success");
-            loadFertHistory();
-            updateFertStats();
-        }
-    })
-    .catch(function () {});
-}
+/* ── Auto Save functionality removed per requirements ── */
 
 /* ── Manual Save ── */
 
@@ -437,18 +482,22 @@ function saveFertilizer() {
     .then(function (r) { return r.json(); })
     .then(function (res) {
         hideLoading();
-        if (btn) { btn.disabled = false; btn.innerHTML = t("Save", "சேமி"); }
         if (res.success) {
-            showFertToast(t("Recommendation saved!", "பரிந்துரை சேமிக்கப்பட்டது!"), "success");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = "✅ " + t("Saved", "சேமிக்கப்பட்டது");
+            }
+            showFertToast(t("Recommendation saved successfully.", "பரிந்துரை வெற்றிகரமாக சேமிக்கப்பட்டது."), "success");
             loadFertHistory();
             updateFertStats();
         } else {
+            if (btn) { btn.disabled = false; btn.innerHTML = "💾 " + t("Save Recommendation", "பரிந்துரையைச் சேமி"); }
             showFertToast(res.error || t("Failed to save.", "சேமிக்க முடியவில்லை."), "error");
         }
     })
     .catch(function () {
         hideLoading();
-        if (btn) { btn.disabled = false; btn.innerHTML = t("Save", "சேமி"); }
+        if (btn) { btn.disabled = false; btn.innerHTML = "💾 " + t("Save Recommendation", "பரிந்துரையைச் சேமி"); }
         showFertToast(t("Save failed.", "சேமிப்பு தோல்வி."), "error");
     });
 }
@@ -742,4 +791,125 @@ function hideLoading() {
     var overlay = document.getElementById("fert-loading-overlay");
     if (overlay) overlay.style.display = "none";
     if (window.fertLoadingInterval) clearInterval(window.fertLoadingInterval);
+}
+
+// --- Live Crops Integration ---
+function filterLiveCropChips(q) {
+    var lower = q.toLowerCase().trim();
+    var select = document.getElementById('native-live-crop-select');
+    if (!select) return;
+    
+    var options = select.options;
+    var hasMatch = false;
+    for (var i = 1; i < options.length; i++) {
+        var opt = options[i];
+        var text = opt.text.toLowerCase();
+        if (text.indexOf(lower) >= 0) {
+            opt.style.display = '';
+            opt.hidden = false;
+            hasMatch = true;
+        } else {
+            opt.style.display = 'none';
+            opt.hidden = true;
+        }
+    }
+    
+    // Automatically select the first visible option if current selection is hidden
+    if (select.selectedIndex > 0 && select.options[select.selectedIndex].hidden) {
+        select.selectedIndex = 0;
+    }
+}
+
+function handleNativeLiveCropSelect(selectElement) {
+    if (selectElement.selectedIndex <= 0) {
+        fertState.selectedLiveCrop = null;
+        return;
+    }
+    
+    var cropId = selectElement.options[selectElement.selectedIndex].value;
+    
+    if (!window.FERT_DATA || !window.FERT_DATA.live_crops) {
+        showFertToast('Live crops data not loaded', 'error');
+        return;
+    }
+    
+    var liveCrops = window.FERT_DATA.live_crops;
+    var selectedCrop = null;
+    
+    for (var i = 0; i < liveCrops.length; i++) {
+        if (liveCrops[i].id === cropId) {
+            selectedCrop = liveCrops[i];
+            break;
+        }
+    }
+    
+    if (!selectedCrop) {
+        showFertToast('Crop details not found', 'error');
+        return;
+    }
+    
+    // Store complete crop object
+    fertState.selectedLiveCrop = selectedCrop;
+    
+    // 1. Sync Season
+    var seasonName = selectedCrop.season || "";
+    if (seasonName) {
+        var seasons = window.FERT_DATA.seasons;
+        var sSearch = seasonName.trim().toLowerCase();
+        for (var j = 0; j < seasons.length; j++) {
+            var s = seasons[j];
+            if ((s.en && s.en.toLowerCase().trim() === sSearch) ||
+                (s.ta && s.ta.toLowerCase().trim() === sSearch) ||
+                (s.id && s.id.toLowerCase().trim() === sSearch)) {
+                
+                // Update form input
+                var seasonInput = document.getElementById('fert-season-input');
+                if (seasonInput) {
+                    var sDisplayText = s.ta && getLang() === "ta" ? s.ta : (s.en || "");
+                    seasonInput.value = sDisplayText;
+                }
+                
+                // Update state
+                fertState.season = s.id;
+                fertState.seasonName = s.en;
+                
+                // Trigger normal state handling
+                if (typeof showSeasonInfo === 'function') showSeasonInfo(s);
+                if (typeof revealStep === 'function') revealStep("crop");
+                if (typeof updateProgress === 'function') updateProgress();
+                break;
+            }
+        }
+    }
+    
+    // 2. Sync Crop
+    var cropName = selectedCrop.crop_name || "";
+    if (cropName) {
+        var crops = window.FERT_DATA.crops;
+        var cSearch = cropName.trim().toLowerCase();
+        for (var k = 0; k < crops.length; k++) {
+            var c = crops[k];
+            if ((c.en && c.en.toLowerCase().trim() === cSearch) || 
+                (c.ta && c.ta.toLowerCase().trim() === cSearch)) {
+                
+                // Update form input
+                var cropInput = document.getElementById('fert-crop-input');
+                if (cropInput) {
+                    var cDisplayText = c.ta && getLang() === "ta" ? c.ta : (c.en || "");
+                    cropInput.value = cDisplayText;
+                }
+                
+                // Update state
+                fertState.crop = c.en;
+                fertState.cropName = c.en;
+                
+                // Trigger normal state handling
+                if (typeof showCropInfo === 'function') showCropInfo(c);
+                if (typeof revealStep === 'function') revealStep("stage");
+                if (typeof updateProgress === 'function') updateProgress();
+                break;
+            }
+        }
+        showFertToast(cropName + ' selected for fertilizer recommendation', 'success');
+    }
 }
