@@ -25,6 +25,90 @@ function wthRenderAdvice(text) {
     return s;
 }
 
+// --- Live Crops Integration ---
+function filterLiveCropChips(q) {
+    var lower = q.toLowerCase().trim();
+    var select = document.getElementById('native-live-crop-select');
+    if (!select) return;
+    
+    var options = select.options;
+    for (var i = 1; i < options.length; i++) {
+        var opt = options[i];
+        if (opt.text.toLowerCase().indexOf(lower) >= 0) {
+            opt.style.display = '';
+            opt.hidden = false;
+        } else {
+            opt.style.display = 'none';
+            opt.hidden = true;
+        }
+    }
+    
+    if (select.selectedIndex > 0 && select.options[select.selectedIndex].hidden) {
+        select.selectedIndex = 0;
+    }
+}
+
+function handleNativeLiveCropSelect(selectElement) {
+    if (selectElement.selectedIndex <= 0) return;
+    
+    var cropId = selectElement.options[selectElement.selectedIndex].value;
+    if (!window.WTH_DATA || !window.WTH_DATA.live_crops) {
+        wthToast('Live crops data not loaded', 'error');
+        return;
+    }
+    
+    var liveCrops = window.WTH_DATA.live_crops;
+    var selectedCrop = null;
+    for (var i = 0; i < liveCrops.length; i++) {
+        if (liveCrops[i].id === cropId) {
+            selectedCrop = liveCrops[i];
+            break;
+        }
+    }
+    
+    if (!selectedCrop) {
+        wthToast('Crop details not found', 'error');
+        return;
+    }
+    
+    var districtName = selectedCrop.district || "";
+    if (districtName) {
+        var districts = window.WTH_DATA.districts;
+        var dSearch = districtName.trim().toLowerCase();
+        for (var k = 0; k < districts.length; k++) {
+            var d = districts[k];
+            if ((d.en && d.en.toLowerCase().trim() === dSearch) || 
+                (d.ta && d.ta.toLowerCase().trim() === dSearch)) {
+                
+                var districtInput = document.getElementById('wth-district-input');
+                if (districtInput) {
+                    districtInput.value = d.ta && getLang() === "ta" ? d.ta : (d.en || "");
+                }
+                
+                wthState.district = d.en;
+                wthState.districtName = d.ta && getLang() === "ta" ? d.ta : (d.en || "");
+                break;
+            }
+        }
+    }
+    
+    var villageName = selectedCrop.village || "";
+    if (villageName) {
+        var townInput = document.getElementById('wth-town-input');
+        if (townInput) {
+            townInput.value = villageName;
+        }
+        wthState.town = villageName;
+    }
+    
+    if (villageName && districtName) {
+        wthToast(selectedCrop.crop_name + ' selected. Fetching weather for ' + villageName, 'success');
+        wthFetchWeather();
+    } else {
+        wthToast('Incomplete location data for ' + selectedCrop.crop_name, 'error');
+    }
+}
+
 function wthBoot() {
     if (typeof WTH_DATA === "undefined") { setTimeout(wthBoot, 100); return; }
     var input = document.getElementById("wth-district-input");

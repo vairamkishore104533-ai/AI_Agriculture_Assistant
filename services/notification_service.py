@@ -14,6 +14,7 @@ class NotificationService:
         NotificationService._generate_fertilizer_notifications(user_id, lang)
         NotificationService._generate_harvest_notifications(user_id, lang)
         NotificationService._generate_watering_notifications(user_id, lang)
+        NotificationService._generate_rainfall_notifications(user_id, lang)
 
     @staticmethod
     def _exists(user_id, notif_type, title, hours=24):
@@ -355,3 +356,77 @@ class NotificationService:
                 related_crop=crop_name,
                 action_link="/fertilizer" # This allows clicking the notification if supported
             )
+
+    @staticmethod
+    def _generate_rainfall_notifications(user_id, lang):
+        from datetime import datetime
+        from services.weather_service import WeatherService
+        db = current_app.config["MONGO"]
+        crops = list(db["crops"].find({"user_id": user_id}))
+        today = datetime.utcnow().date()
+        date_str = today.strftime("%Y-%m-%d")
+
+        unique_villages = {}
+        for c in crops:
+            pd_str = c.get("planting_date")
+            hd_str = c.get("harvest_date")
+            village = c.get("village", "").strip()
+            district = c.get("district", "").strip()
+
+            if not village or not district or not pd_str or not hd_str:
+                continue
+
+            try:
+                pd = datetime.strptime(pd_str[:10], "%Y-%m-%d").date()
+                hd = datetime.strptime(hd_str[:10], "%Y-%m-%d").date()
+            except ValueError:
+                continue
+
+            if today < pd or today > hd:
+                continue
+
+            # Store the district for the unique village
+            if village not in unique_villages:
+                unique_villages[village] = district
+
+        if not unique_villages:
+            return
+
+        ws = WeatherService()
+        for village, district in unique_villages.items():
+            weather_data = ws.fetch_all(district, village)
+            if not weather_data or weather_data.get("error"):
+                continue
+
+            daily = weather_data.get("daily", [])
+            if not daily:
+                continue
+
+            rain_chance = daily[0].get("rain", 0)
+            try:
+                rain_chance = float(rain_chance)
+            except (ValueError, TypeError):
+                rain_chance = 0
+
+            if rain_chance > 50:
+                if lang == "ta":
+                    title = f"மழை எச்சரிக்கை: {village} ({date_str})"
+                    msg = f"மழை எச்சரிக்கை: இன்று {village} பகுதியில் {rain_chance}% மழை பெய்ய வாய்ப்புள்ளது."
+                else:
+                    title = f"Rainfall Alert: {village} ({date_str})"
+                    msg = f"Rainfall Alert: {rain_chance}% chance of rain is expected in {village} today."
+
+                # Check for duplicates using title
+                existing = db["notifications"].find_one({
+                    "user_id": user_id,
+                    "title": title
+                })
+
+                if not existing:
+                    Notification.create_notification(
+                        user_id=user_id, notif_type="rainfall",
+                        title=title, message=msg,
+                        category="weather", priority="high",
+                        related_id=village,
+                        action_link="/weather"
+                    )

@@ -42,12 +42,21 @@ def index():
     district_list = []
     for i, d in enumerate(DISTRICTS):
         district_list.append({"en": d, "ta": DISTRICTS_TA[i] if i < len(DISTRICTS_TA) else d})
+    from models.crop import Crop
+    crops_db = Crop.find_by_user(user_id)
+    live_crops = []
+    for c in crops_db:
+        if c.status.lower() not in ["harvested", "cancelled", "completed"]:
+            live_crops.append(c.to_dict())
+
     return render_template(
         "weather.html",
         districts=district_list,
         districts_json=json.dumps(district_list),
         favorites=[f.to_dict() for f in favorites],
         favorites_json=json.dumps([f.to_dict() for f in favorites]),
+        live_crops=live_crops,
+        live_crops_json=json.dumps(live_crops, default=str),
         lang=lang,
     )
 
