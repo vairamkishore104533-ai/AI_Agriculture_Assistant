@@ -215,53 +215,143 @@ class NotificationService:
 
     @staticmethod
     def _generate_irrigation_notifications(user_id, lang):
+        from datetime import datetime
         db = current_app.config["MONGO"]
         crops = list(db["crops"].find({"user_id": user_id}))
+        today = datetime.utcnow().date()
+        date_str = today.strftime("%Y-%m-%d")
+
         for c in crops:
             crop_name = c.get("crop_name", "")
-            status = c.get("status", "").lower()
-            if not crop_name or status in ("harvested", "planning"):
+            if not crop_name:
                 continue
-            key = f"irr_{crop_name}_{user_id[:8]}"
-            if NotificationService._exists(user_id, "irrigation", key, 48):
+
+            pd_str = c.get("planting_date")
+            hd_str = c.get("harvest_date")
+
+            if not pd_str or not hd_str:
                 continue
+
+            try:
+                pd = datetime.strptime(pd_str[:10], "%Y-%m-%d").date()
+                hd = datetime.strptime(hd_str[:10], "%Y-%m-%d").date()
+            except ValueError:
+                continue
+
+            # Must be within cultivation period (inclusive of start/end dates)
+            if today < pd or today > hd:
+                continue
+
             if lang == "ta":
-                title = f"{crop_name} நீர்ப்பாசன நினைவூட்டல்"
-                msg = f"{crop_name} பயிருக்கு நீர்ப்பாசனம் தேவைப்படலாம். வானிலை மற்றும் மண்ணின் ஈரப்பதத்தை சரிபார்க்கவும்."
+                title = f"💧 {crop_name} நீர்ப்பாசன நினைவூட்டல் ({date_str})"
+                msg = f"நீர்ப்பாசன நினைவூட்டல்: இன்று உங்கள் {crop_name} பயிருக்கு கவனம் தேவை."
             else:
-                title = f"{crop_name} Irrigation Reminder"
-                msg = f"{crop_name} may need irrigation soon. Check weather and soil moisture."
+                title = f"💧 {crop_name} Irrigation Reminder ({date_str})"
+                msg = f"Irrigation reminder: Your {crop_name} crop requires attention today."
+
+            # Check if this exact title has already been generated
+            existing = db["notifications"].find_one({
+                "user_id": user_id,
+                "title": title
+            })
+
+            if existing:
+                continue
+
             Notification.create_notification(
                 user_id=user_id, notif_type="irrigation",
                 title=title, message=msg,
                 category="irrigation", priority="medium",
                 related_crop=crop_name,
+                action_link="/irrigation"
             )
 
     @staticmethod
     def _generate_fertilizer_notifications(user_id, lang):
+        from datetime import datetime
         db = current_app.config["MONGO"]
         crops = list(db["crops"].find({"user_id": user_id}))
+        now = datetime.utcnow()
+        today = now.date()
+        
         for c in crops:
             crop_name = c.get("crop_name", "")
             status = c.get("status", "").lower()
-            if not crop_name or status in ("harvested", "planning"):
+            
+            # Active crops only
+            if not crop_name or status in ("harvested", "completed", "cancelled", "inactive", "planning"):
                 continue
-            fert_records = list(db["fertilizer"].find({"user_id": user_id, "crop": crop_name}).sort("created_at", -1).limit(1))
-            if not fert_records:
+                
+            pd_str = c.get("planting_date")
+            hd_str = c.get("harvest_date") # Wait, in models/crop.py it's harvest_date
+            
+            if not pd_str or not hd_str:
                 continue
-            key = f"fert_{crop_name}_{user_id[:8]}"
-            if NotificationService._exists(user_id, "fertilizer", key, 72):
+                
+            try:
+                pd = datetime.strptime(pd_str, "%Y-%m-%d").date()
+                hd = datetime.strptime(hd_str, "%Y-%m-%d").date()
+            except ValueError:
                 continue
+                
+            if today < pd or today > hd:
+                continue
+                
+            # It's an active crop and today is between planting and harvesting.
+            # Generate one per calendar day. Use the date in the key to prevent duplicates.
+            date_str = today.strftime("%Y-%m-%d")
+            
+            # Create a unique key per crop per day
+            title_en = f"🌱 {crop_name} Fertilizer Reminder ({date_str})"
+            title_ta = f"🌱 {crop_name} உர நினைவூட்டல் ({date_str})"
+            
+            title = title_ta if lang == "ta" else title_en
+            
+            # Check if this exact title has already been generated
+            existing = db["notifications"].find_one({
+                "user_id": user_id, 
+                "title": title
+            })
+            
+            if existing:
+                continue
+                
+            # Stage calculation
+            total_days = (hd - pd).days
+            days_passed = (today - pd).days
+            
+            stage_en = ""
+            stage_ta = ""
+            if total_days > 0:
+                progress = days_passed / total_days
+                if progress < 0.2:
+                    stage_en = "early growth stage"
+                    stage_ta = "ஆரம்ப வளர்ச்சி நிலையில்"
+                elif progress < 0.5:
+                    stage_en = "active vegetative stage"
+                    stage_ta = "தீவிர தாவர வளர்ச்சி நிலையில்"
+                elif progress < 0.8:
+                    stage_en = "flowering/fruiting stage"
+                    stage_ta = "பூக்கும்/காய்க்கும் பருவத்தில்"
+                else:
+                    stage_en = "maturity stage"
+                    stage_ta = "முதிர்ச்சி நிலையில்"
+            
             if lang == "ta":
-                title = f"{crop_name} உர நினைவூட்டல்"
-                msg = f"{crop_name} பயிருக்கு உரம் இட வேண்டிய நேரம். உங்கள் உர பரிந்துரையை பார்க்கவும்."
+                if stage_ta:
+                    msg = f"உங்கள் {crop_name} பயிர் தற்போது {stage_ta} உள்ளது. இன்றைய உரத் தேவையைக் கண்டறிய உர பரிந்துரையை பார்க்கவும்."
+                else:
+                    msg = f"உங்கள் {crop_name} பயிரின் இன்றைய உரத் தேவையைக் கண்டறியவும்."
             else:
-                title = f"{crop_name} Fertilizer Reminder"
-                msg = f"Time to apply fertilizer for {crop_name}. Check your fertilizer recommendation."
+                if stage_en:
+                    msg = f"Your {crop_name} crop is currently in the {stage_en}. Check the fertilizer recommendation for today."
+                else:
+                    msg = f"Check today's fertilizer requirement for your {crop_name} crop."
+                
             Notification.create_notification(
                 user_id=user_id, notif_type="fertilizer",
                 title=title, message=msg,
                 category="fertilizer", priority="low",
                 related_crop=crop_name,
+                action_link="/fertilizer" # This allows clicking the notification if supported
             )

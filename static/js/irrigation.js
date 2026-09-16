@@ -698,6 +698,146 @@ function showIrrToast(msg, type) {
     setTimeout(function () { toast.style.display = "none"; }, 3000);
 }
 
+// --- Live Crops Integration ---
+function filterLiveCropChips(q) {
+    var lower = q.toLowerCase().trim();
+    var select = document.getElementById('native-live-crop-select');
+    if (!select) return;
+    
+    var options = select.options;
+    for (var i = 1; i < options.length; i++) {
+        var opt = options[i];
+        if (opt.text.toLowerCase().indexOf(lower) >= 0) {
+            opt.style.display = '';
+            opt.hidden = false;
+        } else {
+            opt.style.display = 'none';
+            opt.hidden = true;
+        }
+    }
+    
+    if (select.selectedIndex > 0 && select.options[select.selectedIndex].hidden) {
+        select.selectedIndex = 0;
+    }
+}
+
+function handleNativeLiveCropSelect(selectElement) {
+    if (selectElement.selectedIndex <= 0) return;
+    
+    var cropId = selectElement.options[selectElement.selectedIndex].value;
+    if (!window.IRR_DATA || !window.IRR_DATA.live_crops) {
+        showIrrToast('Live crops data not loaded', 'error');
+        return;
+    }
+    
+    var liveCrops = window.IRR_DATA.live_crops;
+    var selectedCrop = null;
+    for (var i = 0; i < liveCrops.length; i++) {
+        if (liveCrops[i].id === cropId) {
+            selectedCrop = liveCrops[i];
+            break;
+        }
+    }
+    
+    if (!selectedCrop) {
+        showIrrToast('Crop details not found', 'error');
+        return;
+    }
+    
+    var cropName = selectedCrop.crop_name || "";
+    if (cropName) {
+        var crops = window.IRR_DATA.crops;
+        var cSearch = cropName.trim().toLowerCase();
+        for (var k = 0; k < crops.length; k++) {
+            var c = crops[k];
+            if ((c.en && c.en.toLowerCase().trim() === cSearch) || 
+                (c.ta && c.ta.toLowerCase().trim() === cSearch)) {
+                
+                var cropInput = document.getElementById('irr-crop-input');
+                if (cropInput) cropInput.value = c.ta && getLang() === "ta" ? c.ta : (c.en || "");
+                
+                irrState.crop = c.en;
+                irrState.cropName = c.en;
+                irrState.cropObj = c;
+                if (typeof showIrrCropInfo === 'function') showIrrCropInfo(c);
+                if (typeof revealIrrStep === 'function') revealIrrStep("district");
+                break;
+            }
+        }
+    }
+    
+    var districtName = selectedCrop.district || "";
+    if (districtName) {
+        var districts = window.IRR_DATA.districts;
+        var dSearch = districtName.trim().toLowerCase();
+        for (var k = 0; k < districts.length; k++) {
+            var d = districts[k];
+            if ((d.en && d.en.toLowerCase().trim() === dSearch) || 
+                (d.ta && d.ta.toLowerCase().trim() === dSearch)) {
+                
+                var districtInput = document.getElementById('irr-district-input');
+                if (districtInput) districtInput.value = d.ta && getLang() === "ta" ? d.ta : (d.en || "");
+                
+                irrState.district = d.en;
+                irrState.districtName = d.en;
+                irrState.districtObj = d;
+                if (typeof showIrrDistrictInfo === 'function') showIrrDistrictInfo(d);
+                if (typeof revealIrrStep === 'function') revealIrrStep("season");
+                break;
+            }
+        }
+    }
+    
+    var seasonName = selectedCrop.season || "";
+    if (seasonName) {
+        var seasons = window.IRR_DATA.seasons;
+        var sSearch = seasonName.trim().toLowerCase();
+        for (var k = 0; k < seasons.length; k++) {
+            var s = seasons[k];
+            if ((s.en && s.en.toLowerCase().trim() === sSearch) || 
+                (s.ta && s.ta.toLowerCase().trim() === sSearch) ||
+                (s.id && s.id.toLowerCase().trim() === sSearch)) {
+                
+                var seasonInput = document.getElementById('irr-season-input');
+                if (seasonInput) seasonInput.value = s.ta && getLang() === "ta" ? s.ta : (s.en || "");
+                
+                irrState.season = s.id;
+                irrState.seasonName = s.en;
+                irrState.seasonObj = s;
+                if (typeof showIrrSeasonInfo === 'function') showIrrSeasonInfo(s);
+                if (typeof revealIrrStep === 'function') revealIrrStep("method");
+                break;
+            }
+        }
+    }
+    
+    var methodName = selectedCrop.irrigation_method || selectedCrop.irrigation || "";
+    if (methodName) {
+        var methods = window.IRR_DATA.methods;
+        var mSearch = methodName.trim().toLowerCase();
+        for (var k = 0; k < methods.length; k++) {
+            var m = methods[k];
+            if ((m.en && m.en.toLowerCase().trim() === mSearch) || 
+                (m.ta && m.ta.toLowerCase().trim() === mSearch) ||
+                (m.id && m.id.toLowerCase().trim() === mSearch)) {
+                
+                var methodInput = document.getElementById('irr-method-input');
+                if (methodInput) methodInput.value = m.ta && getLang() === "ta" ? m.ta : (m.en || "");
+                
+                irrState.method = m.id;
+                irrState.methodName = m.en;
+                irrState.methodObj = m;
+                if (typeof showIrrMethodInfo === 'function') showIrrMethodInfo(m);
+                if (typeof revealIrrStep === 'function') revealIrrStep("generate");
+                break;
+            }
+        }
+    }
+    
+    if (typeof updateIrrProgress === 'function') updateIrrProgress();
+    showIrrToast(cropName + ' selected for irrigation plan', 'success');
+}
+
 /* ── Boot ── */
 
 function irrBoot() {

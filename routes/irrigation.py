@@ -136,19 +136,30 @@ def index():
     for i, c in enumerate(CROPS):
         info = CROP_WATER.get(c, {"water_en": "", "water_ta": "", "duration_en": "", "duration_ta": "", "districts_en": "", "districts_ta": ""})
         crop_list.append({"en": c, "ta": CROPS_TA[i] if i < len(CROPS_TA) else c, **info})
+    from models.crop import Crop
+    from datetime import datetime
+    import json
+    
+    crops_db = Crop.find_by_user(user_id)
+    today = datetime.utcnow().date()
+    live_crops = []
+    for c in crops_db:
+        if c.status.lower() not in ["harvested", "cancelled", "completed"]:
+            live_crops.append(c.to_dict())
+
     return render_template(
         "irrigation.html",
-        crops=crop_list,
-        crops_json=json.dumps(crop_list),
-        districts=DISTRICTS,
+        username=session.get("username", "Farmer"),
+        is_admin=session.get("is_admin", False),
+        lang=lang,
         districts_json=json.dumps(DISTRICTS),
-        seasons=SEASONS,
+        crops_json=json.dumps(crop_list),
         seasons_json=json.dumps(SEASONS),
-        irrigation_methods=IRRIGATION_METHODS,
         irrigation_json=json.dumps(IRRIGATION_METHODS),
+        live_crops_json=json.dumps(live_crops, default=str),
+        live_crops=live_crops,
         stats=stats,
         history=[h.to_dict() for h in history],
-        lang=lang,
     )
 
 

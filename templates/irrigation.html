@@ -45,7 +45,37 @@
             </div>
         </div>
 
-        
+        <!-- Live Crops Section -->
+        <div class="irr-card glass" style="margin-bottom: 2rem;">
+            <div class="irr-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <h3 class="irr-section-title" style="margin:0;">🌱 Live Crops</h3>
+                <div style="margin:0; width:100%; max-width:300px; position:relative;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);">🔍</span>
+                    <input type="text" id="live-crop-search" placeholder="Search live crops..." oninput="filterLiveCropChips(this.value)" style="width:100%; padding:10px 15px 10px 35px; border-radius:8px; border:1px solid var(--irr-border, #e2e8f0); background:var(--irr-card-bg, #fff); color:var(--text-color);">
+                </div>
+            </div>
+            
+            {% if live_crops and live_crops|length > 0 %}
+            <div style="margin-top:15px;">
+                <label for="native-live-crop-select" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
+                    {% if lang == 'ta' %}நேரடி பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Select a live crop{% endif %}
+                </label>
+                <select id="native-live-crop-select" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--irr-border, #e2e8f0); background:var(--irr-card-bg, #fff); color:var(--text-color); font-size:1rem; cursor:pointer;" onchange="handleNativeLiveCropSelect(this)">
+                    <option value="">{% if lang == 'ta' %}-- தேர்ந்தெடுக்கவும் --{% else %}-- Select a live crop --{% endif %}</option>
+                    {% for c in live_crops %}
+                    <option value="{{ c.id }}">
+                        {{ c.crop_name }}{% if c.village %} ({{ c.village }}){% endif %} — Added: {{ c.created_at.strftime('%b %d, %Y') }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div style="text-align:center; padding: 1.5rem;">
+                <p style="font-weight:600; margin-bottom: 5px;">No live crops available</p>
+                <small style="color:var(--text-muted);">Add a crop in My Crops to quickly select it here.</small>
+            </div>
+            {% endif %}
+        </div>
 
         <div class="irr-input-section">
     <div class="irr-card glass">
@@ -167,6 +197,7 @@ var IRR_DATA = {
     districts: {{ districts_json|safe }},
     seasons: {{ seasons_json|safe }},
     methods: {{ irrigation_json|safe }},
+    live_crops: {{ live_crops_json|safe }},
     lang: "{{ lang }}"
 };
 </script>

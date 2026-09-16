@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agriculture Assistant - Tamil Nadu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    <link rel="stylesheet" href="/static/css/chat-widget.css">
+    <style>
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container"></div>
+    
+<link rel="stylesheet" href="/static/css/fertilizer.css">
+<div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar"></div><div class="sidebar-user-info"><h4></h4><span>🌾 Welcome, Farmer</span></div></div></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="/crops" class="sidebar-nav-item"><span class="nav-icon">🌾</span> My Crops</a>
+            <a href="/crop-diagnosis" class="sidebar-nav-item"><span class="nav-icon">🔬</span> Crop Diagnosis</a>
+            <a href="/fertilizer" class="sidebar-nav-item active"><span class="nav-icon">🧪</span> Fertilizer Recommendation</a>
+            <a href="/irrigation" class="sidebar-nav-item"><span class="nav-icon">💧</span> Irrigation Planner</a>
+            <a href="/weather" class="sidebar-nav-item"><span class="nav-icon">🌤️</span> Weather</a>
+            <a href="/market" class="sidebar-nav-item"><span class="nav-icon">📊</span> Market Prices</a>
+            <a href="/schemes" class="sidebar-nav-item"><span class="nav-icon">🏛️</span> Government Schemes</a>
+            <a href="/expenses" class="sidebar-nav-item"><span class="nav-icon">💰</span> Expenses</a>
+            <a href="/analytics" class="sidebar-nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="/notifications" class="sidebar-nav-item"><span class="nav-icon">🔔</span> Notifications</a>
+            <a href="/profile" class="sidebar-nav-item"><span class="nav-icon">👤</span> Profile</a>
+            
+            <a href="/logout" class="sidebar-nav-item logout-item"><span class="nav-icon">🚪</span> Logout</a>
+        </nav>
+    </aside>
+    <main class="main-content fert-main">
+        <div class="fert-header">
+            <div class="fert-header-info">
+                <h1 class="fert-title">Fertilizer Recommendation</h1>
+                <p class="fert-subtitle">Get personalized fertilizer recommendations for your crops</p>
+            </div>
+            <div class="fert-header-actions">
+                <button class="fert-btn fert-btn-secondary" onclick="setLanguage('ta')">🌐 <span>தமிழ்</span></button>
+                <button class="fert-btn fert-btn-secondary" onclick="toggleTheme()">🌓</button>
+            </div>
+        </div>
+
+        <div class="fert-stats-row">
+            <div class="fert-stat-card">
+                <div class="fert-stat-icon purple">📋</div>
+                <div class="fert-stat-info">
+                    <span class="fert-stat-label">Total Recommendations</span>
+                    <span class="fert-stat-value" id="fert-stat-total">1</span>
+                </div>
+            </div>
+        </div>
+
+
+                <!-- Live Crops Section -->
+        <div class="fert-card glass" style="margin-bottom: 2rem;">
+            <div class="fert-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <h3 class="fert-section-title" style="margin:0;">🌱 Live Crops</h3>
+                <div style="margin:0; width:100%; max-width:300px; position:relative;">
+                    <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);">🔍</span>
+                    <input type="text" id="live-crop-search" placeholder="Search live crops..." oninput="filterLiveCropChips(this.value)" style="width:100%; padding:10px 15px 10px 35px; border-radius:8px; border:1px solid var(--fert-border, #e2e8f0); background:var(--fert-card-bg, #fff); color:var(--text-color);">
+                </div>
+            </div>
+            
+            
+            <div id="live-crop-chips-container" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:15px;">
+                
+                <div class="live-crop-chip" data-crop="turmeric" onclick="selectLiveCropChip('Turmeric', this)" style="padding:8px 16px; border-radius:24px; border:1px solid var(--fert-border, #e2e8f0); background:var(--fert-card-bg, #fff); cursor:pointer; transition:all 0.2s; display:inline-flex; flex-direction:column; align-items:center; min-width:80px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <span style="font-weight:600; font-size:1em; color:var(--text-color);">🌱 <span class="chip-crop-name">Turmeric</span></span>
+                    
+                    <span style="font-size:0.75em; color:var(--text-muted); margin-top:2px;">melur</span>
+                    
+                </div>
+                
+                <div class="live-crop-chip" data-crop="cotton" onclick="selectLiveCropChip('Cotton', this)" style="padding:8px 16px; border-radius:24px; border:1px solid var(--fert-border, #e2e8f0); background:var(--fert-card-bg, #fff); cursor:pointer; transition:all 0.2s; display:inline-flex; flex-direction:column; align-items:center; min-width:80px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <span style="font-weight:600; font-size:1em; color:var(--text-color);">🌱 <span class="chip-crop-name">Cotton</span></span>
+                    
+                    <span style="font-size:0.75em; color:var(--text-muted); margin-top:2px;">Karaikudi</span>
+                    
+                </div>
+                
+                <div class="live-crop-chip" data-crop="paddy" onclick="selectLiveCropChip('Paddy', this)" style="padding:8px 16px; border-radius:24px; border:1px solid var(--fert-border, #e2e8f0); background:var(--fert-card-bg, #fff); cursor:pointer; transition:all 0.2s; display:inline-flex; flex-direction:column; align-items:center; min-width:80px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <span style="font-weight:600; font-size:1em; color:var(--text-color);">🌱 <span class="chip-crop-name">Paddy</span></span>
+                    
+                    <span style="font-size:0.75em; color:var(--text-muted); margin-top:2px;">Karaikudi</span>
+                    
+                </div>
+                
+                <div class="live-crop-chip" data-crop="paddy" onclick="selectLiveCropChip('Paddy', this)" style="padding:8px 16px; border-radius:24px; border:1px solid var(--fert-border, #e2e8f0); background:var(--fert-card-bg, #fff); cursor:pointer; transition:all 0.2s; display:inline-flex; flex-direction:column; align-items:center; min-width:80px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                    <span style="font-weight:600; font-size:1em; color:var(--text-color);">🌱 <span class="chip-crop-name">Paddy</span></span>
+                    
+                    <span style="font-size:0.75em; color:var(--text-muted); margin-top:2px;">pallathur</span>
+                    
+                </div>
+                
+            </div>
+            
+        </div>
+
+        <div id="fert-input-section">
+    <div class="fert-card glass">
+        <div class="fert-card-header"><h3 class="fert-section-title">🧪 Fertilizer Recommendation</h3></div>
+        <div class="fert-step-indicator">
+            <div class="fert-step active" id="step-1-indicator"><span class="step-num">1</span><span class="step-label">Season</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-2-indicator"><span class="step-num">2</span><span class="step-label">Crop</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-3-indicator"><span class="step-num">3</span><span class="step-label">Stage</span></div>
+            <div class="fert-step-line"></div>
+            <div class="fert-step" id="step-4-indicator"><span class="step-num">4</span><span class="step-label">Irrigation</span></div>
+        </div>
+        
+        <!-- Step 1: Season -->
+        <div class="fert-step-content" id="fert-card-season">
+            <div class="fert-search-select" id="fert-season-search">
+                <input type="text" class="fert-search-input" id="fert-season-input" placeholder="Search season..." autocomplete="off">
+            </div>
+            <div class="fert-info-card" id="fert-info-season" style="display:none"></div>
+        </div>
+        
+        <!-- Step 2: Crop -->
+        <div class="fert-step-content" id="fert-card-crop" style="display:none">
+            <div class="fert-search-select" id="fert-crop-search">
+                <input type="text" class="fert-search-input" id="fert-crop-input" placeholder="Search crop..." autocomplete="off">
+            </div>
+            <div class="fert-info-card" id="fert-info-crop" style="display:none"></div>
+        </div>
+        
+        <!-- Step 3: Growth Stage -->
+        <div class="fert-step-content" id="fert-card-stage" style="display:none">
+            <div class="fert-search-select" id="fert-stage-search">
+                <input type="text" class="fert-search-input" id="fert-stage-input" placeholder="Search growth stage..." autocomplete="off">
+            </div>
+            <div class="fert-info-card" id="fert-info-stage" style="display:none"></div>
+        </div>
+        
+        <!-- Step 4: Irrigation -->
+        <div class="fert-step-content" id="fert-card-irrigation" style="display:none">
+            <div class="fert-search-select" id="fert-irrigation-search">
+                <input type="text" class="fert-search-input" id="fert-irrigation-input" placeholder="Search irrigation method..." autocomplete="off">
+            </div>
+            <div class="fert-info-card" id="fert-info-irrigation" style="display:none"></div>
+        </div>
+        <!-- Generate Button -->
+            <div class="fert-step-content" id="fert-card-generate" style="display:none; padding: 20px 0;">
+                <div class="fert-generate-section">
+                    <div class="fert-generate-icon">🧪</div>
+                    <h3>All Details Collected</h3>
+                    <p>Generate your fertilizer recommendation now</p>
+                    <button class="fert-btn fert-btn-primary fert-btn-large fert-generate-btn" id="fert-generate-btn" onclick="generateFertilizer()">
+                        🧪 Generate AI Fertilizer Recommendation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="fert-result" id="fert-result-section" style="display:none">
+            <div class="fert-card fert-result-header" style="text-align:center">
+                <div class="fert-result-header-icon">🌱</div>
+                <h2>Fertilizer Recommendation</h2>
+                <div class="fert-result-meta">
+                    <span>🌾 <span id="fert-result-crop">-</span></span>
+                    <span>📅 <span id="fert-result-season">-</span></span>
+                    <span>🌿 <span id="fert-result-stage">-</span></span>
+                    <span>💧 <span id="fert-result-irrigation">-</span></span>
+                </div>
+                <div style="margin-top:12px">
+                    <span class="fert-confidence-badge high" id="fert-confidence-badge">High</span>
+                </div>
+                <div class="fert-btn-group" style="justify-content:center;margin-top:16px">
+                    <button class="fert-btn fert-btn-success" id="fert-save-btn" onclick="saveFertilizer()">💾 Save</button>
+                    <div class="fert-export-dropdown" style="position:relative;display:inline-block" id="fert-export-group">
+                        <button class="fert-btn fert-btn-secondary" onclick="toggleExportMenu(this)">📄 Export ▼</button>
+                        <div class="fert-export-menu" style="display:none;position:absolute;right:0;top:100%;background:var(--fert-card-bg);border:1px solid var(--fert-border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;min-width:120px;overflow:hidden">
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('txt');fertCloseMenus()">📄 TXT</button>
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('pdf');fertCloseMenus()">📄 PDF</button>
+                            <button class="fert-export-option" style="display:block;width:100%;padding:10px 16px;border:none;background:transparent;cursor:pointer;font-size:0.85rem;text-align:left;font-family:inherit" onclick="exportCurrentResult('csv');fertCloseMenus()">📄 CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fert-card fert-result-body" id="fert-result-body">
+                <div class="fert-markdown">fertilizer_generating</div>
+            </div>
+        </div>
+
+        <div class="fert-card" id="fert-history-section">
+            <div class="fert-card-header">
+                <h3 class="fert-section-title">📋 History</h3>
+            </div>
+            <div class="fert-history-tools">
+                <div class="fert-history-search">
+                    <span class="fert-history-search-icon">🔍</span>
+                    <input type="text" id="fert-history-search-input" placeholder="Search...">
+                </div>
+                <div class="fert-history-filters">
+                    <select class="fert-select" id="fert-season-filter" style="width:140px;padding:8px 12px;font-size:0.8rem">
+                        <option value="">All Seasons</option>
+                        
+                        <option value="kuruvai">Kuruvai</option>
+                        
+                        <option value="samba">Samba</option>
+                        
+                        <option value="thaladi">Thaladi</option>
+                        
+                        <option value="navarai">Navarai</option>
+                        
+                        <option value="summer">Summer</option>
+                        
+                        <option value="rainy">Rainy Season</option>
+                        
+                        <option value="winter">Winter</option>
+                        
+                        <option value="custom">Custom Season</option>
+                        
+                    </select>
+                </div>
+            </div>
+            <div class="fert-history-list" id="fert-history-list">
+                <div class="fert-empty">No recommendations yet.</div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="fert-loading-overlay" id="fert-loading-overlay" style="display:none">
+            <div class="fert-loading-card">
+                <div class="fert-spinner"></div>
+                <p id="fert-loading-text">Analyzing soil and crop data...</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="fert-modal-overlay" id="fert-view-modal" onclick="if(event.target===this)closeFertViewModal()">
+    <div class="fert-modal">
+        <div class="fert-modal-header">
+            <h2>📋 Details</h2>
+            <button class="fert-modal-close" onclick="closeFertViewModal()">✕</button>
+        </div>
+        <div class="fert-modal-body" id="fert-view-modal-body"></div>
+    </div>
+</div>
+
+<div class="fert-toast" id="fert-toast"></div>
+
+<script>
+var FERT_DATA = {
+    seasons: [{"id": "kuruvai", "en": "Kuruvai", "ta": "\u0b95\u0bc1\u0bb1\u0bc1\u0bb5\u0bc8", "desc_en": "June\u2013September. Short-term paddy cultivation.", "desc_ta": "\u0b9c\u0bc2\u0ba9\u0bcd\u2013\u0b9a\u0bc6\u0baa\u0bcd\u0b9f\u0bae\u0bcd\u0baa\u0bb0\u0bcd. \u0b95\u0bc1\u0bb1\u0bc1\u0b95\u0bbf\u0baf \u0b95\u0bbe\u0bb2 \u0ba8\u0bc6\u0bb2\u0bcd \u0b9a\u0bbe\u0b95\u0bc1\u0baa\u0b9f\u0bbf.", "months_en": "June to September", "months_ta": "\u0b9c\u0bc2\u0ba9\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0b9a\u0bc6\u0baa\u0bcd\u0b9f\u0bae\u0bcd\u0baa\u0bb0\u0bcd \u0bb5\u0bb0\u0bc8", "rainfall_en": "South-West Monsoon (400\u2013600 mm)", "rainfall_ta": "\u0ba4\u0bc6\u0ba9\u0bcd\u0bae\u0bc7\u0bb1\u0bcd\u0b95\u0bc1 \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bb4\u0bc8 (400\u2013600 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Paddy, Black Gram, Green Gram", "crops_ta": "\u0ba8\u0bc6\u0bb2\u0bcd, \u0b89\u0bb3\u0bc1\u0ba8\u0bcd\u0ba4\u0bc1, \u0baa\u0b9a\u0bcd\u0b9a\u0bc8\u0baa\u0bcd\u0baa\u0baf\u0bb1\u0bc1"}, {"id": "samba", "en": "Samba", "ta": "\u0b9a\u0bae\u0bcd\u0baa\u0bbe", "desc_en": "August\u2013January. Long-duration paddy season.", "desc_ta": "\u0b86\u0b95\u0bb8\u0bcd\u0b9f\u0bcd\u2013\u0b9c\u0ba9\u0bb5\u0bb0\u0bbf. \u0ba8\u0bc0\u0ba3\u0bcd\u0b9f \u0b95\u0bbe\u0bb2 \u0ba8\u0bc6\u0bb2\u0bcd \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bcd.", "months_en": "August to January", "months_ta": "\u0b86\u0b95\u0bb8\u0bcd\u0b9f\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0b9c\u0ba9\u0bb5\u0bb0\u0bbf \u0bb5\u0bb0\u0bc8", "rainfall_en": "North-East Monsoon (500\u2013800 mm)", "rainfall_ta": "\u0bb5\u0b9f\u0b95\u0bbf\u0bb4\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bb4\u0bc8 (500\u2013800 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Paddy (long-duration varieties), Sugarcane, Banana", "crops_ta": "\u0ba8\u0bc6\u0bb2\u0bcd (\u0ba8\u0bc0\u0ba3\u0bcd\u0b9f\u0b95\u0bbe\u0bb2 \u0bb0\u0b95\u0b99\u0bcd\u0b95\u0bb3\u0bcd), \u0b95\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1, \u0bb5\u0bbe\u0bb4\u0bc8"}, {"id": "thaladi", "en": "Thaladi", "ta": "\u0ba4\u0bbe\u0bb3\u0b9f\u0bbf", "desc_en": "September\u2013February. Late paddy season.", "desc_ta": "\u0b9a\u0bc6\u0baa\u0bcd\u0b9f\u0bae\u0bcd\u0baa\u0bb0\u0bcd\u2013\u0baa\u0bbf\u0baa\u0bcd\u0bb0\u0bb5\u0bb0\u0bbf. \u0ba4\u0bbe\u0bae\u0ba4\u0bae\u0bbe\u0ba9 \u0ba8\u0bc6\u0bb2\u0bcd \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bcd.", "months_en": "September to February", "months_ta": "\u0b9a\u0bc6\u0baa\u0bcd\u0b9f\u0bae\u0bcd\u0baa\u0bb0\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0bbf\u0baa\u0bcd\u0bb0\u0bb5\u0bb0\u0bbf \u0bb5\u0bb0\u0bc8", "rainfall_en": "Post-monsoon (300\u2013500 mm)", "rainfall_ta": "\u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bb4\u0bc8\u0b95\u0bcd\u0b95\u0bc1\u0baa\u0bcd \u0baa\u0bbf\u0ba9\u0bcd (300\u2013500 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Paddy (short-duration), Pulses", "crops_ta": "\u0ba8\u0bc6\u0bb2\u0bcd (\u0b95\u0bc1\u0bb1\u0bc1\u0b95\u0bbf\u0baf\u0b95\u0bbe\u0bb2\u0bae\u0bcd), \u0baa\u0baf\u0bb1\u0bc1 \u0bb5\u0b95\u0bc8\u0b95\u0bb3\u0bcd"}, {"id": "navarai", "en": "Navarai", "ta": "\u0ba8\u0bb5\u0bb0\u0bc8", "desc_en": "December\u2013March. Summer paddy season.", "desc_ta": "\u0b9f\u0bbf\u0b9a\u0bae\u0bcd\u0baa\u0bb0\u0bcd\u2013\u0bae\u0bbe\u0bb0\u0bcd\u0b9a\u0bcd. \u0b95\u0bcb\u0b9f\u0bc8 \u0ba8\u0bc6\u0bb2\u0bcd \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bcd.", "months_en": "December to March", "months_ta": "\u0b9f\u0bbf\u0b9a\u0bae\u0bcd\u0baa\u0bb0\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0bae\u0bbe\u0bb0\u0bcd\u0b9a\u0bcd \u0bb5\u0bb0\u0bc8", "rainfall_en": "Dry season, irrigation-dependent", "rainfall_ta": "\u0bb5\u0bb1\u0ba3\u0bcd\u0b9f \u0b95\u0bbe\u0bb2\u0bae\u0bcd, \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd \u0b9a\u0bbe\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1", "crops_en": "Paddy, Groundnut, Millets", "crops_ta": "\u0ba8\u0bc6\u0bb2\u0bcd, \u0bb5\u0bc7\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0b9f\u0bb2\u0bc8, \u0b9a\u0bbf\u0bb1\u0bc1\u0ba4\u0bbe\u0ba9\u0bbf\u0baf\u0b99\u0bcd\u0b95\u0bb3\u0bcd"}, {"id": "summer", "en": "Summer", "ta": "\u0b95\u0bcb\u0b9f\u0bc8", "desc_en": "March\u2013June. Suitable for vegetables and pulses.", "desc_ta": "\u0bae\u0bbe\u0bb0\u0bcd\u0b9a\u0bcd\u2013\u0b9c\u0bc2\u0ba9\u0bcd. \u0b95\u0bbe\u0baf\u0bcd\u0b95\u0bb1\u0bbf\u0b95\u0bb3\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0baa\u0baf\u0bb1\u0bc1 \u0bb5\u0b95\u0bc8\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0bb1\u0ba4\u0bc1.", "months_en": "March to June", "months_ta": "\u0bae\u0bbe\u0bb0\u0bcd\u0b9a\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0b9c\u0bc2\u0ba9\u0bcd \u0bb5\u0bb0\u0bc8", "rainfall_en": "Dry, hot season (<200 mm)", "rainfall_ta": "\u0bb5\u0bb1\u0ba3\u0bcd\u0b9f, \u0bb5\u0bc6\u0baa\u0bcd\u0baa\u0bae\u0bbe\u0ba9 \u0b95\u0bbe\u0bb2\u0bae\u0bcd (<200 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Vegetables (Tomato, Brinjal, Chilli), Pulses, Cotton, Maize", "crops_ta": "\u0b95\u0bbe\u0baf\u0bcd\u0b95\u0bb1\u0bbf\u0b95\u0bb3\u0bcd (\u0ba4\u0b95\u0bcd\u0b95\u0bbe\u0bb3\u0bbf, \u0b95\u0ba4\u0bcd\u0ba4\u0bbf\u0bb0\u0bbf, \u0bae\u0bbf\u0bb3\u0b95\u0bbe\u0baf\u0bcd), \u0baa\u0baf\u0bb1\u0bc1\u0b95\u0bb3\u0bcd, \u0baa\u0bb0\u0bc1\u0ba4\u0bcd\u0ba4\u0bbf, \u0b9a\u0bcb\u0bb3\u0bae\u0bcd"}, {"id": "rainy", "en": "Rainy Season", "ta": "\u0bae\u0bb4\u0bc8\u0b95\u0bcd\u0b95\u0bbe\u0bb2\u0bae\u0bcd", "desc_en": "October\u2013December. North-east monsoon period.", "desc_ta": "\u0b85\u0b95\u0bcd\u0b9f\u0bcb\u0baa\u0bb0\u0bcd\u2013\u0b9f\u0bbf\u0b9a\u0bae\u0bcd\u0baa\u0bb0\u0bcd. \u0bb5\u0b9f\u0b95\u0bbf\u0bb4\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bb4\u0bc8 \u0b95\u0bbe\u0bb2\u0bae\u0bcd.", "months_en": "October to December", "months_ta": "\u0b85\u0b95\u0bcd\u0b9f\u0bcb\u0baa\u0bb0\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0b9f\u0bbf\u0b9a\u0bae\u0bcd\u0baa\u0bb0\u0bcd \u0bb5\u0bb0\u0bc8", "rainfall_en": "Heavy rainfall (800\u20131200 mm)", "rainfall_ta": "\u0b85\u0ba4\u0bbf\u0b95 \u0bae\u0bb4\u0bc8\u0baa\u0bcd\u0baa\u0bca\u0bb4\u0bbf\u0bb5\u0bc1 (800\u20131200 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Paddy, Sugarcane, Banana, Tapioca", "crops_ta": "\u0ba8\u0bc6\u0bb2\u0bcd, \u0b95\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1, \u0bb5\u0bbe\u0bb4\u0bc8, \u0bae\u0bb0\u0bb5\u0bb3\u0bcd\u0bb3\u0bbf"}, {"id": "winter", "en": "Winter", "ta": "\u0b95\u0bc1\u0bb3\u0bbf\u0bb0\u0bcd\u0b95\u0bbe\u0bb2\u0bae\u0bcd", "desc_en": "January\u2013February. Suitable for cool-season crops.", "desc_ta": "\u0b9c\u0ba9\u0bb5\u0bb0\u0bbf\u2013\u0baa\u0bbf\u0baa\u0bcd\u0bb0\u0bb5\u0bb0\u0bbf. \u0b95\u0bc1\u0bb3\u0bbf\u0bb0\u0bcd\u0b95\u0bbe\u0bb2 \u0baa\u0baf\u0bbf\u0bb0\u0bcd\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0bb1\u0ba4\u0bc1.", "months_en": "January to February", "months_ta": "\u0b9c\u0ba9\u0bb5\u0bb0\u0bbf \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0bbf\u0baa\u0bcd\u0bb0\u0bb5\u0bb0\u0bbf \u0bb5\u0bb0\u0bc8", "rainfall_en": "Low rainfall (100\u2013200 mm)", "rainfall_ta": "\u0b95\u0bc1\u0bb1\u0bc8\u0ba8\u0bcd\u0ba4 \u0bae\u0bb4\u0bc8\u0baa\u0bcd\u0baa\u0bca\u0bb4\u0bbf\u0bb5\u0bc1 (100\u2013200 \u0bae\u0bbf\u0bae\u0bc0)", "crops_en": "Cabbage, Cauliflower, Carrot, Beans, Onion", "crops_ta": "\u0bae\u0bc1\u0b9f\u0bcd\u0b9f\u0bc8\u0b95\u0bcb\u0bb8\u0bcd, \u0b95\u0bbe\u0bb2\u0bbf\u0b83\u0baa\u0bbf\u0bb3\u0bb5\u0bb0\u0bcd, \u0b95\u0bc7\u0bb0\u0b9f\u0bcd, \u0baa\u0bc0\u0ba9\u0bcd\u0bb8\u0bcd, \u0bb5\u0bc6\u0b99\u0bcd\u0b95\u0bbe\u0baf\u0bae\u0bcd"}, {"id": "custom", "en": "Custom Season", "ta": "\u0ba4\u0ba9\u0bbf\u0baa\u0bcd\u0baa\u0baf\u0ba9\u0bcd \u0baa\u0bb0\u0bc1\u0bb5\u0bae\u0bcd", "desc_en": "Specify your own season.", "desc_ta": "\u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0b9a\u0bca\u0ba8\u0bcd\u0ba4 \u0baa\u0bb0\u0bc1\u0bb5\u0ba4\u0bcd\u0ba4\u0bc8\u0b95\u0bcd \u0b95\u0bc1\u0bb1\u0bbf\u0baa\u0bcd\u0baa\u0bbf\u0b9f\u0bb5\u0bc1\u0bae\u0bcd.", "months_en": "As specified", "months_ta": "\u0b95\u0bc1\u0bb1\u0bbf\u0baa\u0bcd\u0baa\u0bbf\u0b9f\u0bcd\u0b9f\u0baa\u0b9f\u0bbf", "rainfall_en": "Varies by region", "rainfall_ta": "\u0baa\u0b95\u0bc1\u0ba4\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0baa \u0bae\u0bbe\u0bb1\u0bc1\u0baa\u0b9f\u0bc1\u0bae\u0bcd", "crops_en": "Any suitable crop", "crops_ta": "\u0b8f\u0ba4\u0bc7\u0ba9\u0bc1\u0bae\u0bcd \u0baa\u0bca\u0bb0\u0bc1\u0ba4\u0bcd\u0ba4\u0bae\u0bbe\u0ba9 \u0baa\u0baf\u0bbf\u0bb0\u0bcd"}],
+    crops: [{"en": "Paddy", "ta": "\u0ba8\u0bc6\u0bb2\u0bcd", "sci": "Oryza sativa", "duration_en": "120\u2013150 days", "duration_ta": "120\u2013150 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Thanjavur, Tiruvallur, Cuddalore, Nagapattinam", "districts_ta": "\u0ba4\u0b9e\u0bcd\u0b9a\u0bbe\u0bb5\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0bb3\u0bcd\u0bb3\u0bc2\u0bb0\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba8\u0bbe\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0bbf\u0ba9\u0bae\u0bcd"}, {"en": "Banana", "ta": "\u0bb5\u0bbe\u0bb4\u0bc8", "sci": "Musa paradisiaca", "duration_en": "10\u201312 months", "duration_ta": "10\u201312 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Tiruchirappalli, Theni, Thoothukudi", "districts_ta": "\u0ba4\u0bbf\u0bb0\u0bc1\u0b9a\u0bcd\u0b9a\u0bbf, \u0ba4\u0bc7\u0ba9\u0bbf, \u0ba4\u0bc2\u0ba4\u0bcd\u0ba4\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0b9f\u0bbf"}, {"en": "Sugarcane", "ta": "\u0b95\u0bb0\u0bc1\u0bae\u0bcd\u0baa\u0bc1", "sci": "Saccharum officinarum", "duration_en": "10\u201312 months", "duration_ta": "10\u201312 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Vellore, Dharmapuri, Salem, Erode", "districts_ta": "\u0bb5\u0bc7\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd, \u0b88\u0bb0\u0bcb\u0b9f\u0bc1"}, {"en": "Cotton", "ta": "\u0baa\u0bb0\u0bc1\u0ba4\u0bcd\u0ba4\u0bbf", "sci": "Gossypium hirsutum", "duration_en": "150\u2013180 days", "duration_ta": "150\u2013180 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Coimbatore, Salem, Virudhunagar, Ramanathapuram", "districts_ta": "\u0b95\u0bcb\u0baf\u0bae\u0bcd\u0baa\u0bc1\u0ba4\u0bcd\u0ba4\u0bc2\u0bb0\u0bcd, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd, \u0bb5\u0bbf\u0bb0\u0bc1\u0ba4\u0bc1\u0ba8\u0b95\u0bb0\u0bcd, \u0b87\u0bb0\u0bbe\u0bae\u0ba8\u0bbe\u0ba4\u0baa\u0bc1\u0bb0\u0bae\u0bcd"}, {"en": "Groundnut", "ta": "\u0bb5\u0bc7\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0b9f\u0bb2\u0bc8", "sci": "Arachis hypogaea", "duration_en": "90\u2013120 days", "duration_ta": "90\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Tiruvannamalai, Vellore, Cuddalore", "districts_ta": "\u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0ba3\u0bcd\u0ba3\u0bbe\u0bae\u0bb2\u0bc8, \u0bb5\u0bc7\u0bb2\u0bc2\u0bb0\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd"}, {"en": "Coconut", "ta": "\u0ba4\u0bc7\u0b99\u0bcd\u0b95\u0bbe\u0baf\u0bcd", "sci": "Cocos nucifera", "duration_en": "Year-round (perennial)", "duration_ta": "\u0b86\u0ba3\u0bcd\u0b9f\u0bc1 \u0bae\u0bc1\u0bb4\u0bc1\u0bb5\u0ba4\u0bc1\u0bae\u0bcd (\u0baa\u0bb2 \u0b86\u0ba3\u0bcd\u0b9f\u0bc1)", "districts_en": "Kanyakumari, Thanjavur, Tiruppur, Pollachi", "districts_ta": "\u0b95\u0ba9\u0bcd\u0ba9\u0bbf\u0baf\u0bbe\u0b95\u0bc1\u0bae\u0bb0\u0bbf, \u0ba4\u0b9e\u0bcd\u0b9a\u0bbe\u0bb5\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0baa\u0bcd\u0baa\u0bc2\u0bb0\u0bcd, \u0baa\u0bca\u0bb3\u0bcd\u0bb3\u0bbe\u0b9a\u0bcd\u0b9a\u0bbf"}, {"en": "Turmeric", "ta": "\u0bae\u0b9e\u0bcd\u0b9a\u0bb3\u0bcd", "sci": "Curcuma longa", "duration_en": "7\u20139 months", "duration_ta": "7\u20139 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Erode, Salem, Namakkal", "districts_ta": "\u0b88\u0bb0\u0bcb\u0b9f\u0bc1, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd, \u0ba8\u0bbe\u0bae\u0b95\u0bcd\u0b95\u0bb2\u0bcd"}, {"en": "Maize", "ta": "\u0b9a\u0bcb\u0bb3\u0bae\u0bcd", "sci": "Zea mays", "duration_en": "90\u2013110 days", "duration_ta": "90\u2013110 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Perambalur, Tiruchi, Dindigul", "districts_ta": "\u0baa\u0bc6\u0bb0\u0bae\u0bcd\u0baa\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0b9a\u0bcd\u0b9a\u0bbf, \u0ba4\u0bbf\u0ba3\u0bcd\u0b9f\u0bc1\u0b95\u0bcd\u0b95\u0bb2\u0bcd"}, {"en": "Tomato", "ta": "\u0ba4\u0b95\u0bcd\u0b95\u0bbe\u0bb3\u0bbf", "sci": "Solanum lycopersicum", "duration_en": "70\u201390 days", "duration_ta": "70\u201390 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Krishnagiri, Dharmapuri, Madurai, Theni", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0bae\u0ba4\u0bc1\u0bb0\u0bc8, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Brinjal", "ta": "\u0b95\u0ba4\u0bcd\u0ba4\u0bbf\u0bb0\u0bbf", "sci": "Solanum melongena", "duration_en": "100\u2013120 days", "duration_ta": "100\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Coimbatore, Dindigul, Theni", "districts_ta": "\u0b95\u0bcb\u0baf\u0bae\u0bcd\u0baa\u0bc1\u0ba4\u0bcd\u0ba4\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0ba3\u0bcd\u0b9f\u0bc1\u0b95\u0bcd\u0b95\u0bb2\u0bcd, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Chilli", "ta": "\u0bae\u0bbf\u0bb3\u0b95\u0bbe\u0baf\u0bcd", "sci": "Capsicum annuum", "duration_en": "90\u2013120 days", "duration_ta": "90\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Virudhunagar, Tuticorin, Ramanathapuram", "districts_ta": "\u0bb5\u0bbf\u0bb0\u0bc1\u0ba4\u0bc1\u0ba8\u0b95\u0bb0\u0bcd, \u0ba4\u0bc2\u0ba4\u0bcd\u0ba4\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0b9f\u0bbf, \u0b87\u0bb0\u0bbe\u0bae\u0ba8\u0bbe\u0ba4\u0baa\u0bc1\u0bb0\u0bae\u0bcd"}, {"en": "Onion", "ta": "\u0bb5\u0bc6\u0b99\u0bcd\u0b95\u0bbe\u0baf\u0bae\u0bcd", "sci": "Allium cepa", "duration_en": "90\u2013120 days", "duration_ta": "90\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Tiruchirappalli, Perambalur, Dindigul", "districts_ta": "\u0ba4\u0bbf\u0bb0\u0bc1\u0b9a\u0bcd\u0b9a\u0bbf, \u0baa\u0bc6\u0bb0\u0bae\u0bcd\u0baa\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0ba3\u0bcd\u0b9f\u0bc1\u0b95\u0bcd\u0b95\u0bb2\u0bcd"}, {"en": "Millets", "ta": "\u0b9a\u0bbf\u0bb1\u0bc1\u0ba4\u0bbe\u0ba9\u0bbf\u0baf\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "sci": "Multiple species", "duration_en": "75\u2013120 days", "duration_ta": "75\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Dharmapuri, Krishnagiri, Salem", "districts_ta": "\u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd"}, {"en": "Black Gram", "ta": "\u0b89\u0bb3\u0bc1\u0ba8\u0bcd\u0ba4\u0bc1", "sci": "Vigna mungo", "duration_en": "70\u201390 days", "duration_ta": "70\u201390 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Thanjavur, Tiruvallur, Cuddalore", "districts_ta": "\u0ba4\u0b9e\u0bcd\u0b9a\u0bbe\u0bb5\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0bb3\u0bcd\u0bb3\u0bc2\u0bb0\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd"}, {"en": "Green Gram", "ta": "\u0baa\u0b9a\u0bcd\u0b9a\u0bc8\u0baa\u0bcd\u0baa\u0baf\u0bb1\u0bc1", "sci": "Vigna radiata", "duration_en": "60\u201375 days", "duration_ta": "60\u201375 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Tiruvannamalai, Vellore, Salem", "districts_ta": "\u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0ba3\u0bcd\u0ba3\u0bbe\u0bae\u0bb2\u0bc8, \u0bb5\u0bc7\u0bb2\u0bc2\u0bb0\u0bcd, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd"}, {"en": "Mango", "ta": "\u0bae\u0bbe\u0bae\u0bcd\u0baa\u0bb4\u0bae\u0bcd", "sci": "Mangifera indica", "duration_en": "4\u20135 months (seasonal)", "duration_ta": "4\u20135 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd (\u0baa\u0bb0\u0bc1\u0bb5\u0b95\u0bbe\u0bb2\u0bae\u0bcd)", "districts_en": "Krishnagiri, Dharmapuri, Theni", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Tapioca", "ta": "\u0bae\u0bb0\u0bb5\u0bb3\u0bcd\u0bb3\u0bbf", "sci": "Manihot esculenta", "duration_en": "8\u201310 months", "duration_ta": "8\u201310 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Salem, Namakkal, Erode, Villupuram", "districts_ta": "\u0b9a\u0bc7\u0bb2\u0bae\u0bcd, \u0ba8\u0bbe\u0bae\u0b95\u0bcd\u0b95\u0bb2\u0bcd, \u0b88\u0bb0\u0bcb\u0b9f\u0bc1, \u0bb5\u0bbf\u0bb4\u0bc1\u0baa\u0bcd\u0baa\u0bc1\u0bb0\u0bae\u0bcd"}, {"en": "Sunflower", "ta": "\u0b9a\u0bc2\u0bb0\u0bbf\u0baf\u0b95\u0bbe\u0ba8\u0bcd\u0ba4\u0bbf", "sci": "Helianthus annuus", "duration_en": "80\u2013100 days", "duration_ta": "80\u2013100 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Villupuram, Cuddalore, Tiruvannamalai", "districts_ta": "\u0bb5\u0bbf\u0bb4\u0bc1\u0baa\u0bcd\u0baa\u0bc1\u0bb0\u0bae\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0ba3\u0bcd\u0ba3\u0bbe\u0bae\u0bb2\u0bc8"}, {"en": "Sesame", "ta": "\u0b8e\u0bb3\u0bcd", "sci": "Sesamum indicum", "duration_en": "75\u201390 days", "duration_ta": "75\u201390 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Ramanathapuram, Virudhunagar, Sivaganga", "districts_ta": "\u0b87\u0bb0\u0bbe\u0bae\u0ba8\u0bbe\u0ba4\u0baa\u0bc1\u0bb0\u0bae\u0bcd, \u0bb5\u0bbf\u0bb0\u0bc1\u0ba4\u0bc1\u0ba8\u0b95\u0bb0\u0bcd, \u0b9a\u0bbf\u0bb5\u0b95\u0b99\u0bcd\u0b95\u0bc8"}, {"en": "Horse Gram", "ta": "\u0b95\u0bca\u0bb3\u0bcd\u0bb3\u0bc1", "sci": "Macrotyloma uniflorum", "duration_en": "90\u2013120 days", "duration_ta": "90\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Dharmapuri, Krishnagiri, Tiruvannamalai", "districts_ta": "\u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0ba3\u0bcd\u0ba3\u0bbe\u0bae\u0bb2\u0bc8"}, {"en": "Red Gram", "ta": "\u0ba4\u0bc1\u0bb5\u0bb0\u0bc8", "sci": "Cajanus cajan", "duration_en": "120\u2013180 days", "duration_ta": "120\u2013180 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Villupuram, Cuddalore, Tiruvannamalai", "districts_ta": "\u0bb5\u0bbf\u0bb4\u0bc1\u0baa\u0bcd\u0baa\u0bc1\u0bb0\u0bae\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0ba3\u0bcd\u0ba3\u0bbe\u0bae\u0bb2\u0bc8"}, {"en": "Cashew", "ta": "\u0bae\u0bc1\u0ba8\u0bcd\u0ba4\u0bbf\u0bb0\u0bbf", "sci": "Anacardium occidentale", "duration_en": "Year-round (perennial)", "duration_ta": "\u0b86\u0ba3\u0bcd\u0b9f\u0bc1 \u0bae\u0bc1\u0bb4\u0bc1\u0bb5\u0ba4\u0bc1\u0bae\u0bcd (\u0baa\u0bb2 \u0b86\u0ba3\u0bcd\u0b9f\u0bc1)", "districts_en": "Cuddalore, Villupuram, Kanyakumari", "districts_ta": "\u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd, \u0bb5\u0bbf\u0bb4\u0bc1\u0baa\u0bcd\u0baa\u0bc1\u0bb0\u0bae\u0bcd, \u0b95\u0ba9\u0bcd\u0ba9\u0bbf\u0baf\u0bbe\u0b95\u0bc1\u0bae\u0bb0\u0bbf"}, {"en": "Papaya", "ta": "\u0baa\u0baa\u0bcd\u0baa\u0bbe\u0bb3\u0bbf", "sci": "Carica papaya", "duration_en": "8\u201310 months", "duration_ta": "8\u201310 \u0bae\u0bbe\u0ba4\u0b99\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Coimbatore, Madurai, Theni", "districts_ta": "\u0b95\u0bcb\u0baf\u0bae\u0bcd\u0baa\u0bc1\u0ba4\u0bcd\u0ba4\u0bc2\u0bb0\u0bcd, \u0bae\u0ba4\u0bc1\u0bb0\u0bc8, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Guava", "ta": "\u0b95\u0bca\u0baf\u0bcd\u0baf\u0bbe", "sci": "Psidium guajava", "duration_en": "Year-round (perennial)", "duration_ta": "\u0b86\u0ba3\u0bcd\u0b9f\u0bc1 \u0bae\u0bc1\u0bb4\u0bc1\u0bb5\u0ba4\u0bc1\u0bae\u0bcd (\u0baa\u0bb2 \u0b86\u0ba3\u0bcd\u0b9f\u0bc1)", "districts_en": "Tiruchirappalli, Madurai, Theni", "districts_ta": "\u0ba4\u0bbf\u0bb0\u0bc1\u0b9a\u0bcd\u0b9a\u0bbf, \u0bae\u0ba4\u0bc1\u0bb0\u0bc8, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Okra", "ta": "\u0bb5\u0bc6\u0ba3\u0bcd\u0b9f\u0bc8", "sci": "Abelmoschus esculentus", "duration_en": "50\u201370 days", "duration_ta": "50\u201370 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Erode, Salem, Coimbatore", "districts_ta": "\u0b88\u0bb0\u0bcb\u0b9f\u0bc1, \u0b9a\u0bc7\u0bb2\u0bae\u0bcd, \u0b95\u0bcb\u0baf\u0bae\u0bcd\u0baa\u0bc1\u0ba4\u0bcd\u0ba4\u0bc2\u0bb0\u0bcd"}, {"en": "Cabbage", "ta": "\u0bae\u0bc1\u0b9f\u0bcd\u0b9f\u0bc8\u0b95\u0bcb\u0bb8\u0bcd", "sci": "Brassica oleracea", "duration_en": "70\u2013100 days", "duration_ta": "70\u2013100 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Krishnagiri, Dharmapuri, Nilgiris", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0ba8\u0bc0\u0bb2\u0b95\u0bbf\u0bb0\u0bbf"}, {"en": "Cauliflower", "ta": "\u0b95\u0bbe\u0bb2\u0bbf\u0b83\u0baa\u0bbf\u0bb3\u0bb5\u0bb0\u0bcd", "sci": "Brassica oleracea botrytis", "duration_en": "70\u2013120 days", "duration_ta": "70\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Krishnagiri, Dharmapuri, Nilgiris", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0ba8\u0bc0\u0bb2\u0b95\u0bbf\u0bb0\u0bbf"}, {"en": "Carrot", "ta": "\u0b95\u0bc7\u0bb0\u0b9f\u0bcd", "sci": "Daucus carota", "duration_en": "60\u201380 days", "duration_ta": "60\u201380 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Krishnagiri, Nilgiris, Dindigul", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba8\u0bc0\u0bb2\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bbf\u0ba3\u0bcd\u0b9f\u0bc1\u0b95\u0bcd\u0b95\u0bb2\u0bcd"}, {"en": "Beans", "ta": "\u0baa\u0bc0\u0ba9\u0bcd\u0bb8\u0bcd", "sci": "Phaseolus vulgaris", "duration_en": "50\u201370 days", "duration_ta": "50\u201370 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Krishnagiri, Dharmapuri, Theni", "districts_ta": "\u0b95\u0bbf\u0bb0\u0bc1\u0bb7\u0bcd\u0ba3\u0b95\u0bbf\u0bb0\u0bbf, \u0ba4\u0bb0\u0bcd\u0bae\u0baa\u0bc1\u0bb0\u0bbf, \u0ba4\u0bc7\u0ba9\u0bbf"}, {"en": "Drumstick", "ta": "\u0bae\u0bc1\u0bb0\u0bc1\u0b99\u0bcd\u0b95\u0bc8", "sci": "Moringa oleifera", "duration_en": "Year-round (perennial)", "duration_ta": "\u0b86\u0ba3\u0bcd\u0b9f\u0bc1 \u0bae\u0bc1\u0bb4\u0bc1\u0bb5\u0ba4\u0bc1\u0bae\u0bcd (\u0baa\u0bb2 \u0b86\u0ba3\u0bcd\u0b9f\u0bc1)", "districts_en": "Virudhunagar, Ramanathapuram, Thoothukudi", "districts_ta": "\u0bb5\u0bbf\u0bb0\u0bc1\u0ba4\u0bc1\u0ba8\u0b95\u0bb0\u0bcd, \u0b87\u0bb0\u0bbe\u0bae\u0ba8\u0bbe\u0ba4\u0baa\u0bc1\u0bb0\u0bae\u0bcd, \u0ba4\u0bc2\u0ba4\u0bcd\u0ba4\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0b9f\u0bbf"}, {"en": "Watermelon", "ta": "\u0ba4\u0bb0\u0bcd\u0baa\u0bc2\u0b9a\u0ba3\u0bbf", "sci": "Citrullus lanatus", "duration_en": "75\u201390 days", "duration_ta": "75\u201390 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Thanjavur, Tiruvallur, Cuddalore", "districts_ta": "\u0ba4\u0b9e\u0bcd\u0b9a\u0bbe\u0bb5\u0bc2\u0bb0\u0bcd, \u0ba4\u0bbf\u0bb0\u0bc1\u0bb5\u0bb3\u0bcd\u0bb3\u0bc2\u0bb0\u0bcd, \u0b95\u0b9f\u0bb2\u0bc2\u0bb0\u0bcd"}, {"en": "Pumpkin", "ta": "\u0baa\u0bc2\u0b9a\u0ba3\u0bbf", "sci": "Cucurbita moschata", "duration_en": "90\u2013120 days", "duration_ta": "90\u2013120 \u0ba8\u0bbe\u0b9f\u0bcd\u0b95\u0bb3\u0bcd", "districts_en": "Dindigul, Theni, Madurai", "districts_ta": "\u0ba4\u0bbf\u0ba3\u0bcd\u0b9f\u0bc1\u0b95\u0bcd\u0b95\u0bb2\u0bcd, \u0ba4\u0bc7\u0ba9\u0bbf, \u0bae\u0ba4\u0bc1\u0bb0\u0bc8"}, {"en": "Other", "ta": "\u0bae\u0bb1\u0bcd\u0bb1\u0bb5\u0bc8", "sci": "\u2014", "duration_en": "Varies", "duration_ta": "\u0bae\u0bbe\u0bb1\u0bc1\u0baa\u0b9f\u0bc1\u0bae\u0bcd", "districts_en": "Varies by crop", "districts_ta": "\u0baa\u0baf\u0bbf\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0baa \u0bae\u0bbe\u0bb1\u0bc1\u0baa\u0b9f\u0bc1\u0bae\u0bcd"}],
+    stages: [{"id": "land_prep", "en": "Land Preparation", "ta": "\u0ba8\u0bbf\u0bb2\u0bae\u0bcd \u0ba4\u0baf\u0bbe\u0bb0\u0bbf\u0baa\u0bcd\u0baa\u0bc1", "nutrient_en": "Basal application of NPK. Incorporate organic manure (10\u201315 tons/acre) during ploughing.", "nutrient_ta": "\u0b85\u0b9f\u0bbf\u0baa\u0bcd\u0baa\u0b9f\u0bc8 NPK \u0b89\u0bb0 \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bc1. \u0b89\u0bb4\u0bb5\u0bbf\u0ba9\u0bcd \u0baa\u0bcb\u0ba4\u0bc1 \u0b95\u0bb0\u0bbf\u0bae \u0b8e\u0bb0\u0bc1\u0bb5\u0bc8 (\u0b8f\u0b95\u0bcd\u0b95\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bc1 10\u201315 \u0b9f\u0ba9\u0bcd) \u0b9a\u0bc7\u0bb0\u0bcd\u0ba4\u0bcd\u0ba4\u0bb2\u0bcd."}, {"id": "seed_treatment", "en": "Seed Treatment", "ta": "\u0bb5\u0bbf\u0ba4\u0bc8 \u0ba8\u0bc7\u0bb0\u0bcd\u0ba4\u0bcd\u0ba4\u0bbf", "nutrient_en": "Treat seeds with biofertilizers (Azospirillum, Phosphobacteria) and fungicides before sowing.", "nutrient_ta": "\u0bb5\u0bbf\u0ba4\u0bc8\u0baa\u0bcd\u0baa\u0ba4\u0bb1\u0bcd\u0b95\u0bc1 \u0bae\u0bc1\u0ba9\u0bcd \u0b89\u0baf\u0bbf\u0bb0\u0bcd \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bcd (\u0b85\u0b9a\u0bcb\u0bb8\u0bcd\u0baa\u0bc8\u0bb0\u0bbf\u0bb2\u0bcd\u0bb2\u0bae\u0bcd, \u0baa\u0bbe\u0bb8\u0bcd\u0baa\u0bcb\u0baa\u0bbe\u0b95\u0bcd\u0b9f\u0bc0\u0bb0\u0bbf\u0baf\u0bbe) \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0baa\u0bc2\u0b9e\u0bcd\u0b9a\u0bc8\u0b95\u0bcd \u0b95\u0bca\u0bb2\u0bcd\u0bb2\u0bbf\u0b95\u0bb3\u0bbe\u0bb2\u0bcd \u0bb5\u0bbf\u0ba4\u0bc8 \u0ba8\u0bc7\u0bb0\u0bcd\u0ba4\u0bcd\u0ba4\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "nursery", "en": "Nursery Stage", "ta": "\u0ba8\u0bbe\u0bb1\u0bcd\u0bb1\u0b99\u0bcd\u0b95\u0bbe\u0bb2\u0bcd \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Apply FYM and recommended NPK in nursery beds. Ensure adequate moisture for seedling growth.", "nutrient_ta": "\u0ba8\u0bbe\u0bb1\u0bcd\u0bb1\u0b99\u0bcd\u0b95\u0bbe\u0bb2\u0bcd \u0baa\u0bbe\u0ba4\u0bcd\u0ba4\u0bbf\u0b95\u0bb3\u0bbf\u0bb2\u0bcd \u0ba4\u0bca\u0bb4\u0bc1\u0bb5\u0bc1\u0bb0\u0bae\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f NPK \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0ba8\u0bbe\u0bb1\u0bcd\u0bb1\u0bc1 \u0bb5\u0bb3\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bcb\u0ba4\u0bc1\u0bae\u0bbe\u0ba9 \u0b88\u0bb0\u0baa\u0bcd\u0baa\u0ba4\u0ba4\u0bcd\u0ba4\u0bc8 \u0b89\u0bb1\u0bc1\u0ba4\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "germination", "en": "Germination", "ta": "\u0bae\u0bc1\u0bb3\u0bc8\u0baa\u0bcd\u0baa\u0bc1", "nutrient_en": "Light irrigation needed. No direct fertilizer application during germination stage. Starter solution may help.", "nutrient_ta": "\u0bae\u0bc6\u0bb2\u0bcd\u0bb2\u0bbf\u0baf \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8. \u0bae\u0bc1\u0bb3\u0bc8\u0baa\u0bcd\u0baa\u0bc1 \u0b95\u0b9f\u0bcd\u0b9f\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0ba8\u0bc7\u0bb0\u0b9f\u0bbf \u0b89\u0bb0 \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bc1 \u0ba4\u0bc7\u0bb5\u0bc8\u0baf\u0bbf\u0bb2\u0bcd\u0bb2\u0bc8. \u0ba4\u0bca\u0b9f\u0b95\u0bcd\u0b95\u0b95\u0bcd \u0b95\u0bb0\u0bc8\u0b9a\u0bb2\u0bcd \u0b89\u0ba4\u0bb5\u0bb2\u0bbe\u0bae\u0bcd."}, {"id": "seedling", "en": "Seedling", "ta": "\u0ba8\u0bbe\u0bb1\u0bcd\u0bb1\u0bc1 \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Apply 1/4 of recommended nitrogen as top dressing. Ensure phosphorus for root development.", "nutrient_ta": "\u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f \u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0b9c\u0ba9\u0bbf\u0bb2\u0bcd 1/4 \u0baa\u0b95\u0bc1\u0ba4\u0bbf\u0baf\u0bc8 \u0bae\u0bc7\u0bb2\u0bc1\u0bb0\u0bae\u0bbe\u0b95 \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0bb5\u0bc7\u0bb0\u0bcd \u0bb5\u0bb3\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bbe\u0bb8\u0bcd\u0baa\u0bb0\u0bb8\u0bc8 \u0b89\u0bb1\u0bc1\u0ba4\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "vegetative", "en": "Vegetative Stage", "ta": "\u0ba4\u0bbe\u0bb5\u0bb0 \u0bb5\u0bb3\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0bbf \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Heavy nitrogen requirement. Apply 50% of recommended N. Incorporate potash for stem strength.", "nutrient_ta": "\u0b85\u0ba4\u0bbf\u0b95 \u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0b9c\u0ba9\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8. \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f N-\u0b87\u0bb2\u0bcd 50% \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0ba4\u0ba3\u0bcd\u0b9f\u0bc1 \u0bb5\u0bb2\u0bc1\u0bb5\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bca\u0b9f\u0bcd\u0b9f\u0bbe\u0bb7\u0bcd \u0b9a\u0bc7\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "tillering", "en": "Tillering", "ta": "\u0ba4\u0bc2\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Critical stage for nitrogen. Apply remaining N. Zinc sulfate (25 kg/ha) recommended for paddy.", "nutrient_ta": "\u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0b9c\u0ba9\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0bae\u0bc1\u0b95\u0bcd\u0b95\u0bbf\u0baf\u0bae\u0bbe\u0ba9 \u0ba8\u0bbf\u0bb2\u0bc8. \u0bae\u0bc0\u0ba4\u0bae\u0bc1\u0bb3\u0bcd\u0bb3 N \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0ba8\u0bc6\u0bb2\u0bcd\u0bb2\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0ba4\u0bc1\u0ba4\u0bcd\u0ba4\u0ba8\u0bbe\u0b95 \u0b9a\u0bb2\u0bcd\u0baa\u0bc7\u0b9f\u0bcd (\u0bb9\u0bc6\u0b95\u0bcd\u0b9f\u0bc7\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bc1 25 \u0b95\u0bbf\u0b95\u0bbf) \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1."}, {"id": "flowering", "en": "Flowering", "ta": "\u0baa\u0bc2\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Apply phosphorus and potash. Avoid excess nitrogen. Boron and micronutrient spray beneficial.", "nutrient_ta": "\u0baa\u0bbe\u0bb8\u0bcd\u0baa\u0bb0\u0bb8\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0baa\u0bca\u0b9f\u0bcd\u0b9f\u0bbe\u0bb7\u0bcd \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0b85\u0ba4\u0bbf\u0b95 \u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0b9c\u0ba9\u0bc8 \u0ba4\u0bb5\u0bbf\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd. \u0baa\u0bcb\u0bb0\u0bbe\u0ba9\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0ba8\u0bc1\u0ba3\u0bcd\u0ba3\u0bc2\u0b9f\u0bcd\u0b9f \u0ba4\u0bc6\u0bb3\u0bbf\u0baa\u0bcd\u0baa\u0bc1 \u0baa\u0baf\u0ba9\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1."}, {"id": "fruiting", "en": "Fruiting", "ta": "\u0b95\u0bbe\u0baf\u0bcd\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Potash-heavy fertilization. Apply potassium nitrate for fruit quality. Maintain consistent irrigation.", "nutrient_ta": "\u0baa\u0bca\u0b9f\u0bcd\u0b9f\u0bbe\u0bb7\u0bcd \u0b85\u0ba4\u0bbf\u0b95\u0bae\u0bbe\u0ba9 \u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bc1\u0ba4\u0bb2\u0bcd. \u0baa\u0bb4 \u0ba4\u0bb0\u0ba4\u0bcd\u0ba4\u0bbf\u0bb1\u0bcd\u0b95\u0bc1 \u0baa\u0bca\u0b9f\u0bcd\u0b9f\u0bbe\u0b9a\u0bbf\u0baf\u0bae\u0bcd \u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0bc7\u0b9f\u0bcd \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0ba8\u0bbf\u0bb2\u0bc8\u0baf\u0bbe\u0ba9 \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9\u0ba4\u0bcd\u0ba4\u0bc8 \u0baa\u0bb0\u0bbe\u0bae\u0bb0\u0bbf\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "grain_filling", "en": "Grain Filling", "ta": "\u0ba4\u0bbe\u0ba9\u0bbf\u0baf \u0ba8\u0bbf\u0bb0\u0baa\u0bcd\u0baa\u0bc1\u0bae\u0bcd \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Apply potash for grain development. Foliar spray of DAP (2%) recommended. Avoid nitrogen at this stage.", "nutrient_ta": "\u0ba4\u0bbe\u0ba9\u0bbf\u0baf \u0bb5\u0bb3\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bca\u0b9f\u0bcd\u0b9f\u0bbe\u0bb7\u0bcd \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. DAP (2%) \u0b87\u0bb2\u0bc8\u0bb5\u0bb4\u0bbf \u0ba4\u0bc6\u0bb3\u0bbf\u0baa\u0bcd\u0baa\u0bc1 \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1. \u0b87\u0ba8\u0bcd\u0ba4 \u0b95\u0b9f\u0bcd\u0b9f\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0ba8\u0bc8\u0b9f\u0bcd\u0bb0\u0b9c\u0ba9\u0bc8 \u0ba4\u0bb5\u0bbf\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "maturity", "en": "Maturity", "ta": "\u0bae\u0bc1\u0ba4\u0bbf\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0bbf \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "Stop fertilizer application. Reduce irrigation gradually. Monitor for pest attacks.", "nutrient_ta": "\u0b89\u0bb0 \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bcd\u0b9f\u0bc8 \u0ba8\u0bbf\u0bb1\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd. \u0baa\u0b9f\u0bbf\u0baa\u0bcd\u0baa\u0b9f\u0bbf\u0baf\u0bbe\u0b95 \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9\u0ba4\u0bcd\u0ba4\u0bc8 \u0b95\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd. \u0baa\u0bc2\u0b9a\u0bcd\u0b9a\u0bbf \u0ba4\u0bbe\u0b95\u0bcd\u0b95\u0bc1\u0ba4\u0bb2\u0bc8 \u0b95\u0ba3\u0bcd\u0b95\u0bbe\u0ba3\u0bbf\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "harvest", "en": "Harvest Stage", "ta": "\u0b85\u0bb1\u0bc1\u0bb5\u0b9f\u0bc8 \u0ba8\u0bbf\u0bb2\u0bc8", "nutrient_en": "No fertilization required. Harvest at correct moisture content. Store in dry conditions.", "nutrient_ta": "\u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bc1\u0ba4\u0bb2\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8\u0baf\u0bbf\u0bb2\u0bcd\u0bb2\u0bc8. \u0b9a\u0bb0\u0bbf\u0baf\u0bbe\u0ba9 \u0b88\u0bb0\u0baa\u0bcd\u0baa\u0ba4\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0b85\u0bb1\u0bc1\u0bb5\u0b9f\u0bc8 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd. \u0b89\u0bb2\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4 \u0ba8\u0bbf\u0bb2\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0b9a\u0bc7\u0bae\u0bbf\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}],
+    irrigation: [{"id": "drip", "en": "Drip Irrigation", "ta": "\u0b9a\u0bca\u0b9f\u0bcd\u0b9f\u0bc1 \u0ba8\u0bc0\u0bb0\u0bcd \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "Low water requirement (2\u20134 L/hr). 60\u201380% efficiency.", "water_ta": "\u0b95\u0bc1\u0bb1\u0bc8\u0ba8\u0bcd\u0ba4 \u0ba8\u0bc0\u0bb0\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8 (2\u20134 \u0bb2\u0bbf/\u0bae\u0ba3\u0bbf). 60\u201380% \u0ba4\u0bbf\u0bb1\u0ba9\u0bcd.", "fert_en": "Fertigation recommended. Water-soluble fertilizers injected directly to root zone. Reduces wastage by 30\u201340%.", "fert_ta": "\u0b89\u0bb0 \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1. \u0ba8\u0bc0\u0bb0\u0bbf\u0bb2\u0bcd \u0b95\u0bb0\u0bc8\u0baf\u0b95\u0bcd\u0b95\u0bc2\u0b9f\u0bbf\u0baf \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0ba8\u0bc7\u0bb0\u0b9f\u0bbf\u0baf\u0bbe\u0b95 \u0bb5\u0bc7\u0bb0\u0bcd \u0baa\u0b95\u0bc1\u0ba4\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0b9a\u0bc6\u0bb2\u0bc1\u0ba4\u0bcd\u0ba4\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0ba9\u0bcd\u0bb1\u0ba9. 30\u201340% \u0bb5\u0bc0\u0ba3\u0bbe\u0bb5\u0ba4\u0bc8 \u0b95\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95\u0bbf\u0bb1\u0ba4\u0bc1."}, {"id": "flood", "en": "Flood Irrigation", "ta": "\u0bb5\u0bc6\u0bb3\u0bcd\u0bb3\u0baa\u0bcd \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "High water requirement. 40\u201350% efficiency. Common for paddy.", "water_ta": "\u0b85\u0ba4\u0bbf\u0b95 \u0ba8\u0bc0\u0bb0\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8. 40\u201350% \u0ba4\u0bbf\u0bb1\u0ba9\u0bcd. \u0ba8\u0bc6\u0bb2\u0bcd\u0bb2\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bca\u0ba4\u0bc1\u0bb5\u0bbe\u0ba9\u0ba4\u0bc1.", "fert_en": "Apply fertilizer in split doses. Ensure standing water during urea application. Use neem-coated urea to reduce loss.", "fert_ta": "\u0ba4\u0bb5\u0ba3\u0bc8 \u0bae\u0bc1\u0bb1\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0baf\u0bc2\u0bb0\u0bbf\u0baf\u0bbe \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bcd\u0b9f\u0bbf\u0ba9\u0bcd \u0baa\u0bcb\u0ba4\u0bc1 \u0ba8\u0bc0\u0bb0\u0bcd \u0ba4\u0bc7\u0b95\u0bcd\u0b95\u0ba4\u0bcd\u0ba4\u0bc8 \u0b89\u0bb1\u0bc1\u0ba4\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd. \u0b87\u0bb4\u0baa\u0bcd\u0baa\u0bc8 \u0b95\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95 \u0bb5\u0bc7\u0baa\u0bcd\u0baa\u0bae\u0bcd\u0baa\u0bc2\u0b9a\u0bcd\u0b9a\u0bc1 \u0baf\u0bc2\u0bb0\u0bbf\u0baf\u0bbe\u0bb5\u0bc8\u0baa\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "sprinkler", "en": "Sprinkler Irrigation", "ta": "\u0ba4\u0bc6\u0bb3\u0bbf\u0baa\u0bcd\u0baa\u0bc1 \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "Moderate water requirement. 60\u201370% efficiency. Suitable for vegetables.", "water_ta": "\u0bae\u0bbf\u0ba4\u0bae\u0bbe\u0ba9 \u0ba8\u0bc0\u0bb0\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8. 60\u201370% \u0ba4\u0bbf\u0bb1\u0ba9\u0bcd. \u0b95\u0bbe\u0baf\u0bcd\u0b95\u0bb1\u0bbf\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0bb1\u0ba4\u0bc1.", "fert_en": "Foliar feeding effective. Apply water-soluble fertilizers through sprinkler. Avoid urea in hard water.", "fert_ta": "\u0b87\u0bb2\u0bc8\u0bb5\u0bb4\u0bbf \u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0baf\u0ba9\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1. \u0ba4\u0bc6\u0bb3\u0bbf\u0baa\u0bcd\u0baa\u0bbe\u0ba9\u0bcd \u0bb5\u0bb4\u0bbf\u0baf\u0bbe\u0b95 \u0ba8\u0bc0\u0bb0\u0bbf\u0bb2\u0bcd \u0b95\u0bb0\u0bc8\u0baf\u0bc1\u0bae\u0bcd \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8 \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0b95\u0b9f\u0bbf\u0ba9 \u0ba8\u0bc0\u0bb0\u0bbf\u0bb2\u0bcd \u0baf\u0bc2\u0bb0\u0bbf\u0baf\u0bbe\u0bb5\u0bc8 \u0ba4\u0bb5\u0bbf\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "rainfed", "en": "Rainfed Farming", "ta": "\u0bae\u0bb4\u0bc8 \u0b9a\u0bbe\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4 \u0bb5\u0bbf\u0bb5\u0b9a\u0bbe\u0baf\u0bae\u0bcd", "water_en": "Rainfall-dependent. No irrigation infrastructure needed.", "water_ta": "\u0bae\u0bb4\u0bc8\u0baf\u0bc8 \u0b9a\u0bbe\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1. \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9 \u0b95\u0b9f\u0bcd\u0b9f\u0bae\u0bc8\u0baa\u0bcd\u0baa\u0bc1 \u0ba4\u0bc7\u0bb5\u0bc8\u0baf\u0bbf\u0bb2\u0bcd\u0bb2\u0bc8.", "fert_en": "Apply fertilizers just before expected rainfall. Use slow-release and organic fertilizers. Split application recommended.", "fert_ta": "\u0b8e\u0ba4\u0bbf\u0bb0\u0bcd\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0bae\u0bcd \u0bae\u0bb4\u0bc8\u0b95\u0bcd\u0b95\u0bc1 \u0bae\u0bc1\u0ba9\u0bcd \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8 \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0bae\u0bc6\u0ba4\u0bc1\u0bb5\u0bbe\u0b95 \u0bb5\u0bc6\u0bb3\u0bbf\u0baf\u0bbf\u0b9f\u0bc1\u0bae\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0b95\u0bb0\u0bbf\u0bae \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8\u0baa\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd. \u0ba4\u0bb5\u0ba3\u0bc8 \u0bae\u0bc1\u0bb1\u0bc8 \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1."}, {"id": "furrow", "en": "Furrow Irrigation", "ta": "\u0b9a\u0bbe\u0bb2\u0bcd \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "Moderate water use. 50\u201360% efficiency. Good for row crops.", "water_ta": "\u0bae\u0bbf\u0ba4\u0bae\u0bbe\u0ba9 \u0ba8\u0bc0\u0bb0\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bc1. 50\u201360% \u0ba4\u0bbf\u0bb1\u0ba9\u0bcd. \u0bb5\u0bb0\u0bbf\u0b9a\u0bc8 \u0baa\u0baf\u0bbf\u0bb0\u0bcd\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0bb1\u0ba4\u0bc1.", "fert_en": "Place fertilizer in furrows before irrigation. Band placement improves uptake. Use ammonium-based fertilizers.", "fert_ta": "\u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9\u0ba4\u0bcd\u0ba4\u0bbf\u0bb1\u0bcd\u0b95\u0bc1 \u0bae\u0bc1\u0ba9\u0bcd \u0b9a\u0bbe\u0bb2\u0bcd\u0b95\u0bb3\u0bbf\u0bb2\u0bcd \u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0baa\u0b9f\u0bcd\u0b9f\u0bc8 \u0bae\u0bc1\u0bb1\u0bc8 \u0b89\u0bb0\u0bae\u0bbf\u0b9f\u0bc1\u0ba4\u0bb2\u0bcd \u0b89\u0bb1\u0bbf\u0b9e\u0bcd\u0b9a\u0bc1\u0ba4\u0bb2\u0bc8 \u0bae\u0bc7\u0bae\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1. \u0b85\u0bae\u0bcd\u0bae\u0bcb\u0ba9\u0bbf\u0baf\u0bae\u0bcd \u0b85\u0b9f\u0bbf\u0baa\u0bcd\u0baa\u0b9f\u0bc8\u0baf\u0bbf\u0bb2\u0bbe\u0ba9 \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8\u0baa\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "basin", "en": "Basin Irrigation", "ta": "\u0b95\u0bc1\u0b9f\u0bcd\u0b9f\u0bc8 \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "High water use. 40\u201350% efficiency. Common for orchards.", "water_ta": "\u0b85\u0ba4\u0bbf\u0b95 \u0ba8\u0bc0\u0bb0\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bc1. 40\u201350% \u0ba4\u0bbf\u0bb1\u0ba9\u0bcd. \u0baa\u0bb4\u0ba4\u0bcd\u0ba4\u0bcb\u0b9f\u0bcd\u0b9f\u0b99\u0bcd\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bca\u0ba4\u0bc1\u0bb5\u0bbe\u0ba9\u0ba4\u0bc1.", "fert_en": "Apply fertilizers evenly within the basin. Use controlled-release fertilizers. Incorporate organic matter.", "fert_ta": "\u0b95\u0bc1\u0b9f\u0bcd\u0b9f\u0bc8\u0b95\u0bcd\u0b95\u0bc1\u0bb3\u0bcd \u0b9a\u0bc0\u0bb0\u0bbe\u0ba9 \u0b89\u0bb0 \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0bbe\u0b9f\u0bc1. \u0b95\u0b9f\u0bcd\u0b9f\u0bc1\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f \u0bb5\u0bc6\u0bb3\u0bbf\u0baf\u0bc0\u0b9f\u0bcd\u0b9f\u0bc1 \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8\u0baa\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd. \u0b95\u0bb0\u0bbf\u0bae\u0baa\u0bcd \u0baa\u0bca\u0bb0\u0bc1\u0b9f\u0bcd\u0b95\u0bb3\u0bc8 \u0b9a\u0bc7\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}, {"id": "manual", "en": "Manual Irrigation", "ta": "\u0b95\u0bc8\u0bae\u0bc1\u0bb1\u0bc8 \u0baa\u0bbe\u0b9a\u0ba9\u0bae\u0bcd", "water_en": "Low volume. Labor-intensive. Suitable for small plots.", "water_ta": "\u0b95\u0bc1\u0bb1\u0bc8\u0ba8\u0bcd\u0ba4 \u0b85\u0bb3\u0bb5\u0bc1. \u0b89\u0bb4\u0bc8\u0baa\u0bcd\u0baa\u0bc1 \u0bae\u0bbf\u0b95\u0bc1\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1. \u0b9a\u0bbf\u0bb1\u0bbf\u0baf \u0ba8\u0bbf\u0bb2\u0b99\u0bcd\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0bb1\u0ba4\u0bc1.", "fert_en": "Apply liquid fertilizers manually. Use fertigation cans. Precise placement reduces waste.", "fert_ta": "\u0ba4\u0bbf\u0bb0\u0bb5 \u0b89\u0bb0\u0b99\u0bcd\u0b95\u0bb3\u0bc8 \u0b95\u0bc8\u0bae\u0bc1\u0bb1\u0bc8\u0baf\u0bbe\u0b95 \u0b87\u0b9f\u0bb5\u0bc1\u0bae\u0bcd. \u0b89\u0bb0 \u0ba8\u0bc0\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bbe\u0b9a\u0ba9 \u0b95\u0bc7\u0ba9\u0bcd\u0b95\u0bb3\u0bc8\u0baa\u0bcd \u0baa\u0baf\u0ba9\u0bcd\u0baa\u0b9f\u0bc1\u0ba4\u0bcd\u0ba4\u0bb5\u0bc1\u0bae\u0bcd. \u0ba4\u0bc1\u0bb2\u0bcd\u0bb2\u0bbf\u0baf\u0bae\u0bbe\u0ba9 \u0b87\u0b9f\u0bae\u0bcd \u0bb5\u0bc0\u0ba3\u0bbe\u0bb5\u0ba4\u0bc8 \u0b95\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95\u0bbf\u0bb1\u0ba4\u0bc1."}, {"id": "other", "en": "Other", "ta": "\u0bae\u0bb1\u0bcd\u0bb1\u0bb5\u0bc8", "water_en": "Varies by method.", "water_ta": "\u0bae\u0bc1\u0bb1\u0bc8\u0b95\u0bcd\u0b95\u0bc1 \u0b8f\u0bb1\u0bcd\u0baa \u0bae\u0bbe\u0bb1\u0bc1\u0baa\u0b9f\u0bc1\u0bae\u0bcd.", "fert_en": "Consult local agricultural officer for method-specific fertilizer recommendations.", "fert_ta": "\u0bae\u0bc1\u0bb1\u0bc8 \u0b9a\u0bbe\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4 \u0b89\u0bb0 \u0baa\u0bb0\u0bbf\u0ba8\u0bcd\u0ba4\u0bc1\u0bb0\u0bc8\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0b89\u0bb3\u0bcd\u0bb3\u0bc2\u0bb0\u0bcd \u0bb5\u0bc7\u0bb3\u0bbe\u0ba3\u0bcd \u0b85\u0bb2\u0bc1\u0bb5\u0bb2\u0bb0\u0bc8 \u0b85\u0ba3\u0bc1\u0b95\u0bb5\u0bc1\u0bae\u0bcd."}],
+    lang: 'en'
+};
+</script>
+<script src="/static/js/fertilizer.js"></script>
+
+
+    
+    
+    <!-- Floating Chat Widget -->
+    <div class="floating-chat-panel" id="chat-widget-panel">
+        <div class="chat-panel-header">
+            <div class="chat-panel-header-left">
+                <div class="chat-panel-avatar">🤖</div>
+                <div>
+                    <div class="chat-panel-title">AI Farming Assistant</div>
+                    <div class="chat-panel-status">Online • Ready to help</div>
+                </div>
+            </div>
+            <button class="chat-panel-lang-toggle" onclick="setLanguage('ta')">
+                தமிழ்
+            </button>
+        </div>
+        <div class="chat-panel-body" id="chat-widget-body">
+            <div class="widget-chat-bubble bot">
+                Ask me anything about farming in Tamil Nadu
+            </div>
+        </div>
+        <div class="chat-panel-suggestions">
+            <span class="chat-panel-suggestion" data-text="Best crop for Coimbatore?">Best crop for Coimbatore?</span>
+            <span class="chat-panel-suggestion" data-text="Fertilizer for paddy?">Fertilizer for paddy?</span>
+            <span class="chat-panel-suggestion" data-text="Organic farming tips?">Organic farming tips?</span>
+        </div>
+        <div class="chat-panel-footer">
+            <input type="text" id="chat-widget-input" class="chat-panel-input" placeholder="Type your farming question here...">
+            <button id="chat-widget-send" class="chat-panel-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    <button class="floating-chat-fab" id="chat-widget-fab">
+        <i class="fas fa-comment-dots"></i>
+        <div class="unread-dot"></div>
+    </button>
+    
+
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/chat-widget.js"></script>
+    <script src="/static/js/weather.js"></script>
+    <script src="/static/js/charts.js"></script>
+</body>
+</html>
