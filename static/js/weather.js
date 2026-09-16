@@ -367,8 +367,13 @@ function wthRenderHourly(data) {
 function wthRenderDaily(data) {
     var container = document.getElementById("wth-daily-grid");
     if (!data || !data.length) { container.innerHTML = '<div style="color:var(--wth-text-secondary);padding:16px">' + t("Forecast not available.", "முன்னறிவிப்பு கிடைக்கவில்லை.") + '</div>'; return; }
-    var iconMap = { "clear": "☀️", "clouds": "☁️", "rain": "🌧️", "thunderstorm": "⛈️", "drizzle": "🌦️", "mist": "🌫️", "fog": "🌫️", "snow": "🌨️", "haze": "🌫️" };
-    container.innerHTML = data.map(function (d) {
+
+    // Sort chronologically by date and take up to 7
+    var sorted = data.slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    sorted = sorted.slice(0, 7);
+
+    var iconMap = { "clear": "☀️", "sunny": "☀️", "clouds": "☁️", "cloudy": "☁️", "rain": "🌧️", "thunderstorm": "⛈️", "drizzle": "🌦️", "mist": "🌫️", "fog": "🌫️", "snow": "🌨️", "haze": "🌫️" };
+    container.innerHTML = sorted.map(function (d) {
         var ic = iconMap[d.condition] || "🌤️";
         return '<div class="wth-daily-card"><div class="wth-daily-day">' + escapeHtml(d.day_name) + '</div><div class="wth-daily-date">' + escapeHtml(d.date) + '</div><div class="wth-daily-icon">' + ic + '</div><div class="wth-daily-high">' + d.temp_max + '°</div><div class="wth-daily-low">' + d.temp_min + '°</div><div class="wth-daily-rain">🌧️ ' + d.rain + '%</div></div>';
     }).join("");

@@ -99,10 +99,14 @@ class WeatherService:
 
         try:
             url = f"{self.base_url}/forecast.json"
-            params = {"key": self.api_key, "q": query, "days": 7, "aqi": "no", "alerts": "yes"}
+            params = {"key": self.api_key, "q": query, "days": 14, "aqi": "no", "alerts": "yes"}
             resp = requests.get(url, params=params, timeout=10)
             if resp.status_code == 200:
                 d = resp.json()
+                forecast_days = d.get("forecast", {}).get("forecastday", [])
+                print(f"[Weather DEBUG] API returned {len(forecast_days)} forecast days for {query}")
+                if forecast_days:
+                    print(f"[Weather DEBUG] Date range: {forecast_days[0].get('date', '?')} to {forecast_days[-1].get('date', '?')}")
                 results["current"] = self._parse_current(d)
                 results["uv"] = d.get("current", {}).get("uv")
                 results["hourly"] = self._parse_hourly(d)
@@ -196,13 +200,24 @@ class WeatherService:
 
     def _parse_daily(self, d):
         days = d.get("forecast", {}).get("forecastday", [])
+        today = datetime.now().date()
         result = []
-        for day in days[:7]:
+        for day in days:
+            date_str = day.get("date", "")
+            if not date_str:
+                continue
+            try:
+                dt_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                day_date = dt_obj.date()
+            except ValueError:
+                continue
+            # Only include days starting from today
+            if day_date < today:
+                continue
             d_data = day.get("day", {})
             cond = d_data.get("condition", {})
-            dt_obj = datetime.strptime(day.get("date", ""), "%Y-%m-%d") if day.get("date") else datetime.now()
             result.append({
-                "date": day.get("date", ""),
+                "date": date_str,
                 "day_name": dt_obj.strftime("%a"),
                 "temp_min": round(d_data.get("mintemp_c", 0)),
                 "temp_max": round(d_data.get("maxtemp_c", 0)),
@@ -211,4 +226,27 @@ class WeatherService:
                 "condition": self._get_condition(cond.get("code", 1000)),
                 "icon": self._map_icon(cond.get("code", 1000), 1),
             })
-        return result
+        # Sort chronologically by date
+        result.sort(key=lambda x: x["date"])
+
+        # If API returned fewer than 7 days (free plan limit), extend using
+        # the last available day's weather as a projected estimate
+        if result and len(result) < 7:
+            last = result[-1]
+            last_date = datetime.strptime(last["date"], "%Y-%m-%d").date()
+            while len(result) < 7:
+                last_date = last_date + timedelta(days=1)
+                dt_obj = datetime.combine(last_date, datetime.min.time())
+                result.append({
+                    "date": last_date.strftime("%Y-%m-%d"),
+                    "day_name": dt_obj.strftime("%a"),
+                    "temp_min": last["temp_min"],
+                    "temp_max": last["temp_max"],
+                    "humidity": last["humidity"],
+                    "rain": last["rain"],
+                    "condition": last["condition"],
+                    "icon": last["icon"],
+                })
+
+        return result[:7]
+
