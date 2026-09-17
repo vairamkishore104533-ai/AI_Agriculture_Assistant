@@ -173,3 +173,23 @@ document.addEventListener("DOMContentLoaded", function () {
     if (document.querySelector(".faq-item")) initFAQ();
     initSmoothScroll();
 });
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    var notifLink = document.querySelector('.sidebar-nav a[href*="/notifications"]');
+    if (!notifLink) return;
+
+    fetch('/api/notifications/unread')
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success && res.count > 0) {
+                var badge = document.createElement('span');
+                badge.className = 'nav-badge';
+                badge.style.background = '#ef4444'; // Red for notifications
+                badge.style.borderRadius = '10px';
+                badge.textContent = res.count > 99 ? '99+' : res.count;
+                notifLink.appendChild(badge);
+            }
+        })
+        .catch(function(e) { console.error('Failed to fetch unread count', e); });
+});
