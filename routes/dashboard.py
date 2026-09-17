@@ -166,10 +166,18 @@ def index():
 
     weather_data = {}
     ai_advice = ""
-    if selected_district:
+    show_village_empty_state = False
+    
+    user = User.find_by_id(user_id)
+    verified_village = user.village if user else ""
+    
+    if verified_village:
         weather_service = WeatherService()
-        weather_data = weather_service.get_current_weather(district=selected_district)
+        weather_data = weather_service.get_current_weather(district=selected_district, town=verified_village)
         ai_advice = weather_service.get_ai_farming_advice(weather_data, lang) if weather_data else ""
+    else:
+        weather_data = None
+        show_village_empty_state = True
 
     crop_count = Crop.count_by_user(user_id)
     expense_summary = Expense.get_summary(user_id)
@@ -220,6 +228,8 @@ def index():
         tips=tips.get(lang, tips["en"]),
         lang=lang,
         selected_district=selected_district,
+        verified_village=verified_village,
+        show_village_empty_state=show_village_empty_state,
         zone=zone,
         zone_info=zone_info,
         all_districts=ALL_DISTRICTS,

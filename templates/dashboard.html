@@ -225,7 +225,16 @@
         </div>
 
         <!-- Weather with dynamic illustration -->
-        {% if weather %}
+        {% if show_village_empty_state %}
+        <div class="dashboard-grid">
+            <div class="stat-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; text-align:center; background:var(--gray-50); border:2px dashed var(--gray-200); grid-column: 1 / -1; min-height: 250px;">
+                <div style="font-size:3rem; margin-bottom:16px;">dY"</div>
+                <h3 style="margin-bottom:8px;">{% if lang == 'ta' %}உள்ளூர் வானிலையைப் பார்க்க உங்கள் கிராமத்தை சரிபார்க்கவும்.{% else %}Verify your village in Profile to view local weather.{% endif %}</h3>
+                <p style="color:var(--text-secondary); margin-bottom:24px;">{% if lang == 'ta' %}துல்லியமான வானிலை முன்னறிவிப்புகளுக்கு உங்கள் கிராமம் தேவை.{% else %}We need your verified village to provide accurate weather forecasts.{% endif %}</p>
+                <a href="{{ url_for('profile.index') }}" class="btn btn-primary">{% if lang == 'ta' %}சுயவிவரத்திற்குச் செல்{% else %}Go to Profile{% endif %}</a>
+            </div>
+        </div>
+        {% elif weather %}
         {% set w = weather.condition | lower %}
         {% if w in ['clear', 'sunny'] %}{% set wi = '☀️' %}
         {% elif w in ['clouds', 'cloudy', 'overcast'] %}{% set wi = '☁️' %}

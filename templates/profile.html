@@ -1,5 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
+
+<style>
+.profile-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+.profile-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+@media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } }
+.profile-left-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+.profile-left-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100px; background: linear-gradient(135deg, var(--green-50), var(--green-100)); z-index: 0; }
+[data-theme="dark"] .profile-left-card::before { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); }
+.profile-avatar-wrap { position: relative; z-index: 1; width: 110px; height: 110px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--emerald)); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; font-weight: 700; box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2); border: 4px solid var(--bg-card); }
+.profile-username { position: relative; z-index: 1; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+.profile-role { position: relative; z-index: 1; font-size: 0.9rem; color: var(--emerald); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.profile-form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+.profile-form-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.profile-form-header h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px; margin: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+.form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; transition: all 0.2s; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+.form-group input:disabled { opacity: 0.7; cursor: not-allowed; background: var(--gray-100); }
+[data-theme="dark"] .form-group input:disabled { background: var(--gray-800); }
+.verify-group { display: flex; gap: 10px; }
+.verify-group input { flex: 1; }
+.btn-verify { background: var(--emerald); color: white; border: none; border-radius: var(--radius); padding: 0 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn-verify:hover { background: var(--green-600); }
+.btn-verify:disabled { opacity: 0.7; cursor: not-allowed; }
+.profile-actions { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+.btn-save { background: linear-gradient(135deg, var(--emerald), var(--primary)); color: white; border: none; border-radius: var(--radius); padding: 12px 32px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+.btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+</style>
+
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header"><div class="sidebar-user"><div class="sidebar-avatar">{{ username[0]|upper }}</div><div class="sidebar-user-info"><h4>{{ username }}</h4><span>🌾 {{ t('welcome_farmer') }}</span></div></div></div>
@@ -29,56 +60,82 @@
             </div>
         </div>
 
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <div style="text-align:center;margin-bottom:24px">
-                    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--emerald));display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;font-weight:700;margin:0 auto 12px">{{ user.username[0]|upper }}</div>
-                    <h2 style="font-size:1.3rem">{{ user.username }}</h2>
+        
+        <div class="profile-container">
+            <div class="profile-grid">
+                <!-- Left Profile Card -->
+                <div class="profile-left-card">
+                    <div class="profile-avatar-wrap">
+                        {{ user.username[0]|upper }}
+                    </div>
+                    <div class="profile-username">{{ user.username }}</div>
+                    <div class="profile-role">
+                        <i class="fas fa-leaf"></i> {{ t('welcome_farmer') }}
+                    </div>
+                </div>
+
+                <!-- Right Form Card -->
+                <div class="profile-form-card">
+                    <div class="profile-form-header">
+                        <h3><i class="fas fa-user-circle"></i> {{ t('profile_title') }}</h3>
+                    </div>
+                    <form id="profile-form">
+                        <div class="form-grid">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>{{ t('profile_username') }}</label>
+                                <input type="text" value="{{ user.username }}" disabled>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ t('profile_district') }}</label>
+                                <select name="district" id="district-select">
+                                    <option value="">{{ t('edit') }}...</option>
+                                    {% for d in districts %}
+                                    <option value="{{ d }}" {% if user.district == d %}selected{% endif %}>{{ d }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ t('profile_village') }}</label>
+                                <div class="verify-group">
+                                    <input type="text" name="village" id="village-input" value="{{ user.village }}">
+                                    <button type="button" class="btn-verify" id="btn-verify-village">
+                                        <i class="fas fa-check-circle"></i> {{ "சரிபார்க்க" if lang == "ta" else "Verify Village" }}
+                                    </button>
+                                </div>
+                                <div id="village-verify-result" style="margin-top:8px;font-size:0.9rem;display:none;padding:10px;border-radius:6px;"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ t('profile_language') }}</label>
+                                <select name="preferred_language">
+                                    <option value="en" {% if user.preferred_language == 'en' %}selected{% endif %}>English</option>
+                                    <option value="ta" {% if user.preferred_language == 'ta' %}selected{% endif %}>தமிழ்</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ t('profile_farm_size') }}</label>
+                                <input type="number" name="farm_size" step="0.01" value="{{ user.farm_size }}">
+                            </div>
+
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>{{ t('profile_crops_grown') }}</label>
+                                <input type="text" name="primary_crops" value="{{ user.primary_crops }}" placeholder="e.g., Paddy, Coconut, Banana">
+                            </div>
+                        </div>
+
+                        <div class="profile-actions">
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i> {{ t('profile_save') }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="stat-card">
-                <h3 style="margin-bottom:20px">{{ t('profile_title') }}</h3>
-                <form id="profile-form" style="display:flex;flex-direction:column;gap:16px">
-                    <div class="form-group">
-                        <label>{{ t('profile_username') }}</label>
-                        <input type="text" value="{{ user.username }}" disabled style="background:var(--gray-100);cursor:not-allowed">
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('profile_district') }}</label>
-                        <select name="district" id="district-select">
-                            <option value="">{{ t('edit') }}...</option>
-                            {% for d in districts %}
-                            <option value="{{ d }}" {% if user.district == d %}selected{% endif %}>{{ d }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('profile_village') }}</label>
-                        <div style="display:flex;gap:10px;">
-                            <input type="text" name="village" id="village-input" value="{{ user.village }}" style="flex:1">
-                            <button type="button" class="btn btn-primary" id="btn-verify-village" style="white-space:nowrap; background:var(--emerald); border-color:var(--emerald);">Verify Village</button>
-                        </div>
-                        <div id="village-verify-result" style="margin-top:8px;font-size:0.9rem;display:none;padding:10px;border-radius:6px;"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('profile_language') }}</label>
-                        <select name="preferred_language">
-                            <option value="en" {% if user.preferred_language == 'en' %}selected{% endif %}>English</option>
-                            <option value="ta" {% if user.preferred_language == 'ta' %}selected{% endif %}>தமிழ்</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('profile_farm_size') }}</label>
-                        <input type="number" name="farm_size" step="0.01" value="{{ user.farm_size }}">
-                    </div>
-                    <div class="form-group">
-                        <label>{{ t('profile_crops_grown') }}</label>
-                        <input type="text" name="primary_crops" value="{{ user.primary_crops }}" placeholder="e.g., Paddy, Coconut, Banana">
-                    </div>
-                    <button type="submit" class="btn btn-primary">{{ t('profile_save') }}</button>
-                </form>
-            </div>
         </div>
+
     </main>
 </div>
 <script>
@@ -93,20 +150,20 @@ document.getElementById('btn-verify-village')?.addEventListener('click', functio
     
     if(!district || !village) {
         resDiv.style.display = 'block';
-        resDiv.style.backgroundColor = '#fef2f2';
+        resDiv.style.backgroundColor = 'var(--red-50)';
         resDiv.style.color = '#dc2626';
         resDiv.style.border = '1px solid #fca5a5';
-        resDiv.innerHTML = '⚠ ' + ('{{ lang }}' === 'ta' ? 'கிராமம் மற்றும் மாவட்டம் தேவை' : 'Village and district are required');
+        resDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + ('{{ lang }}' === 'ta' ? '\u0b95\u0bbf\u0bb0\u0bbe\u0bae\u0bae\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0bae\u0bbe\u0bb5\u0b9f\u0bcd\u0b9f\u0bae\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8' : 'Village and district are required');
         return;
     }
     
     btn.disabled = true;
-    btn.innerText = '{{ lang }}' === 'ta' ? 'சரிபார்க்கிறது...' : 'Verifying...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     resDiv.style.display = 'block';
-    resDiv.style.backgroundColor = '#f3f4f6';
-    resDiv.style.color = '#374151';
-    resDiv.style.border = '1px solid #d1d5db';
-    resDiv.innerHTML = '⏳ ' + ('{{ lang }}' === 'ta' ? 'கிராமத்தை சரிபார்க்கிறது...' : 'Verifying village...');
+    resDiv.style.backgroundColor = 'var(--gray-50)';
+    resDiv.style.color = 'var(--text-secondary)';
+    resDiv.style.border = '1px solid var(--border)';
+    resDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + ('{{ lang }}' === 'ta' ? '\u0b95\u0bbf\u0bb0\u0bbe\u0bae\u0ba4\u0bcd\u0ba4\u0bc8 \u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bbf\u0bb1\u0ba4\u0bc1...' : 'Verifying village...');
     
     fetch('/api/validate-village', {
         method: 'POST',
@@ -116,15 +173,15 @@ document.getElementById('btn-verify-village')?.addEventListener('click', functio
     .then(r => r.json())
     .then(data => {
         btn.disabled = false;
-        btn.innerText = 'Verify Village';
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> ' + ('{{ lang }}' === 'ta' ? '\u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd' : 'Verify');
         
         if(data.valid) {
             isVillageVerified = true;
             isDistrictMismatch = false;
-            resDiv.style.backgroundColor = '#f0fdf4';
-            resDiv.style.color = '#166534';
-            resDiv.style.border = '1px solid #bbf7d0';
-            resDiv.innerHTML = `✓ <strong>${data.message}</strong><br><small>${data.village} belongs to ${data.district} district.</small>`;
+            resDiv.style.backgroundColor = 'var(--green-50)';
+            resDiv.style.color = 'var(--green-700)';
+            resDiv.style.border = '1px solid var(--emerald)';
+            resDiv.innerHTML = `<i class="fas fa-check-circle"></i> <strong>${data.message}</strong><br><small style="margin-top:4px;display:block;">${data.village} belongs to ${data.district} district.</small>`;
         } else {
             isVillageVerified = false;
             resDiv.style.backgroundColor = '#fffbeb';
@@ -133,30 +190,38 @@ document.getElementById('btn-verify-village')?.addEventListener('click', functio
             
             if(data.status === 'district_mismatch') {
                 isDistrictMismatch = true;
-                resDiv.style.backgroundColor = '#fef2f2';
+                resDiv.style.backgroundColor = 'var(--red-50)';
                 resDiv.style.color = '#dc2626';
                 resDiv.style.border = '1px solid #fca5a5';
-                resDiv.innerHTML = `✕ <strong>${data.message}</strong><br><small>This village belongs to ${data.actual_district} district, not ${data.selected_district}.</small>`;
+                resDiv.innerHTML = `<i class="fas fa-times-circle"></i> <strong>${data.message}</strong><br><small style="margin-top:4px;display:block;">This village belongs to ${data.actual_district} district, not ${data.selected_district}.</small>`;
             } else {
                 isDistrictMismatch = false;
-                resDiv.innerHTML = `⚠ <strong>${data.message}</strong>`;
+                resDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>${data.message}</strong>`;
             }
         }
     })
     .catch(err => {
         btn.disabled = false;
-        btn.innerText = 'Verify Village';
-        resDiv.style.backgroundColor = '#fef2f2';
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> ' + ('{{ lang }}' === 'ta' ? '\u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd' : 'Verify');
+        resDiv.style.backgroundColor = 'var(--red-50)';
         resDiv.style.color = '#dc2626';
         resDiv.style.border = '1px solid #fca5a5';
-        resDiv.innerHTML = `⚠ ` + ('{{ lang }}' === 'ta' ? 'சரிபார்ப்பு தற்போது கிடைக்கவில்லை' : 'Verification Unavailable');
+        resDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ` + ('{{ lang }}' === 'ta' ? '\u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd\u0baa\u0bcd\u0baa\u0bc1 \u0b95\u0bbf\u0b9f\u0bc8\u0b95\u0bcd\u0b95\u0bb5\u0bbf\u0bb2\u0bcd\u0bb2\u0bc8' : 'Verification Unavailable');
     });
+});
+
+document.getElementById('village-input').addEventListener('input', function() {
+    isVillageVerified = false;
 });
 
 document.getElementById("profile-form")?.addEventListener("submit", function(e){
     e.preventDefault();
     if(isDistrictMismatch) {
-        showToast('{{ lang }}' === 'ta' ? 'மாவட்ட பொருத்தமின்மை. சரிசெய்யவும்.' : 'District mismatch. Please correct it.', "error");
+        showToast('{{ lang }}' === 'ta' ? '\u0bae\u0bbe\u0bb5\u0b9f\u0bcd\u0b9f\u0bae\u0bcd \u0baa\u0bca\u0bb0\u0bc1\u0ba8\u0bcd\u0ba4\u0bb5\u0bbf\u0bb2\u0bcd\u0bb2\u0bc8. \u0ba4\u0baf\u0bb5\u0bc1\u0b9a\u0bc6\u0baf\u0bcd\u0ba4\u0bc1 \u0b9a\u0bb0\u0bbf\u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd.' : 'District mismatch. Please correct it.', "error");
+        return;
+    }
+    if(!isVillageVerified && document.getElementById('village-input').value.trim() !== '') {
+        showToast('{{ lang }}' === 'ta' ? '\u0bae\u0bc1\u0ba4\u0bb2\u0bbf\u0bb2\u0bcd \u0b89\u0b99\u0bcd\u0b95\u0bb3\u0bcd \u0b95\u0bbf\u0bb0\u0bbe\u0bae\u0ba4\u0bcd\u0ba4\u0bc8 \u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd.' : 'Please verify your village first.', "error");
         return;
     }
     const data = Object.fromEntries(new FormData(this));
