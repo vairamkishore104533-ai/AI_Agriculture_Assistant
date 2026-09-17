@@ -23,6 +23,10 @@ def index():
     markets_list = []
     for i, m in enumerate(MARKETS):
         markets_list.append({"en": m, "ta": MARKETS_TA[i] if i < len(MARKETS_TA) else m})
+    from models.crop import Crop
+    crops_db = Crop.find_by_user(user_id)
+    live_crops = [c.to_dict() for c in crops_db if c.status.lower() not in ["harvested", "cancelled", "completed"]]
+    
     return render_template(
         "market.html",
         lang=lang,
@@ -34,6 +38,7 @@ def index():
         favorites_json=json.dumps([f.to_dict() for f in favorites]),
         history=[h.to_dict() for h in history],
         history_json=json.dumps([h.to_dict() for h in history]),
+        live_crops=live_crops,
     )
 
 

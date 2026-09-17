@@ -100,6 +100,42 @@
             </div>
         </div>
 
+        <!-- Live Crops Section -->
+        <div class="mkt-card glass" style="margin-bottom: 2rem; position: relative; z-index: 999; overflow: visible;">
+            <div class="mkt-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom: 1rem;">
+                <h3 class="mkt-section-title" style="margin:0;">🌱 {% if lang == 'ta' %}நேரடி பயிர்கள்{% else %}Live Crops{% endif %}</h3>
+                <div class="mkt-search-select" style="margin:0; width:100%; max-width:300px; position:relative;">
+                    <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%);">🔍</span>
+                    <input type="text" id="live-crop-search" class="mkt-search-input" style="padding-left: 35px;" placeholder="{% if lang == 'ta' %}நேரடி பயிர்களை தேடுங்கள்...{% else %}Search live crops...{% endif %}" oninput="filterLiveCropsMkt(this.value)">
+                </div>
+            </div>
+            
+            {% if live_crops and live_crops|length > 0 %}
+            <div class="mkt-live-crops">
+                <div class="mkt-live-crops-dropdown-wrap">
+                    <button id="live-crop-dropdown-btn" class="mkt-search-input" style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center; background:var(--mkt-bg); border:1px solid var(--mkt-border); padding:12px; border-radius:8px; cursor:pointer;" onclick="toggleLiveCropDropdownMkt(event)">
+                        <span id="live-crop-selected-text">{% if lang == 'ta' %}பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Select a live crop{% endif %}</span> <span>▼</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="mkt-empty-state" style="text-align:center; padding: 1.5rem;">
+                <p style="font-weight:600; margin-bottom: 5px;">{% if lang == 'ta' %}பயிர்கள் இன்னும் சேர்க்கப்படவில்லை{% else %}No crops added yet{% endif %}</p>
+                <small style="color:var(--mkt-text-secondary);">{% if lang == 'ta' %}உங்கள் பயிர்களின் சந்தை விலைகளை அறிய, 'என் பயிர்கள்' பகுதியில் பயிர்களைச் சேர்க்கவும்.{% else %}Add crops in My Crops to view their current market prices here.{% endif %}</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Floating Live Crops Picker -->
+        <div id="floating-crop-picker-backdrop-mkt" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999998; background:transparent;" onclick="closeLiveCropDropdownMkt()"></div>
+        <div id="live-crop-dropdown-list-mkt" class="mkt-card" style="display:none; position:fixed; z-index:999999; border-radius:8px; width:100%; max-width:400px; max-height:350px; overflow-y:auto; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); padding:0;">
+            {% for c in live_crops %}
+                <div class="mkt-live-crop-item" data-crop="{{ c.crop_name|lower }}" onclick="selectLiveCropMkt('{{ c.crop_name }}')" style="padding:15px; cursor:pointer; border-bottom:1px solid var(--mkt-border); display:block; transition: background 0.2s;">
+                    🌱 <strong>{{ c.crop_name }}</strong> {% if c.village %}<span style="font-size:0.85em; color:var(--mkt-text-secondary);">— {{ c.village }}</span>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
         <!-- Price Comparison Table -->
         <div class="mkt-card">
             <div class="mkt-table-header">

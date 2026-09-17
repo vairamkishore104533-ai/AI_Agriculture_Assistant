@@ -436,3 +436,115 @@ function mktToast(msg, type) {
 document.addEventListener("DOMContentLoaded", function () {
     if (document.getElementById("mkt-crop-input")) { mktBoot(); }
 });
+
+// --- Live Crops Integration ---
+function filterLiveCropsMkt(q) {
+    var lower = q.toLowerCase();
+    var items = document.querySelectorAll('.mkt-live-crop-item');
+    var count = 0;
+    var list = document.getElementById('live-crop-dropdown-list-mkt');
+    if (q.length > 0 && list && list.style.display === 'none') {
+        openLiveCropDropdownMkt();
+    }
+    items.forEach(function(item) {
+        var cropName = item.getAttribute('data-crop') || "";
+        if (cropName.indexOf(lower) >= 0) {
+            item.style.display = 'block';
+            count++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function openLiveCropDropdownMkt() {
+    var btn = document.getElementById('live-crop-dropdown-btn');
+    var list = document.getElementById('live-crop-dropdown-list-mkt');
+    var backdrop = document.getElementById('floating-crop-picker-backdrop-mkt');
+    if (!btn || !list) return;
+    
+    if (window.innerWidth <= 768) {
+        list.style.top = 'auto';
+        list.style.bottom = '20px';
+        list.style.left = '5%';
+        list.style.width = '90%';
+        list.style.maxHeight = '50vh';
+        if (backdrop) backdrop.style.background = 'rgba(0,0,0,0.4)';
+    } else {
+        var rect = btn.getBoundingClientRect();
+        list.style.left = rect.left + 'px';
+        list.style.width = rect.width + 'px';
+        var spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 250) {
+            list.style.top = 'auto';
+            list.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        } else {
+            list.style.bottom = 'auto';
+            list.style.top = (rect.bottom + 4) + 'px';
+        }
+        if (backdrop) backdrop.style.background = 'transparent';
+    }
+    
+    list.style.display = 'block';
+    if (backdrop) backdrop.style.display = 'block';
+}
+
+function closeLiveCropDropdownMkt() {
+    var list = document.getElementById('live-crop-dropdown-list-mkt');
+    var backdrop = document.getElementById('floating-crop-picker-backdrop-mkt');
+    if (list) list.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+function toggleLiveCropDropdownMkt(e) {
+    if (e) e.preventDefault();
+    var list = document.getElementById('live-crop-dropdown-list-mkt');
+    if (list && list.style.display === 'block') {
+        closeLiveCropDropdownMkt();
+    } else {
+        openLiveCropDropdownMkt();
+    }
+}
+
+function selectLiveCropMkt(cropName) {
+    document.getElementById('live-crop-selected-text').innerHTML = "🌱 <strong>" + escapeHtml(cropName) + "</strong>";
+    closeLiveCropDropdownMkt();
+    
+    var ci = document.getElementById("mkt-crop-input");
+    if(ci) ci.value = cropName;
+    mktState.crop = cropName;
+    mktState.cropName = cropName;
+
+    showLoading();
+    fetch("/api/market/compare?crop=" + encodeURIComponent(cropName))
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            hideLoading();
+            if (!res.success || !res.prices || res.prices.length === 0) {
+                mktToast(t("No market price data available for this crop right now.", "இந்த பயிருக்கு தற்போது சந்தை விலை தரவு கிடைக்கவில்லை."), "error");
+                return;
+            }
+            
+            var data = res.prices;
+            data.sort(function(a, b) { return b.price - a.price; });
+            
+            mktState.tableData = data;
+            mktState.page = 1;
+            mktState.sortKey = "price";
+            mktState.sortDir = -1;
+            mktRenderTable();
+            
+            var highest = data[0];
+            mktState.market = highest.market;
+            var mi = document.getElementById("mkt-market-input");
+            if(mi) mi.value = highest.market;
+            
+            mktState.currentPrice = highest;
+            mktDisplayPrice(highest);
+            mktLoadCompareForCrop(cropName);
+            mktLoadInsights(highest);
+            
+            document.getElementById("mkt-price-section").scrollIntoView({behavior: "smooth", block: "start"});
+        })
+        .catch(function () { hideLoading(); mktToast(t("Network error.", "நெட்வொர்க் பிழை."), "error"); });
+}
