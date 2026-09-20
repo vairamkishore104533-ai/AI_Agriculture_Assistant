@@ -93,15 +93,24 @@ class VillageValidator:
                 "countrycodes": "in"
             }
             headers = {
-                "User-Agent": "TN-Agri-Assistant/1.0"
+                "User-Agent": "TN-Agri-Assistant/1.0 (https://github.com/vairamkishore104533-ai/AI_Agriculture_Assistant)"
             }
             
             # Simple rate limiting protection
             time.sleep(1)
             
-            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response = requests.get(url, params=params, headers=headers, timeout=5)
+            
+            print(f"[VILLAGE-VALIDATOR] Nominatim status={response.status_code} for village='{village}' district='{district}'")
+            
+            if response.status_code == 403:
+                print("[VILLAGE-VALIDATOR] Nominatim returned 403 Forbidden - likely IP blocked by Nominatim usage policy")
+                raise Exception(f"Nominatim 403 Forbidden")
+            if response.status_code == 429:
+                print("[VILLAGE-VALIDATOR] Nominatim returned 429 Too Many Requests - rate limited")
+                raise Exception(f"Nominatim 429 Rate Limited")
             if response.status_code != 200:
-                raise Exception("Nominatim API error")
+                raise Exception(f"Nominatim API error: HTTP {response.status_code}")
 
             results = response.json()
             if not results:
@@ -166,8 +175,22 @@ class VillageValidator:
                 "message": get_text("district_mismatch", lang)
             }
 
+        except requests.exceptions.Timeout:
+            print(f"[VILLAGE-VALIDATOR] Nominatim TIMEOUT for village='{village}' district='{district}'")
+            return {
+                "valid": False,
+                "status": "error",
+                "message": get_text("verification_unavailable", lang)
+            }
+        except requests.exceptions.ConnectionError as e:
+            print(f"[VILLAGE-VALIDATOR] Nominatim CONNECTION ERROR: {e}")
+            return {
+                "valid": False,
+                "status": "error",
+                "message": get_text("verification_unavailable", lang)
+            }
         except Exception as e:
-            print(f"[ERROR] Nominatim fallback failed: {e}")
+            print(f"[VILLAGE-VALIDATOR] Nominatim fallback failed: {type(e).__name__}: {e}")
             return {
                 "valid": False,
                 "status": "error",
