@@ -848,10 +848,11 @@ function handleNativeLiveCropSelect(selectElement) {
         return;
     }
     
-    // Store complete crop object
     fertState.selectedLiveCrop = selectedCrop;
     
-    // 1. Sync Season
+    var seasonMatched = false;
+    var cropMatched = false;
+    
     var seasonName = selectedCrop.season || "";
     if (seasonName) {
         var seasons = window.FERT_DATA.seasons;
@@ -862,65 +863,70 @@ function handleNativeLiveCropSelect(selectElement) {
                 (s.ta && s.ta.toLowerCase().trim() === sSearch) ||
                 (s.id && s.id.toLowerCase().trim() === sSearch)) {
                 
-                // Update form input
                 var seasonInput = document.getElementById('fert-season-input');
                 if (seasonInput) {
                     var sDisplayText = s.ta && getLang() === "ta" ? s.ta : (s.en || "");
                     seasonInput.value = sDisplayText;
                 }
                 
-                // Update state
                 fertState.season = s.id;
                 fertState.seasonName = s.en;
                 
-                // Trigger normal state handling
                 if (typeof showSeasonInfo === 'function') showSeasonInfo(s);
+                seasonMatched = true;
                 if (typeof revealStep === 'function') revealStep("crop");
-                if (typeof updateProgress === 'function') updateProgress();
                 break;
             }
         }
     }
     
-    // 2. Sync Crop
     var cropName = selectedCrop.crop_name || "";
-    if (cropName) {
-        var crops = window.FERT_DATA.crops;
-        var cSearch = cropName.trim().toLowerCase();
-        for (var k = 0; k < crops.length; k++) {
-            var c = crops[k];
-            if ((c.en && c.en.toLowerCase().trim() === cSearch) || 
-                (c.ta && c.ta.toLowerCase().trim() === cSearch)) {
-                
-                // Update form input
-                var cropInput = document.getElementById('fert-crop-input');
-                if (cropInput) {
-                    var cDisplayText = c.ta && getLang() === "ta" ? c.ta : (c.en || "");
-                    cropInput.value = cDisplayText;
-                }
-                
-                // Update state
-                fertState.crop = c.en;
-                fertState.cropName = c.en;
-                
-                // Trigger normal state handling
-                if (typeof showCropInfo === 'function') showCropInfo(c);
-                if (typeof revealStep === 'function') revealStep("stage");
-                if (typeof updateProgress === 'function') updateProgress();
-                break;
+    var cSearch = cropName.trim().toLowerCase();
+    var crops = window.FERT_DATA.crops;
+    
+    for (var k = 0; k < crops.length; k++) {
+        var c = crops[k];
+        if ((c.en && c.en.toLowerCase().trim() === cSearch) || 
+            (c.ta && c.ta.toLowerCase().trim() === cSearch) ||
+            (c.id && c.id.toLowerCase().trim() === cSearch)) {
+            
+            var cropInput = document.getElementById('fert-crop-input');
+            if (cropInput) {
+                var cDisplayText = c.ta && getLang() === "ta" ? c.ta : (c.en || "");
+                cropInput.value = cDisplayText;
             }
+            
+            fertState.crop = c.id || c.en;
+            fertState.cropName = c.en;
+            
+            if (typeof showCropInfo === 'function') showCropInfo(c);
+            cropMatched = true;
+            if (typeof revealStep === 'function') revealStep("stage");
+            break;
         }
-        showFertToast(cropName + ' selected for fertilizer recommendation', 'success');
-        setTimeout(function() {
-            var el = document.getElementById("fert-card-stage");
-            if (el) {
-                el.style.display = "block";
-                el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    
+    if (!cropMatched) {
+        showFertToast(cropName + " is currently not available in our fertilizer database", 'error');
+        selectElement.selectedIndex = 0;
+        fertState.selectedLiveCrop = null;
+        return;
+    }
+    
+    if (typeof updateProgress === 'function') updateProgress();
+    
+    showFertToast(cropName + ' selected for fertilizer recommendation', 'success');
+    
+    setTimeout(function() {
+        var section = document.getElementById("fert-input-section");
+        if (section) {
+            section.scrollIntoView({ behavior: "smooth", block: "start" });
+            setTimeout(function() {
                 var stInput = document.getElementById("fert-stage-input");
                 if (stInput) {
                     stInput.focus();
                 }
-            }
-        }, 100);
-    }
+            }, 300);
+        }
+    }, 100);
 }
