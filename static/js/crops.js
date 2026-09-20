@@ -124,6 +124,9 @@ function openAddModal() {
     document.getElementById("modal-title").textContent = "Add New Crop";
     document.getElementById("crop-id").value = "";
     document.getElementById("crop-form").reset();
+    isVillageVerified = false;
+    document.getElementById("crop-village-verify-result").style.display = "none";
+    document.getElementById("btn-verify-village-crop").innerHTML = "Verify";
     var btn = document.getElementById("form-submit-btn");
     btn.textContent = "Save Crop";
     btn.disabled = false;
@@ -151,6 +154,10 @@ document.getElementById("crop-form").addEventListener("submit", function (e) {
         status: document.getElementById("status").value,
         notes: document.getElementById("notes").value,
     };
+    if (!isVillageVerified && document.getElementById("village").value.trim() !== "") {
+        showToast("Please verify your village first.", "error");
+        return;
+    }
     var url = "/api/crops" + (id ? "/" + id : "");
     var method = id ? "PUT" : "POST";
     var btn = document.getElementById("form-submit-btn");
@@ -189,6 +196,9 @@ function editCrop(id) {
             document.getElementById("crop-id").value = c.id;
             document.getElementById("crop_name").value = c.crop_name;
             document.getElementById("village").value = c.village || "";
+            isVillageVerified = c.village ? true : false;
+            document.getElementById("crop-village-verify-result").style.display = "none";
+            document.getElementById("btn-verify-village-crop").innerHTML = "Verify";
             document.getElementById("district").value = c.district;
             document.getElementById("land_size").value = c.land_size;
             document.getElementById("soil_type").value = c.soil_type;
@@ -464,3 +474,76 @@ function showToast(msg, type) {
     clearTimeout(toast._timer);
     toast._timer = setTimeout(function () { toast.style.display = "none"; }, 3000);
 }
+
+
+// Village Verification for My Crops
+let isVillageVerified = false;
+
+document.getElementById('village')?.addEventListener('input', function() {
+    isVillageVerified = false;
+});
+
+document.getElementById('btn-verify-village-crop')?.addEventListener('click', function() {
+    const district = document.getElementById('district').value;
+    const village = document.getElementById('village').value;
+    const resDiv = document.getElementById('crop-village-verify-result');
+    const btn = this;
+    
+    if(!district || !village) {
+        resDiv.style.display = 'block';
+        resDiv.style.backgroundColor = 'var(--red-50, #fef2f2)';
+        resDiv.style.color = '#dc2626';
+        resDiv.style.border = '1px solid #fca5a5';
+        resDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Village and district are required';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    resDiv.style.display = 'block';
+    resDiv.style.backgroundColor = 'var(--gray-50, #f3f4f6)';
+    resDiv.style.color = 'var(--text-secondary, #374151)';
+    resDiv.style.border = '1px solid #d1d5db';
+    resDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying village...';
+    
+    fetch('/api/validate-village', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ district, village })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = 'Verify';
+        
+        if(data.valid) {
+            isVillageVerified = true;
+            resDiv.style.backgroundColor = 'var(--green-50, #f0fdf4)';
+            resDiv.style.color = '#166534';
+            resDiv.style.border = '1px solid #bbf7d0';
+            resDiv.innerHTML = `<i class="fas fa-check-circle"></i> <strong>${data.message}</strong><br><small style="margin-top:4px;display:block;">${data.village} belongs to ${data.district} district.</small>`;
+        } else {
+            isVillageVerified = false;
+            resDiv.style.backgroundColor = '#fffbeb';
+            resDiv.style.color = '#b45309';
+            resDiv.style.border = '1px solid #fde68a';
+            
+            if(data.status === 'district_mismatch') {
+                resDiv.style.backgroundColor = 'var(--red-50, #fef2f2)';
+                resDiv.style.color = '#dc2626';
+                resDiv.style.border = '1px solid #fca5a5';
+                resDiv.innerHTML = `<i class="fas fa-times-circle"></i> <strong>${data.message}</strong><br><small style="margin-top:4px;display:block;">This village belongs to ${data.actual_district} district, not ${data.selected_district}.</small>`;
+            } else {
+                resDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>${data.message}</strong>`;
+            }
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = 'Verify';
+        resDiv.style.backgroundColor = 'var(--red-50, #fef2f2)';
+        resDiv.style.color = '#dc2626';
+        resDiv.style.border = '1px solid #fca5a5';
+        resDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Verification Unavailable`;
+    });
+});
