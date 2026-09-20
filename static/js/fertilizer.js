@@ -911,5 +911,16 @@ function handleNativeLiveCropSelect(selectElement) {
             }
         }
         showFertToast(cropName + ' selected for fertilizer recommendation', 'success');
+        setTimeout(function() {
+            var el = document.getElementById("fert-card-stage");
+            if (el) {
+                el.style.display = "block";
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                var stInput = document.getElementById("fert-stage-input");
+                if (stInput) {
+                    stInput.focus();
+                }
+            }
+        }, 100);
     }
 }
