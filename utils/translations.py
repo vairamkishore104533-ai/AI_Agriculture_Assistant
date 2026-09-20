@@ -13,12 +13,12 @@ TRANSLATIONS = {
         "nav_language": "Language",
 
         # Landing Page
-        "hero_title": "AI Agriculture Assistant for Tamil Nadu",
+        "hero_title": "TN Agriculture Assistant for Tamil Nadu",
         "hero_subtitle": "Smart farming solutions powered by AI - helping Tamil Nadu farmers grow better, earn more, and farm smarter.",
         "hero_get_started": "Get Started",
         "hero_watch_video": "Watch Video",
         "about_title": "About Our Platform",
-        "about_desc": "AI Agriculture Assistant is a smart farming platform designed specifically for Tamil Nadu farmers. We leverage artificial intelligence to provide personalized crop guidance, weather insights, fertilizer recommendations, and more - all in your preferred language.",
+        "about_desc": "TN Agriculture Assistant is a smart farming platform designed specifically for Tamil Nadu farmers. We leverage artificial intelligence to provide personalized crop guidance, weather insights, fertilizer recommendations, and more - all in your preferred language.",
         "features_title": "Powerful Features",
         "features_subtitle": "Everything you need for smart farming",
         "feature_ai_chat": "AI Chat Assistant",
@@ -65,7 +65,7 @@ TRANSLATIONS = {
         "testimonial_3_role": "Coconut Farmer, Pollachi",
         "faq_title": "Frequently Asked Questions",
         "faq_1_q": "Is this platform free to use?",
-        "faq_1_a": "Yes, the AI Agriculture Assistant is completely free for all Tamil Nadu farmers.",
+        "faq_1_a": "Yes, the TN Agriculture Assistant is completely free for all Tamil Nadu farmers.",
         "faq_2_q": "Can I use this in Tamil?",
         "faq_2_a": "Absolutely! The entire platform is available in both Tamil and English. You can switch anytime.",
         "faq_3_q": "Do I need internet always?",
@@ -111,7 +111,7 @@ TRANSLATIONS = {
         "error_username_short": "Username must be at least 4 characters.",
         "error_password_short": "Password must be at least 4 characters.",
         "success_registered": "Registration successful! Please login.",
-        "success_logged_in": "Login successful! Welcome to AI Agriculture Assistant.",
+        "success_logged_in": "Login successful! Welcome to TN Agriculture Assistant.",
 
         # Dashboard
         "dashboard_title": "Dashboard",
@@ -156,7 +156,7 @@ TRANSLATIONS = {
         "sidebar_logout": "Logout",
 
         # AI Chat
-        "chat_title": "AI Agriculture Assistant",
+        "chat_title": "TN Agriculture Assistant",
         "chat_subtitle": "Ask me anything about farming in Tamil Nadu",
         "chat_placeholder": "Type your farming question here...",
         "chat_send": "Send",
@@ -587,12 +587,12 @@ TRANSLATIONS = {
         "nav_language": "மொழி",
 
         # Landing Page
-        "hero_title": "தமிழ்நாட்டிற்கான AI விவசாய உதவியாளர்",
+        "hero_title": "தமிழ்நாட்டிற்கான TN விவசாய உதவியாளர்",
         "hero_subtitle": "AI மூலம் இயங்கும் ஸ்மார்ட் விவசாய தீர்வுகள் - தமிழ்நாடு விவசாயிகள் சிறப்பாக விளைவிக்க, அதிகம் சம்பாதிக்க, மேலும் அறிவார்ந்த விவசாயம் செய்ய உதவுகிறது.",
         "hero_get_started": "தொடங்கவும்",
         "hero_watch_video": "வீடியோ பாருங்கள்",
         "about_title": "எங்கள் தளம் பற்றி",
-        "about_desc": "AI விவசாய உதவியாளர் என்பது தமிழ்நாடு விவசாயிகளுக்காக சிறப்பாக வடிவமைக்கப்பட்ட ஒரு ஸ்மார்ட் விவசாய தளமாகும். தனிப்பயனாக்கப்பட்ட பயிர் வழிகாட்டுதல், வானிலை நுண்ணறிவுகள், உர பரிந்துரைகள் மற்றும் பலவற்றை வழங்க செயற்கை நுண்ணறிவைப் பயன்படுத்துகிறோம்.",
+        "about_desc": "TN விவசாய உதவியாளர் என்பது தமிழ்நாடு விவசாயிகளுக்காக சிறப்பாக வடிவமைக்கப்பட்ட ஒரு ஸ்மார்ட் விவசாய தளமாகும். தனிப்பயனாக்கப்பட்ட பயிர் வழிகாட்டுதல், வானிலை நுண்ணறிவுகள், உர பரிந்துரைகள் மற்றும் பலவற்றை வழங்க செயற்கை நுண்ணறிவைப் பயன்படுத்துகிறோம்.",
         "features_title": "சக்திவாய்ந்த அம்சங்கள்",
         "features_subtitle": "ஸ்மார்ட் விவசாயத்திற்கு தேவையான அனைத்தும்",
         "feature_ai_chat": "AI அரட்டை உதவியாளர்",
@@ -639,7 +639,7 @@ TRANSLATIONS = {
         "testimonial_3_role": "தேங்காய் விவசாயி, பொள்ளாச்சி",
         "faq_title": "அடிக்கடி கேட்கப்படும் கேள்விகள்",
         "faq_1_q": "இந்த தளம் இலவசமா?",
-        "faq_1_a": "ஆம், AI விவசாய உதவியாளர் அனைத்து தமிழ்நாடு விவசாயிகளுக்கும் முற்றிலும் இலவசம்.",
+        "faq_1_a": "ஆம், TN விவசாய உதவியாளர் அனைத்து தமிழ்நாடு விவசாயிகளுக்கும் முற்றிலும் இலவசம்.",
         "faq_2_q": "நான் தமிழில் பயன்படுத்தலாமா?",
         "faq_2_a": "நிச்சயமாக! முழு தளமும் தமிழ் மற்றும் ஆங்கிலம் ஆகிய இரண்டு மொழிகளிலும் கிடைக்கிறது. நீங்கள் எப்போது வேண்டுமானாலும் மாறலாம்.",
         "faq_3_q": "எனக்கு எப்போதும் இணையம் தேவையா?",
@@ -730,7 +730,7 @@ TRANSLATIONS = {
         "sidebar_logout": "வெளியேறு",
 
         # AI Chat
-        "chat_title": "AI விவசாய உதவியாளர்",
+        "chat_title": "TN விவசாய உதவியாளர்",
         "chat_subtitle": "தமிழ்நாட்டில் விவசாயம் பற்றி என்னையும் கேளுங்கள்",
         "chat_placeholder": "உங்கள் விவசாய கேள்வியை இங்கே தட்டச்சு செய்க...",
         "chat_send": "அனுப்பு",

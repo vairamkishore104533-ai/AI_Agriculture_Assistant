@@ -196,7 +196,7 @@ class AIService:
                     )
 
         return (
-            f"You are an expert AI Agriculture Assistant specialized in Tamil Nadu farming.\n\n"
+            f"You are an expert TN Agriculture Assistant specialized in Tamil Nadu farming.\n\n"
             f"{lang_instruction}\n\n"
             f"Guidelines:\n"
             f"- Answer ONLY agriculture and farming related questions.\n"

@@ -36,7 +36,7 @@ def login():
 
     user.update({"last_login": __import__("datetime").datetime.utcnow()})
 
-    msg = "Login successful! Welcome to AI Agriculture Assistant." if lang == "en" else "உள்நுழைவு வெற்றி! AI விவசாய உதவியாளருக்கு வரவேற்கிறோம்."
+    msg = "Login successful! Welcome to TN Agriculture Assistant." if lang == "en" else "உள்நுழைவு வெற்றி! TN விவசாய உதவியாளருக்கு வரவேற்கிறோம்."
     return jsonify({"success": True, "message": msg, "redirect": url_for("dashboard.index")})
 
 @auth_bp.route("/register", methods=["GET", "POST"])

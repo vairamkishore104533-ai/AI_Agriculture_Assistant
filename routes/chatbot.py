@@ -198,7 +198,7 @@ def export_chat():
             pdf.add_font("Arial", "", r"C:\Windows\Fonts\arial.ttf")
             pdf.add_font("Arial", "B", r"C:\Windows\Fonts\arialbd.ttf")
             pdf.set_font("Arial", "B", 16)
-            pdf.cell(0, 10, text="AI Agriculture Assistant - Chat Export", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+            pdf.cell(0, 10, text="TN Agriculture Assistant - Chat Export", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
             pdf.set_font("Arial", "", 10)
             pdf.cell(0, 6, text=f"Date: {now}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.cell(0, 6, text=f"District: {conv.district or 'Not set'}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -230,7 +230,7 @@ def export_chat():
         else:
             lines = []
             header = (
-                f"AI Agriculture Assistant - Chat Export\n"
+                f"TN Agriculture Assistant - Chat Export\n"
                 f"Date: {now}\n"
                 f"District: {conv.district or 'Not set'}\n"
                 f"Language: {lang_label}\n"

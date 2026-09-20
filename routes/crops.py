@@ -449,7 +449,7 @@ def export_crops():
             pdf.add_font("Arial", "", r"C:\Windows\Fonts\arial.ttf")
             pdf.add_font("Arial", "B", r"C:\Windows\Fonts\arialbd.ttf")
             pdf.set_font("Arial", "B", 16)
-            label = "AI Agriculture Assistant - Crops Export" if lang == "en" else "AI விவசாய உதவியாளர் - பயிர் ஏற்றுமதி"
+            label = "TN Agriculture Assistant - Crops Export" if lang == "en" else "TN விவசாய உதவியாளர் - பயிர் ஏற்றுமதி"
             pdf.cell(0, 10, text=label, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
             pdf.set_font("Arial", "", 10)
             pdf.cell(0, 6, text=f"Farmer: {username}  |  District: {district}  |  Date: {now}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
