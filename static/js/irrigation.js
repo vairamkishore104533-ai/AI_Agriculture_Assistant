@@ -286,9 +286,13 @@ function showIrrMethodInfo(item) {
 
 /* ── Generate ── */
 
+var isGenerating = false;
 function generateIrrigation() {
+    if (isGenerating) return;
+    isGenerating = true;
     if (!irrState.crop || !irrState.district || !irrState.season || !irrState.method) {
         showIrrToast(t("Please fill in all fields first.", "முதலில் அனைத்து புலங்களையும் நிரப்பவும்."), "error");
+        isGenerating = false;
         return;
     }
 
@@ -324,6 +328,7 @@ function generateIrrigation() {
             showIrrToast(msg, "error");
         }
     })
+    .finally(function() { isGenerating = false; })
     .catch(function (err) {
         clearInterval(msgInterval);
         overlay.style.display = "none";

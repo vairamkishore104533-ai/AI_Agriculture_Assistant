@@ -361,7 +361,10 @@ function syncFertState() {
     }
 }
 
+var isGenerating = false;
 function generateFertilizer() {
+    if (isGenerating) return;
+    isGenerating = true;
     syncFertState();
     
     var missing = [];
@@ -372,6 +375,7 @@ function generateFertilizer() {
     
     if (missing.length > 0) {
         showFertToast(t("Please provide: ", "தயவுசெய்து வழங்கவும்: ") + missing.join(", "), "error");
+        isGenerating = false;
         return;
     }
 
@@ -411,6 +415,7 @@ function generateFertilizer() {
         fertState.recommendation = res;
         displayFertResult(res);
     })
+    .finally(function() { isGenerating = false; })
     .catch(function (err) {
         hideLoading();
         if (btn) { btn.disabled = false; btn.innerHTML = t("Generate AI Fertilizer Recommendation", "AI உர பரிந்துரையை உருவாக்கவும்"); }

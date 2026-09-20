@@ -88,6 +88,8 @@ class AIService:
                     elif res.status_code == 402:
                         return ("OpenRouter API error: Insufficient account balance. "
                                 "Please check your OpenRouter account at https://openrouter.ai/")
+                    elif res.status_code == 429 or res.status_code >= 500:
+                        raise Exception(f"API rate limit or server error: HTTP {res.status_code}")
                     else:
                         return f"OpenRouter API error (status {res.status_code}): {res.text}"
                 except Exception as e:
@@ -121,6 +123,8 @@ class AIService:
                     elif res.status_code == 402:
                         return ("DeepSeek API error: Insufficient account balance. "
                                 "Please check your DeepSeek billing at https://platform.deepseek.com/")
+                    elif res.status_code == 429 or res.status_code >= 500:
+                        raise Exception(f"API rate limit or server error: HTTP {res.status_code}")
                     else:
                         return f"DeepSeek API error (status {res.status_code}): {res.text}"
                 except Exception as e:
