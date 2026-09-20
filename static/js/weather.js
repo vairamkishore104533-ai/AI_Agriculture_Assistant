@@ -26,7 +26,7 @@ function wthRenderAdvice(text) {
 }
 
 // --- Live Crops Integration ---
-function filterLiveCropChips(q) {
+function wthFilterLiveCropChips(q) {
     var lower = q.toLowerCase().trim();
     var select = document.getElementById('native-live-crop-select');
     if (!select) return;
@@ -48,7 +48,7 @@ function filterLiveCropChips(q) {
     }
 }
 
-function handleNativeLiveCropSelect(selectElement) {
+function wthHandleNativeLiveCropSelect(selectElement) {
     if (selectElement.selectedIndex <= 0) return;
     
     var cropId = selectElement.options[selectElement.selectedIndex].value;

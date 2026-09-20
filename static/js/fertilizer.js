@@ -794,7 +794,7 @@ function hideLoading() {
 }
 
 // --- Live Crops Integration ---
-function filterLiveCropChips(q) {
+function fertFilterLiveCropChips(q) {
     var lower = q.toLowerCase().trim();
     var select = document.getElementById('native-live-crop-select');
     if (!select) return;
@@ -820,7 +820,7 @@ function filterLiveCropChips(q) {
     }
 }
 
-function handleNativeLiveCropSelect(selectElement) {
+function fertHandleNativeLiveCropSelect(selectElement) {
     if (selectElement.selectedIndex <= 0) {
         fertState.selectedLiveCrop = null;
         return;

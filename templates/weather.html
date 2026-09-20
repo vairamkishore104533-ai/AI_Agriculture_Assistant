@@ -160,7 +160,7 @@
                 <h3 class="wth-section-title" style="margin:0;">🌱 Live Crops</h3>
                 <div style="margin:0; width:100%; max-width:300px; position:relative;">
                     <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);">🔍</span>
-                    <input type="text" id="live-crop-search" placeholder="Search live crops..." oninput="filterLiveCropChips(this.value)" style="width:100%; padding:10px 15px 10px 35px; border-radius:8px; border:1px solid var(--wth-border, #e2e8f0); background:var(--wth-card-bg, #fff); color:var(--text-color);">
+                    <input type="text" id="live-crop-search" placeholder="Search live crops..." oninput="wthFilterLiveCropChips(this.value)" style="width:100%; padding:10px 15px 10px 35px; border-radius:8px; border:1px solid var(--wth-border, #e2e8f0); background:var(--wth-card-bg, #fff); color:var(--text-color);">
                 </div>
             </div>
             
@@ -169,7 +169,7 @@
                 <label for="native-live-crop-select" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:8px;">
                     {% if lang == 'ta' %}நேரடி பயிரைத் தேர்ந்தெடுக்கவும்{% else %}Select a live crop{% endif %}
                 </label>
-                <select id="native-live-crop-select" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--wth-border, #e2e8f0); background:var(--wth-card-bg, #fff); color:var(--text-color); font-size:1rem; cursor:pointer;" onchange="handleNativeLiveCropSelect(this)">
+                <select id="native-live-crop-select" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--wth-border, #e2e8f0); background:var(--wth-card-bg, #fff); color:var(--text-color); font-size:1rem; cursor:pointer;" onchange="wthHandleNativeLiveCropSelect(this)">
                     <option value="">{% if lang == 'ta' %}-- தேர்ந்தெடுக்கவும் --{% else %}-- Select a live crop --{% endif %}</option>
                     {% for c in live_crops %}
                     <option value="{{ c.id }}">
